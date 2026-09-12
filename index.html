@@ -12,15 +12,8 @@
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
 <style>
-  @font-face {
-    font-family: 'MonoTypewriter';
-    font-style: normal;
-    font-display: swap;
-    font-weight: 400;
-    src: url(https://lightscape-photo.github.io/apps/Monospace_Typewriter.ttf) format('truetype');
-  }
   :root{
     --bg:#1B1F24;
     --panel:#23282F;
@@ -77,7 +70,7 @@
   body{
     background:var(--bg);
     color:var(--text);
-    font-family:'IBM Plex Sans TC',-apple-system,sans-serif;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;
     min-height:100vh;
     display:flex;
     justify-content:center;
@@ -103,8 +96,8 @@
     padding:12px 14px;margin-bottom:10px;
   }
   .trash-info{min-width:0;flex:1;}
-  .trash-ordno{font-size:15px;font-weight:700;color:var(--text);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;display:inline-block;transform:scaleY(0.9);}
-  .trash-meta{font-size:12px;color:var(--muted);margin-top:4px;font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;display:inline-block;transform:scaleY(0.9);}
+  .trash-ordno{font-size:15px;font-weight:700;color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;}
+  .trash-meta{font-size:12px;color:var(--muted);margin-top:4px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;}
   .trash-restore-btn{
     flex:0 0 auto;background:var(--green);color:var(--on-green);border:none;
     border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;
@@ -124,13 +117,13 @@
   }
   .locked-price{
     background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
-    padding:6px 10px;font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;
-    color:var(--muted);display:inline-block;transform:scaleY(0.9);
+    padding:6px 10px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;
+    color:var(--muted);
   }
 
   .active-header{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;}
   .active-header h2{font-size:14px;color:var(--muted);font-weight:600;margin:0;}
-  .active-header .count{font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:var(--amber);display:inline-block;transform:scaleY(0.9);}
+  .active-header .count{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:var(--amber);}
 
   .swipe-card-wrap{position:relative;margin-bottom:10px;border-radius:14px;overflow:hidden;}
   .order-card{
@@ -140,7 +133,7 @@
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   .ordno-input{
     flex:1.8;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
-    padding:8px 10px;font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
+    padding:8px 10px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
     text-align:center;letter-spacing:1px;color:var(--text);
   }
   .ordno-input:focus{outline:none;border-color:var(--amber);}
@@ -151,10 +144,10 @@
     padding:8px 10px;
   }
   .price-input-wrap span{font-size:14px;color:var(--muted);}
-  .price-input-wrap.locked-price{color:var(--muted);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;display:inline-block;transform:scaleY(0.9);}
+  .price-input-wrap.locked-price{color:var(--muted);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;}
   .price-input{
     flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none;
-    color:var(--text);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
+    color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
     text-align:right;-moz-appearance:textfield;appearance:textfield;
   }
   .price-input::-webkit-outer-spin-button,.price-input::-webkit-inner-spin-button{
@@ -165,17 +158,17 @@
   .price-input-wrap:focus-within{border-color:var(--amber);}
   .order-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .order-start{font-size:12px;color:var(--muted);}
-  .order-start b{color:var(--text);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;display:inline-block;transform:scaleY(0.9);}
+  .order-start b{color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;}
 
   .order-status-row{
     display:flex;align-items:baseline;justify-content:space-between;gap:10px;
     padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--border);
   }
   .order-timer{
-    font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;
-    letter-spacing:0.5px;flex-shrink:0;display:inline-block;transform:scaleY(0.9);
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;
+    letter-spacing:0.5px;flex-shrink:0;
   }
-  .order-fee{font-size:11px;color:var(--muted);text-align:right;font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;display:inline-block;transform:scaleY(0.9);}
+  .order-fee{font-size:11px;color:var(--muted);text-align:right;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;}
   .order-fee.over{color:var(--amber);}
 
   .complete-btn{
@@ -191,7 +184,7 @@
     padding:12px 10px;
   }
   .summary .card .label{font-size:11px;color:var(--muted);line-height:1.4;}
-  .summary .card .value{font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;margin-top:4px;display:inline-block;transform:scaleY(0.9);}
+  .summary .card .value{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;margin-top:4px;}
   .empty{font-size:13px;color:var(--muted);text-align:center;padding:20px 0;}
 
   .overlay{
@@ -205,12 +198,12 @@
   }
   .settings-panel h3{margin:0 0 6px;font-size:16px;}
   .settings-panel .hint{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.6;}
-  #deleteRowInfo{font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;display:inline-block;transform:scaleY(0.9);}
+  #deleteRowInfo{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;}
   .settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .settings-row label{font-size:13px;color:var(--muted);}
   .settings-row input[type=number]{
     width:70px;background:transparent;border:none;outline:none;color:var(--text);
-    font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;text-align:right;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;text-align:right;
   }
   .settings-actions{display:flex;gap:10px;margin-top:6px;}
   .quick-price-input-wrap{
@@ -221,7 +214,7 @@
   .quick-price-input-wrap span{font-size:20px;color:var(--muted);font-weight:600;}
   .quick-price-input-wrap input{
     flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none;
-    color:var(--text);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:32px;font-weight:700;
+    color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:32px;font-weight:700;
     text-align:center;-moz-appearance:textfield;appearance:textfield;
   }
   .quick-price-input-wrap input::-webkit-outer-spin-button,
@@ -233,27 +226,27 @@
   .settings-actions .cancel{background:transparent;border:1px solid var(--border);color:var(--muted);}
   .settings-actions .confirm{background:var(--amber);border:none;color:var(--on-amber);}
 
-  .clear-all{font-size:12px;color:var(--muted);background:none;border:none;text-decoration:underline;cursor:pointer;font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;}
+  .clear-all{font-size:12px;color:var(--muted);background:none;border:none;text-decoration:underline;cursor:pointer;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;}
   .history-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
   .export-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer;
-    font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;
   }
   .export-btn:active{transform:scale(0.97);}
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 2px;text-align:center;border-bottom:1px solid var(--border);
-    font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
   }
-  .export-table th{color:var(--muted);font-family:'IBM Plex Sans TC',sans-serif;font-weight:600;font-size:10px;text-align:center;}
+  .export-table th{color:var(--muted);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-weight:600;font-size:10px;text-align:center;}
   .export-table tbody tr:last-child td{border-bottom:none;}
   .row-id-cell{-webkit-user-select:none;user-select:none;cursor:pointer;}
   .export-table tfoot td{border-top:1px solid var(--border);border-bottom:none;color:var(--amber);font-weight:600;padding-top:10px;}
   .export-table-scroll{overflow-x:hidden;}
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border);
-    color:var(--text);font-family:'MonoTypewriter','IBM Plex Sans TC',sans-serif;font-variant-numeric:tabular-nums;font-size:inherit;
+    color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:inherit;
     text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
@@ -552,7 +545,7 @@ function getFeeStatus(o, now){
   }
   const targetTs = o.startTs + thresholdMin * 60000;
   const remainStr = fmtMMSS(targetTs - now);
-  return { text: `還有 <span style="font-family:'MonoTypewriter',monospace;">${remainStr}</span> 開始補差額`, over: false };
+  return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
 }
 
 function init(){
