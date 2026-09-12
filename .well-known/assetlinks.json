@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "io.github.lightscape_photo.twa",
-        "sha256_cert_fingerprints": ["A8:DC:CD:FA:64:17:4B:09:1C:0C:EA:C5:6E:1B:2B:FA:8A:B9:28:20:D6:57:37:83:12:D0:5E:2E:ED:FD:C2:85"]
+        "package_name": "tw.myapp.uecalculator",
+        "sha256_cert_fingerprints": ["4D:B2:D4:87:EC:D6:44:FF:FB:65:1E:2F:74:7C:C4:54:9B:18:27:09:13:01:B6:1C:09:55:F1:41:39:85:09:3A"]
       }
     }]
