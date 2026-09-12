@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.lightscape_photo.twa",
+        "sha256_cert_fingerprints": ["A8:DC:CD:FA:64:17:4B:09:1C:0C:EA:C5:6E:1B:2B:FA:8A:B9:28:20:D6:57:37:83:12:D0:5E:2E:ED:FD:C2:85"]
+      }
+    }]
