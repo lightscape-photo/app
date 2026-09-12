@@ -250,16 +250,26 @@
     text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
+  
+  /* 隱形輸入框魔法：平時看起來像純文字，點擊後浮現提示線 */
+  .time-edit-input{
+    border-bottom:none;
+    padding:0;
+  }
+
   .base-edit-input{-moz-appearance:textfield;appearance:textfield;}
   .base-edit-input::-webkit-outer-spin-button,.base-edit-input::-webkit-inner-spin-button{
     -webkit-appearance:none;margin:0;
   }
-  .time-edit-input{font-size:11px;padding:2px;}
   .ordno-edit-input{font-weight:600;}
+  
+  /* 全新比例分配，讓 9 個欄位和諧並排 */
   .export-table th:nth-child(4),.export-table td:nth-child(4),
-  .export-table th:nth-child(5),.export-table td:nth-child(5){width:16%;}
-  .export-table th:nth-child(1),.export-table td:nth-child(1),
-  .export-table th:nth-child(6),.export-table td:nth-child(6){width:10%;}
+  .export-table th:nth-child(5),.export-table td:nth-child(5){width:12%;}
+  .export-table th:nth-child(1),.export-table td:nth-child(1){width:8%;}
+  .export-table th:nth-child(6),.export-table td:nth-child(6),
+  .export-table th:nth-child(7),.export-table td:nth-child(7){width:9%;}
+
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
   .tabs{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:18px;}
@@ -686,7 +696,6 @@ function renderActive(){
     const isPrimary = o.linkRole === 'primary';
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
-    // 修改點：疊單 B 的欄位改成固定顯示「-」，避免誤導，並保持唯讀屬性與灰霧鎖定外觀
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="number" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" min="0"></div>`;
@@ -1138,17 +1147,19 @@ function renderDetailTable(){
   }
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
-  const header = ['編號','單號','日期','開始','結束','超時','單價','差額','疊單共用'];
+  
+  // 更新 CSV 匯出所需表頭與總計邏輯 (增加用時欄位)
+  const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
   const rows = list.map((o,i) => [
-    i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
+    i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.elapsedMinCeil, o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
   ]);
-  const totalRow = ['','總計','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
+  const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
   
   wrap.innerHTML = `
     <div class="export-table-scroll">
       <table class="export-table">
         <thead><tr>
-          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>超時</th><th>單價</th><th>差額</th>
+          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>用時</th><th>超時</th><th>單價</th><th>差額</th>
         </tr></thead>
         <tbody>
           ${list.map((o,i) => `
@@ -1158,6 +1169,7 @@ function renderDetailTable(){
               <td>${fmtDateOnly(o.startTs)}</td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="HH:MM"></td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="HH:MM"></td>
+              <td>${o.elapsedMinCeil}</td>
               <td>${o.extraMin}</td>
               <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input base-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
               <td>${plainNum(o.extraFee)}</td>
@@ -1165,7 +1177,7 @@ function renderDetailTable(){
           `).join('')}
         </tbody>
         <tfoot>
-          <tr><td colspan="6">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr>
+          <tr><td colspan="7">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr>
         </tfoot>
       </table>
     </div>
@@ -1334,7 +1346,16 @@ function csvEscape(v){
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = getExportOrders();
   if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
-  const { header, rows, totalRow } = buildExportRows(list);
+  
+  // 匯出包含「用時」的新版表頭與資料結構
+  const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
+  const rows = list.map((o,i) => [
+    i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.elapsedMinCeil, o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
+  ]);
+  const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
+  const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
+  const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
+  
   const csv = '\uFEFF' + [header, ...rows, totalRow].map(r => r.map(csvEscape).join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1400,8 +1421,15 @@ $('importCsvInput').addEventListener('change', e=>{
         const dateStr = r[2];
         const startStr = r[3];
         const endStr = r[4];
-        const basePrice = parseFloat(r[6]) || 0;
-        const excludeBaseFromTotal = r[8] === '是' || r[8] === '1' || r[8] === 'Y';
+        
+        // 判斷是否為新版帶有「用時」欄位的 CSV
+        const isNewFormat = (r.length >= 10 && (r[9] === '是' || r[9] === '' || r[8] === '是' || r[8] === '')); // 簡單相容判定
+        let basePriceIdx = isNewFormat ? 7 : 6;
+        let extraFeeIdx = isNewFormat ? 8 : 7;
+        let excludeIdx = isNewFormat ? 9 : 8;
+        
+        const basePrice = parseFloat(r[basePriceIdx]) || 0;
+        const excludeBaseFromTotal = r[excludeIdx] === '是' || r[excludeIdx] === '1' || r[excludeIdx] === 'Y';
         const dateParts = dateStr.split('/').map(n => parseInt(n));
         let yyyy, mm, dd;
         if(dateParts.length === 3){
@@ -1425,7 +1453,7 @@ $('importCsvInput').addEventListener('change', e=>{
         let covered = getCoveredMin(basePrice, isLinked);
         const actualExtraMin = excludeBaseFromTotal ? 0 : Math.max(0, billedMin - covered);
         
-        const extraFee = parseFloat(r[7]) || 0;
+        const extraFee = parseFloat(r[extraFeeIdx]) || 0;
         
         imported.push({
           id: genId(),
