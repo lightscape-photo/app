@@ -519,21 +519,41 @@ function getLegalMinPrice(mins) {
   return Math.max(45, rounded);
 }
 
+// 核心修改點：加入一個方法來計算「本金能涵蓋的分鐘數（保底門檻）」
+function getCoveredMin(basePrice, isLinked) {
+  const bp = basePrice || 0;
+  let m = 0;
+  while(m <= 120) {
+    let leg = getLegalMinPrice(m + 1);
+    if (isLinked) leg *= 2;
+    if (leg > bp) break;
+    m++;
+  }
+  return m;
+}
+
 function calcOrderSubsidy(o, endTs) {
   const billedMin = getBilledMinutes(o.startTs, endTs);
   const legalMin = getLegalMinPrice(billedMin);
+  
+  const isLinked = !!o.linkGroupId;
+  const bp = o.basePrice || 0;
+  
+  // 計算出這單「真正超時」的分鐘數（總分鐘 減去 被本金涵蓋的門檻分鐘）
+  const covered = getCoveredMin(bp, isLinked);
+  const actualExtraMin = Math.max(0, billedMin - covered);
 
-  if (o.linkGroupId) {
+  if (isLinked) {
     if (o.linkRole === 'secondary') {
-      return { billedMin, legalTotal: legalMin, extraFee: 0 };
+      return { billedMin, extraMin: 0, legalTotal: legalMin, extraFee: 0 };
     }
     const totalLegal = legalMin * 2;
-    const extraFee = Math.max(0, totalLegal - (o.basePrice || 0));
-    return { billedMin, legalTotal: totalLegal, extraFee: Math.round(extraFee * 10) / 10 };
+    const extraFee = Math.max(0, totalLegal - bp);
+    return { billedMin, extraMin: actualExtraMin, legalTotal: totalLegal, extraFee: Math.round(extraFee * 10) / 10 };
   }
 
-  const extraFee = Math.max(0, legalMin - (o.basePrice || 0));
-  return { billedMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
+  const extraFee = Math.max(0, legalMin - bp);
+  return { billedMin, extraMin: actualExtraMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
 }
 
 function getFeeStatus(o, now) {
@@ -914,7 +934,7 @@ function completeOrder(id){
   }
 
   toComplete.forEach(item => {
-    const { billedMin, extraFee } = calcOrderSubsidy(item, endTs);
+    const { billedMin, extraMin, extraFee } = calcOrderSubsidy(item, endTs);
     const isSec = item.linkRole === 'secondary';
     
     const record = {
@@ -925,7 +945,7 @@ function completeOrder(id){
       startTs: item.startTs,
       endTs,
       elapsedMinCeil: billedMin,
-      extraMin: billedMin, // 保留相容性，這裡存放的是「總計費分鐘」
+      extraMin: extraMin, // 寫入精準的超時分鐘
       extraFee: extraFee,
       total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
       linkGroupId: item.linkGroupId,
@@ -1223,7 +1243,8 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     if(order){
       const newVal = parseFloat(e.target.value) || 0;
       order.basePrice = newVal;
-      const { extraFee } = calcOrderSubsidy(order, order.endTs);
+      const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
+      order.extraMin = extraMin; // 更新真正的超時
       order.extraFee = extraFee;
       order.total = newVal + order.extraFee;
       saveJSON(KEY_ORDERS, orders);
@@ -1287,9 +1308,9 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     group.forEach(go => {
       go.startTs = newStartTs;
       go.endTs = newEndTs;
-      const { billedMin, extraFee } = calcOrderSubsidy(go, newEndTs);
+      const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
       go.elapsedMinCeil = billedMin;
-      go.extraMin = billedMin;
+      go.extraMin = extraMin; // 更新真正的超時
       go.extraFee = extraFee;
       go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
     });
@@ -1409,7 +1430,13 @@ $('importCsvInput').addEventListener('change', e=>{
         let endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
         if(endTs <= startTs) endTs += 24*60*60*1000;
         
-        const billedMin = parseInt(r[5], 10) || getBilledMinutes(startTs, endTs);
+        const billedMin = getBilledMinutes(startTs, endTs);
+        
+        // 匯入時推算真正的超時分鐘，如果是疊單B就為 0
+        const isLinked = !excludeBaseFromTotal ? false : true; 
+        let covered = getCoveredMin(basePrice, isLinked);
+        const actualExtraMin = excludeBaseFromTotal ? 0 : Math.max(0, billedMin - covered);
+        
         const extraFee = parseFloat(r[7]) || 0;
         
         imported.push({
@@ -1419,7 +1446,7 @@ $('importCsvInput').addEventListener('change', e=>{
           excludeBaseFromTotal,
           startTs, endTs,
           elapsedMinCeil: billedMin, 
-          extraMin: billedMin, 
+          extraMin: actualExtraMin, 
           extraFee,
           total: (excludeBaseFromTotal ? 0 : basePrice) + extraFee
         });
