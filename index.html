@@ -235,9 +235,7 @@
   }
   .export-btn:active{transform:scale(0.97);}
   
-  /* 表格原生的「強制等分」引擎 */
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
-  
   .export-table th,.export-table td{
     padding:6px 2px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
@@ -248,7 +246,6 @@
   .export-table tfoot td{border-top:1px solid var(--border);border-bottom:none;color:var(--amber);font-weight:600;padding-top:10px;}
   .export-table-scroll{overflow-x:hidden;}
   
-  /* 全面隱形化：拔除底線與內邊距，點擊時才出現提示 */
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
     color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:inherit;
@@ -554,6 +551,32 @@ function calcOrderSubsidy(o, endTs) {
 
   const extraFee = Math.max(0, legalMin - bp);
   return { billedMin, extraMin: actualExtraMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
+}
+
+/* 提取真實毫秒數，換算成精確的 分:秒，用於填補 UI 版面 */
+function getExactTimes(o) {
+  const ms = Math.max(0, o.endTs - o.startTs);
+  const elapsed = fmtMMSS(ms);
+  
+  // 疊單 B (附屬單) 不獨立計算超時差額，顯示為 -
+  if (o.excludeBaseFromTotal) return { elapsed, over: '-' };
+
+  // 尋找開始補差額的真實秒數起跑線
+  let thresholdMin = 0;
+  while (thresholdMin <= 120) {
+    let legal = getLegalMinPrice(thresholdMin);
+    if (o.linkGroupId) legal *= 2; 
+    if (legal > (o.basePrice || 0)) break;
+    thresholdMin++;
+  }
+  let targetSec = thresholdMin * 60 - 30;
+  if (thresholdMin === 0) targetSec = 0;
+  
+  const targetTs = o.startTs + targetSec * 1000;
+  const overMs = Math.max(0, o.endTs - targetTs);
+  
+  const over = overMs > 0 ? fmtMMSS(overMs) : '00:00';
+  return { elapsed, over };
 }
 
 function getFeeStatus(o, now) {
@@ -1139,11 +1162,14 @@ function renderDetailTable(){
   }
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
-  const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
-  const rows = list.map((o,i) => [
-    i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.elapsedMinCeil, o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
-  ]);
-  const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
+  
+  // 使用新的精確分秒格式帶入表格
+  const rows = list.map((o,i) => {
+    const t = getExactTimes(o);
+    return [
+      i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), t.elapsed, t.over, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
+    ];
+  });
   
   wrap.innerHTML = `
     <div class="export-table-scroll">
@@ -1152,19 +1178,22 @@ function renderDetailTable(){
           <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>用時</th><th>超時</th><th>單價</th><th>差額</th>
         </tr></thead>
         <tbody>
-          ${list.map((o,i) => `
+          ${list.map((o,i) => {
+            const t = getExactTimes(o);
+            return `
             <tr>
               <td class="row-id-cell" data-row-id="${o.id}">${i+1}</td>
               <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="-" lang="en" inputmode="text" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false"></td>
               <td>${fmtDateOnly(o.startTs)}</td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="HH:MM"></td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="HH:MM"></td>
-              <td>${o.elapsedMinCeil}</td>
-              <td>${o.extraMin}</td>
+              <td>${t.elapsed}</td>
+              <td>${t.over}</td>
               <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input base-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
               <td>${plainNum(o.extraFee)}</td>
             </tr>
-          `).join('')}
+            `;
+          }).join('')}
         </tbody>
         <tfoot>
           <tr><td colspan="7">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr>
@@ -1338,9 +1367,12 @@ $('exportCsvBtn').addEventListener('click', ()=>{
   if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
   
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
-  const rows = list.map((o,i) => [
-    i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.elapsedMinCeil, o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
-  ]);
+  const rows = list.map((o,i) => {
+    const t = getExactTimes(o);
+    return [
+      i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), t.elapsed, t.over, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
+    ];
+  });
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
