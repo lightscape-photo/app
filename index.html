@@ -500,10 +500,6 @@ function money(n){
   const r = Math.round(n*10)/10;
   return 'NT$' + (Number.isInteger(r) ? r : r.toFixed(1));
 }
-function moneyExport(n){
-  const r = Math.round(n*10)/10;
-  return (Number.isInteger(r) ? r : r.toFixed(1)) + '元';
-}
 function plainNum(n){
   const r = Math.round(n*10)/10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
@@ -540,7 +536,6 @@ function calcOrderSubsidy(o, endTs) {
   return { billedMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
 }
 
-// 修改點：精確推算「達標門檻時間」來呈現即時超時碼表
 function getFeeStatus(o, now) {
   if(!o.basePrice || o.basePrice <= 0){
     return { text: '請先輸入單價', over: false };
@@ -1129,6 +1124,7 @@ function renderDetailTable(){
   }
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
+  
   wrap.innerHTML = `
     <div class="export-table-scroll">
       <table class="export-table">
@@ -1150,7 +1146,7 @@ function renderDetailTable(){
           `).join('')}
         </tbody>
         <tfoot>
-          <tr><td colspan="6">總計</td><td>${moneyExport(baseSum)}</td><td>${moneyExport(feeSum)}</td></tr>
+          <tr><td colspan="6">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr>
         </tfoot>
       </table>
     </div>
@@ -1314,7 +1310,6 @@ $('rangeEnd').addEventListener('change', renderDetailTable);
 function buildExportRows(list){
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
-  // 修改匯出 CSV 的標題為「超時」
   const header = ['編號','單號','日期','開始','結束','超時','單價','差額','疊單共用'];
   const rows = list.map((o,i) => [
     i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
