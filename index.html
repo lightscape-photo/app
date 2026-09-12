@@ -510,7 +510,6 @@ function plainNum(n){
 }
 
 /* ================== 新版專法核心計算邏輯 ================== */
-// 1. 滿 30 秒進 1 分鐘，未滿 30 秒捨去
 function getBilledMinutes(startTs, endTs) {
   const totalSec = Math.max(0, Math.floor((endTs - startTs) / 1000));
   const m = Math.floor(totalSec / 60);
@@ -518,35 +517,30 @@ function getBilledMinutes(startTs, endTs) {
   return s >= 30 ? m + 1 : m;
 }
 
-// 2. 取得單筆訂單法定基本報酬 (245/60 乘分鐘，無條件進位小數第一位，保底 45)
 function getLegalMinPrice(mins) {
   const val = mins * (245 / 60);
   const rounded = Math.ceil(val * 10) / 10;
   return Math.max(45, rounded);
 }
 
-// 3. 計算訂單差額 (支援疊單合併邏輯)
 function calcOrderSubsidy(o, endTs) {
   const billedMin = getBilledMinutes(o.startTs, endTs);
   const legalMin = getLegalMinPrice(billedMin);
 
   if (o.linkGroupId) {
     if (o.linkRole === 'secondary') {
-      // 疊單B的差額不獨立計算，全歸給A單
       return { billedMin, legalTotal: legalMin, extraFee: 0 };
     }
-    // 疊單A：由於兩單完成時間一致，計費分鐘數相同
     const totalLegal = legalMin * 2;
     const extraFee = Math.max(0, totalLegal - (o.basePrice || 0));
     return { billedMin, legalTotal: totalLegal, extraFee: Math.round(extraFee * 10) / 10 };
   }
 
-  // 夾單或一般單
   const extraFee = Math.max(0, legalMin - (o.basePrice || 0));
   return { billedMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
 }
 
-// 4. 動態計時器狀態顯示
+// 修改點：精確推算「達標門檻時間」來呈現即時超時碼表
 function getFeeStatus(o, now) {
   if(!o.basePrice || o.basePrice <= 0){
     return { text: '請先輸入單價', over: false };
@@ -555,29 +549,35 @@ function getFeeStatus(o, now) {
     return { text: '差額併入 A 單', over: false };
   }
 
-  const { billedMin, extraFee } = calcOrderSubsidy(o, now);
+  const { extraFee } = calcOrderSubsidy(o, now);
+
+  // 反推：到底要幾分鐘，法規金額才會剛好大於本金？
+  let thresholdMin = 0;
+  while (thresholdMin <= 120) {
+    let legal = getLegalMinPrice(thresholdMin);
+    if (o.linkGroupId) legal *= 2; 
+    if (legal > (o.basePrice || 0)) break;
+    thresholdMin++;
+  }
+
+  // 達標門檻的時間戳記（扣掉30秒的進位優惠）
+  let targetSec = thresholdMin * 60 - 30;
+  if (thresholdMin === 0) targetSec = 0; // 如果單價是0，第0秒就達標了
+  const targetTs = o.startTs + targetSec * 1000;
+
   if(extraFee > 0){
-    return { text: `已達標補差額，+${money(extraFee)}`, over: true };
+    // 如果現在時間已經大於達標門檻，就算出經過了多久
+    const elapsedOverMs = now - targetTs;
+    const overTimeStr = fmtMMSS(Math.max(0, elapsedOverMs));
+    return { text: `已超時 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${overTimeStr}</span>，+${money(extraFee)}`, over: true };
   }
 
-  // 推算何時達標補差額
-  let simMin = billedMin;
-  let simFee = 0;
-  while(simFee <= 0 && simMin <= 120){
-    simMin++;
-    let simLegal = getLegalMinPrice(simMin);
-    if(o.linkGroupId) simLegal *= 2; // 若為主單，預期兩單都會同步達成
-    simFee = Math.max(0, simLegal - o.basePrice);
-  }
-
-  if(simFee > 0 && simMin <= 120){
-    const targetSec = simMin * 60 - 30; // 扣除30秒(滿30秒即進位)
-    const targetTs = o.startTs + targetSec * 1000;
+  // 尚未達標
+  if (targetTs > now) {
     const remainStr = fmtMMSS(targetTs - now);
-    if(targetTs > now){
-      return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
-    }
+    return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
   }
+
   return { text: '尚未達標', over: false };
 }
 /* ======================================================= */
@@ -827,7 +827,6 @@ function animateCompleteExit(id, callback){
   card.style.transform = 'scale(0.94)';
   card.style.opacity = '0';
   
-  // 如果是疊單，一併把另一個的動畫也觸發
   const item = active.find(a => a.id === id);
   if(item && item.linkGroupId){
     const linkedItem = active.find(a => a.linkGroupId === item.linkGroupId && a.id !== id);
@@ -915,7 +914,6 @@ function completeOrder(id){
   const endTs = Date.now();
 
   let toComplete = [o];
-  // 疊單同步結算：抓出同一組的訂單一起處理
   if (o.linkGroupId) {
     toComplete = active.filter(a => a.linkGroupId === o.linkGroupId);
   }
@@ -932,7 +930,7 @@ function completeOrder(id){
       startTs: item.startTs,
       endTs,
       elapsedMinCeil: billedMin,
-      extraMin: billedMin, // 原超時欄位改存「計費分鐘」維持資料相容性
+      extraMin: billedMin, // 保留相容性，這裡存放的是「總計費分鐘」
       extraFee: extraFee,
       total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
       linkGroupId: item.linkGroupId,
@@ -940,7 +938,6 @@ function completeOrder(id){
     };
     
     orders.unshift(record);
-    // 結算後從 active 中移除
     const rIdx = active.findIndex(a => a.id === item.id);
     if(rIdx > -1) active.splice(rIdx,1);
   });
@@ -1136,7 +1133,7 @@ function renderDetailTable(){
     <div class="export-table-scroll">
       <table class="export-table">
         <thead><tr>
-          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>計費分鐘</th><th>單價</th><th>差額</th>
+          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>超時</th><th>單價</th><th>差額</th>
         </tr></thead>
         <tbody>
           ${list.map((o,i) => `
@@ -1230,7 +1227,6 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     if(order){
       const newVal = parseFloat(e.target.value) || 0;
       order.basePrice = newVal;
-      // 重新計算這筆單的差額 (含疊單A單重算)
       const { extraFee } = calcOrderSubsidy(order, order.endTs);
       order.extraFee = extraFee;
       order.total = newVal + order.extraFee;
@@ -1292,7 +1288,6 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       group = orders.filter(o => o.linkGroupId === order.linkGroupId);
     }
     
-    // 疊單或單筆同步更新時間並重新計算
     group.forEach(go => {
       go.startTs = newStartTs;
       go.endTs = newEndTs;
@@ -1319,7 +1314,8 @@ $('rangeEnd').addEventListener('change', renderDetailTable);
 function buildExportRows(list){
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
-  const header = ['編號','單號','日期','開始','結束','計費分鐘','單價','差額','疊單共用'];
+  // 修改匯出 CSV 的標題為「超時」
+  const header = ['編號','單號','日期','開始','結束','超時','單價','差額','疊單共用'];
   const rows = list.map((o,i) => [
     i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
   ]);
@@ -1418,7 +1414,6 @@ $('importCsvInput').addEventListener('change', e=>{
         let endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
         if(endTs <= startTs) endTs += 24*60*60*1000;
         
-        // 匯入時直接沿用 CSV 算好的差額與分鐘數
         const billedMin = parseInt(r[5], 10) || getBilledMinutes(startTs, endTs);
         const extraFee = parseFloat(r[7]) || 0;
         
