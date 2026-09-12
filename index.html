@@ -259,7 +259,7 @@
   .export-table th:nth-child(4),.export-table td:nth-child(4),
   .export-table th:nth-child(5),.export-table td:nth-child(5){width:16%;}
   .export-table th:nth-child(1),.export-table td:nth-child(1),
-  .export-table th:nth-child(6),.export-table td:nth-child(6){width:9%;}
+  .export-table th:nth-child(6),.export-table td:nth-child(6){width:10%;}
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
   .tabs{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:18px;}
@@ -441,9 +441,11 @@
 <script>
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
+const KEY_TRASH = 'meter_trash';
 
 let active = [];
 let orders = [];
+let trashItems = [];
 
 const $ = id => document.getElementById(id);
 
@@ -506,47 +508,79 @@ function plainNum(n){
   const r = Math.round(n*10)/10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
-function calculateDeliverySubsidy(basePrice, actualMinutes){
-  // 1. 根據專法計算出這趟行程的「法定保障總額」 (每分鐘4.1元與45元擇高)
-  const timeGuarantee = actualMinutes * 4.1;
-  const legalGuarantee = Math.max(45, timeGuarantee);
 
-  // 2. 計算應補差額 (保障總額 扣掉 初始起價)
-  let subsidy = legalGuarantee - basePrice;
+/* ================== 新版專法核心計算邏輯 ================== */
+// 1. 滿 30 秒進 1 分鐘，未滿 30 秒捨去
+function getBilledMinutes(startTs, endTs) {
+  const totalSec = Math.max(0, Math.floor((endTs - startTs) / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return s >= 30 ? m + 1 : m;
+}
 
-  // 3. 防呆機制：如果起價很高，差額為負數時，畫面顯示 0 元 (不補也不扣)
-  if(subsidy < 0){
-    subsidy = 0;
+// 2. 取得單筆訂單法定基本報酬 (245/60 乘分鐘，無條件進位小數第一位，保底 45)
+function getLegalMinPrice(mins) {
+  const val = mins * (245 / 60);
+  const rounded = Math.ceil(val * 10) / 10;
+  return Math.max(45, rounded);
+}
+
+// 3. 計算訂單差額 (支援疊單合併邏輯)
+function calcOrderSubsidy(o, endTs) {
+  const billedMin = getBilledMinutes(o.startTs, endTs);
+  const legalMin = getLegalMinPrice(billedMin);
+
+  if (o.linkGroupId) {
+    if (o.linkRole === 'secondary') {
+      // 疊單B的差額不獨立計算，全歸給A單
+      return { billedMin, legalTotal: legalMin, extraFee: 0 };
+    }
+    // 疊單A：由於兩單完成時間一致，計費分鐘數相同
+    const totalLegal = legalMin * 2;
+    const extraFee = Math.max(0, totalLegal - (o.basePrice || 0));
+    return { billedMin, legalTotal: totalLegal, extraFee: Math.round(extraFee * 10) / 10 };
   }
 
-  // 回傳四捨五入後的整數金額
-  return Math.round(subsidy);
+  // 夾單或一般單
+  const extraFee = Math.max(0, legalMin - (o.basePrice || 0));
+  return { billedMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
 }
-function calcFee(startTs, endTs, basePrice){
-  const price = basePrice || 0;
-  const elapsedMs = endTs - startTs;
-  const elapsedMinCeil = Math.max(0, Math.ceil(elapsedMs/60000));
-  let firstOverMin = 0;
-  while(calculateDeliverySubsidy(price, firstOverMin) <= 0 && firstOverMin < 100000){
-    firstOverMin++;
-  }
-  const thresholdMin = Math.max(0, firstOverMin - 1);
-  const extraMin = Math.max(0, elapsedMinCeil - thresholdMin);
-  const extraFee = Math.round(extraMin * 4.1);
-  return { elapsedMinCeil, thresholdMin, extraMin, extraFee };
-}
-function getFeeStatus(o, now){
+
+// 4. 動態計時器狀態顯示
+function getFeeStatus(o, now) {
   if(!o.basePrice || o.basePrice <= 0){
     return { text: '請先輸入單價', over: false };
   }
-  const { thresholdMin, extraMin, extraFee } = calcFee(o.startTs, now, o.basePrice);
-  if(extraFee > 0){
-    return { text: `已超時 ${extraMin} 分鐘，+${money(extraFee)}`, over: true };
+  if(o.linkRole === 'secondary'){
+    return { text: '差額併入 A 單', over: false };
   }
-  const targetTs = o.startTs + thresholdMin * 60000;
-  const remainStr = fmtMMSS(targetTs - now);
-  return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
+
+  const { billedMin, extraFee } = calcOrderSubsidy(o, now);
+  if(extraFee > 0){
+    return { text: `已達標補差額，+${money(extraFee)}`, over: true };
+  }
+
+  // 推算何時達標補差額
+  let simMin = billedMin;
+  let simFee = 0;
+  while(simFee <= 0 && simMin <= 120){
+    simMin++;
+    let simLegal = getLegalMinPrice(simMin);
+    if(o.linkGroupId) simLegal *= 2; // 若為主單，預期兩單都會同步達成
+    simFee = Math.max(0, simLegal - o.basePrice);
+  }
+
+  if(simFee > 0 && simMin <= 120){
+    const targetSec = simMin * 60 - 30; // 扣除30秒(滿30秒即進位)
+    const targetTs = o.startTs + targetSec * 1000;
+    const remainStr = fmtMMSS(targetTs - now);
+    if(targetTs > now){
+      return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
+    }
+  }
+  return { text: '尚未達標', over: false };
 }
+/* ======================================================= */
 
 function init(){
   active = loadJSON(KEY_ACTIVE, []);
@@ -554,11 +588,13 @@ function init(){
   trashItems = loadJSON(KEY_TRASH, []);
   let migrated = false;
   orders.forEach(o=>{
-    const rounded = Math.round(o.extraFee);
-    if(rounded !== o.extraFee){
-      o.extraFee = rounded;
-      o.total = (o.basePrice || 0) + rounded;
-      migrated = true;
+    if(o.extraFee !== undefined){
+      const rounded = Math.round(o.extraFee * 10) / 10;
+      if(rounded !== o.extraFee){
+        o.extraFee = rounded;
+        o.total = (o.excludeBaseFromTotal ? 0 : (o.basePrice || 0)) + rounded;
+        migrated = true;
+      }
     }
   });
   if(migrated) saveJSON(KEY_ORDERS, orders);
@@ -790,6 +826,21 @@ function animateCompleteExit(id, callback){
   card.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
   card.style.transform = 'scale(0.94)';
   card.style.opacity = '0';
+  
+  // 如果是疊單，一併把另一個的動畫也觸發
+  const item = active.find(a => a.id === id);
+  if(item && item.linkGroupId){
+    const linkedItem = active.find(a => a.linkGroupId === item.linkGroupId && a.id !== id);
+    if(linkedItem){
+      const linkWrap = document.querySelector(`.swipe-card-wrap[data-swipe-card="${linkedItem.id}"]`);
+      if(linkWrap){
+        const linkCard = linkWrap.querySelector('.order-card');
+        linkCard.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+        linkCard.style.transform = 'scale(0.94)';
+        linkCard.style.opacity = '0';
+      }
+    }
+  }
   setTimeout(callback, 180);
 }
 
@@ -862,28 +913,44 @@ function completeOrder(id){
   if(idx === -1) return;
   const o = active[idx];
   const endTs = Date.now();
-  const { elapsedMinCeil, extraMin, extraFee } = calcFee(o.startTs, endTs, o.basePrice);
-  const record = {
-    id: genId(),
-    orderNo: o.orderNo || '',
-    basePrice: o.basePrice || 0,
-    excludeBaseFromTotal: o.linkRole === 'secondary',
-    startTs: o.startTs,
-    endTs,
-    elapsedMinCeil, extraMin, extraFee,
-    total: (o.basePrice || 0) + extraFee
-  };
-  orders.unshift(record);
-  active.splice(idx,1);
+
+  let toComplete = [o];
+  // 疊單同步結算：抓出同一組的訂單一起處理
+  if (o.linkGroupId) {
+    toComplete = active.filter(a => a.linkGroupId === o.linkGroupId);
+  }
+
+  toComplete.forEach(item => {
+    const { billedMin, extraFee } = calcOrderSubsidy(item, endTs);
+    const isSec = item.linkRole === 'secondary';
+    
+    const record = {
+      id: genId(),
+      orderNo: item.orderNo || '',
+      basePrice: item.basePrice || 0,
+      excludeBaseFromTotal: isSec,
+      startTs: item.startTs,
+      endTs,
+      elapsedMinCeil: billedMin,
+      extraMin: billedMin, // 原超時欄位改存「計費分鐘」維持資料相容性
+      extraFee: extraFee,
+      total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
+      linkGroupId: item.linkGroupId,
+      linkRole: item.linkRole
+    };
+    
+    orders.unshift(record);
+    // 結算後從 active 中移除
+    const rIdx = active.findIndex(a => a.id === item.id);
+    if(rIdx > -1) active.splice(rIdx,1);
+  });
+
   saveJSON(KEY_ACTIVE, active);
   saveJSON(KEY_ORDERS, orders);
   renderActive();
   computeTodaySummary();
   renderDetailTable();
 }
-
-const KEY_TRASH = 'meter_trash';
-let trashItems = [];
 
 function cancelOrder(id){
   const idx = active.findIndex(a=>a.id===id);
@@ -1069,7 +1136,7 @@ function renderDetailTable(){
     <div class="export-table-scroll">
       <table class="export-table">
         <thead><tr>
-          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>超時</th><th>單價</th><th>差額</th>
+          <th>編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th><th>計費分鐘</th><th>單價</th><th>差額</th>
         </tr></thead>
         <tbody>
           ${list.map((o,i) => `
@@ -1124,7 +1191,7 @@ function openDeleteRowConfirm(id){
   const order = orders.find(o=>o.id===id);
   if(!order) return;
   pendingDeleteRowId = id;
-  $('deleteRowInfo').textContent = `單號：${order.orderNo || '未填寫'}　${fmtDateOnly(order.startTs)} ${fmtHHMM(order.startTs)}~${fmtHHMM(order.endTs)}`;
+  $('deleteRowInfo').textContent = `單號：${order.orderNo || '未填寫'} ${fmtDateOnly(order.startTs)} ${fmtHHMM(order.startTs)}~${fmtHHMM(order.endTs)}`;
   $('confirmDeleteRowOverlay').classList.add('show');
 }
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{
@@ -1163,6 +1230,9 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     if(order){
       const newVal = parseFloat(e.target.value) || 0;
       order.basePrice = newVal;
+      // 重新計算這筆單的差額 (含疊單A單重算)
+      const { extraFee } = calcOrderSubsidy(order, order.endTs);
+      order.extraFee = extraFee;
       order.total = newVal + order.extraFee;
       saveJSON(KEY_ORDERS, orders);
       computeTodaySummary();
@@ -1217,28 +1287,39 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       return;
     }
 
-    order.startTs = newStartTs;
-    order.endTs = newEndTs;
-    const { elapsedMinCeil, thresholdMin, extraMin, extraFee } = calcFee(newStartTs, newEndTs, order.basePrice);
-    order.elapsedMinCeil = elapsedMinCeil;
-    order.extraMin = extraMin;
-    order.extraFee = extraFee;
-    order.total = (order.basePrice || 0) + extraFee;
+    let group = [order];
+    if (order.linkGroupId) {
+      group = orders.filter(o => o.linkGroupId === order.linkGroupId);
+    }
+    
+    // 疊單或單筆同步更新時間並重新計算
+    group.forEach(go => {
+      go.startTs = newStartTs;
+      go.endTs = newEndTs;
+      const { billedMin, extraFee } = calcOrderSubsidy(go, newEndTs);
+      go.elapsedMinCeil = billedMin;
+      go.extraMin = billedMin;
+      go.extraFee = extraFee;
+      go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
+    });
+
     saveJSON(KEY_ORDERS, orders);
     computeTodaySummary();
     renderDetailTable();
   }
 });
+
 $('exportRange').addEventListener('change', ()=>{
   $('customDateRow').style.display = $('exportRange').value === 'custom' ? 'flex' : 'none';
   renderDetailTable();
 });
 $('rangeStart').addEventListener('change', renderDetailTable);
 $('rangeEnd').addEventListener('change', renderDetailTable);
+
 function buildExportRows(list){
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
-  const header = ['編號','單號','日期','開始','結束','超時','單價','差額','疊單共用'];
+  const header = ['編號','單號','日期','開始','結束','計費分鐘','單價','差額','疊單共用'];
   const rows = list.map((o,i) => [
     i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), o.extraMin, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
   ]);
@@ -1336,15 +1417,21 @@ $('importCsvInput').addEventListener('change', e=>{
         const startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime();
         let endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
         if(endTs <= startTs) endTs += 24*60*60*1000;
-        const { elapsedMinCeil, extraMin, extraFee } = calcFee(startTs, endTs, basePrice);
+        
+        // 匯入時直接沿用 CSV 算好的差額與分鐘數
+        const billedMin = parseInt(r[5], 10) || getBilledMinutes(startTs, endTs);
+        const extraFee = parseFloat(r[7]) || 0;
+        
         imported.push({
           id: genId(),
           orderNo: orderNo || '',
           basePrice,
           excludeBaseFromTotal,
           startTs, endTs,
-          elapsedMinCeil, extraMin, extraFee,
-          total: basePrice + extraFee
+          elapsedMinCeil: billedMin, 
+          extraMin: billedMin, 
+          extraFee,
+          total: (excludeBaseFromTotal ? 0 : basePrice) + extraFee
         });
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄，請確認CSV格式'); e.target.value=''; return; }
