@@ -140,7 +140,6 @@
   }
   .price-input-wrap span{font-size:14px;color:var(--muted);}
   
-  /* 加入 50% 灰霧透明度，並取消點擊事件 */
   .price-input-wrap.locked-price {
     opacity: 0.5;
     pointer-events: none;
@@ -687,8 +686,9 @@ function renderActive(){
     const isPrimary = o.linkRole === 'primary';
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
+    // 修改點：疊單 B 的欄位改成固定顯示「-」，避免誤導，並保持唯讀屬性與灰霧鎖定外觀
     const priceField = isSecondary
-      ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="number" class="price-input" data-locked-display="${o.id}" value="${o.basePrice || ''}" placeholder="連動" readonly></div>`
+      ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="number" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" min="0"></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
@@ -788,8 +788,6 @@ $('activeList').addEventListener('input', e=>{
       if(o.linkRole === 'primary' && o.linkGroupId){
         active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec=>{
           sec.basePrice = o.basePrice;
-          const disp = document.querySelector(`[data-locked-display="${sec.id}"]`);
-          if(disp) disp.value = sec.basePrice || '';
           updateFeeDisplay(sec);
         });
       }
