@@ -2,6 +2,7 @@
   "name": "UE跑跑算",
   "short_name": "UE跑跑算",
   "description": "外送員的外送計費小工具，記錄開始/完成時間，自動計算差額費與每日收入",
+  "id": "tw.myapp.uecalculator", 
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
