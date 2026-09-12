@@ -575,7 +575,8 @@ function getExactTimes(o) {
   const targetTs = o.startTs + targetSec * 1000;
   const overMs = Math.max(0, o.endTs - targetTs);
   
-  const over = overMs > 0 ? fmtMMSS(overMs) : '00:00';
+  // 將未超時的 '00:00' 改為單純的 '-'
+  const over = overMs > 0 ? fmtMMSS(overMs) : '-';
   return { elapsed, over };
 }
 
@@ -1163,7 +1164,6 @@ function renderDetailTable(){
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   
-  // 使用新的精確分秒格式帶入表格
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
     return [
