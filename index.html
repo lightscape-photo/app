@@ -519,7 +519,6 @@ function getLegalMinPrice(mins) {
   return Math.max(45, rounded);
 }
 
-// 核心修改點：加入一個方法來計算「本金能涵蓋的分鐘數（保底門檻）」
 function getCoveredMin(basePrice, isLinked) {
   const bp = basePrice || 0;
   let m = 0;
@@ -539,7 +538,6 @@ function calcOrderSubsidy(o, endTs) {
   const isLinked = !!o.linkGroupId;
   const bp = o.basePrice || 0;
   
-  // 計算出這單「真正超時」的分鐘數（總分鐘 減去 被本金涵蓋的門檻分鐘）
   const covered = getCoveredMin(bp, isLinked);
   const actualExtraMin = Math.max(0, billedMin - covered);
 
@@ -566,7 +564,6 @@ function getFeeStatus(o, now) {
 
   const { extraFee } = calcOrderSubsidy(o, now);
 
-  // 反推：到底要幾分鐘，法規金額才會剛好大於本金？
   let thresholdMin = 0;
   while (thresholdMin <= 120) {
     let legal = getLegalMinPrice(thresholdMin);
@@ -575,19 +572,16 @@ function getFeeStatus(o, now) {
     thresholdMin++;
   }
 
-  // 達標門檻的時間戳記（扣掉30秒的進位優惠）
   let targetSec = thresholdMin * 60 - 30;
-  if (thresholdMin === 0) targetSec = 0; // 如果單價是0，第0秒就達標了
+  if (thresholdMin === 0) targetSec = 0;
   const targetTs = o.startTs + targetSec * 1000;
 
   if(extraFee > 0){
-    // 如果現在時間已經大於達標門檻，就算出經過了多久
     const elapsedOverMs = now - targetTs;
     const overTimeStr = fmtMMSS(Math.max(0, elapsedOverMs));
     return { text: `已超時 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${overTimeStr}</span>，+${money(extraFee)}`, over: true };
   }
 
-  // 尚未達標
   if (targetTs > now) {
     const remainStr = fmtMMSS(targetTs - now);
     return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
@@ -692,9 +686,11 @@ function renderActive(){
     const isPrimary = o.linkRole === 'primary';
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
+    // 修改點：將疊單 B 的欄位改成與疊單 A 一樣的 <input>，並設定 readonly 保持唯讀鎖定
     const priceField = isSecondary
-      ? `<div class="price-input-wrap locked-price"><span>NT$</span><span data-locked-display="${o.id}">${plainNum(o.basePrice)}</span></div>`
+      ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="number" class="price-input" data-locked-display="${o.id}" value="${o.basePrice || ''}" placeholder="連動" readonly></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="number" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" min="0"></div>`;
+    
     const feeStatus = getFeeStatus(o, now0);
     return `
     <div class="swipe-card-wrap" data-swipe-card="${o.id}">
@@ -793,7 +789,8 @@ $('activeList').addEventListener('input', e=>{
         active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec=>{
           sec.basePrice = o.basePrice;
           const disp = document.querySelector(`[data-locked-display="${sec.id}"]`);
-          if(disp) disp.textContent = plainNum(sec.basePrice);
+          // 修改點：連動更新時，改為更新 input 的 value
+          if(disp) disp.value = sec.basePrice || '';
           updateFeeDisplay(sec);
         });
       }
@@ -945,7 +942,7 @@ function completeOrder(id){
       startTs: item.startTs,
       endTs,
       elapsedMinCeil: billedMin,
-      extraMin: extraMin, // 寫入精準的超時分鐘
+      extraMin: extraMin,
       extraFee: extraFee,
       total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
       linkGroupId: item.linkGroupId,
@@ -1244,7 +1241,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       const newVal = parseFloat(e.target.value) || 0;
       order.basePrice = newVal;
       const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
-      order.extraMin = extraMin; // 更新真正的超時
+      order.extraMin = extraMin;
       order.extraFee = extraFee;
       order.total = newVal + order.extraFee;
       saveJSON(KEY_ORDERS, orders);
@@ -1310,7 +1307,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       go.endTs = newEndTs;
       const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
       go.elapsedMinCeil = billedMin;
-      go.extraMin = extraMin; // 更新真正的超時
+      go.extraMin = extraMin;
       go.extraFee = extraFee;
       go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
     });
@@ -1432,7 +1429,6 @@ $('importCsvInput').addEventListener('change', e=>{
         
         const billedMin = getBilledMinutes(startTs, endTs);
         
-        // 匯入時推算真正的超時分鐘，如果是疊單B就為 0
         const isLinked = !excludeBaseFromTotal ? false : true; 
         let covered = getCoveredMin(basePrice, isLinked);
         const actualExtraMin = excludeBaseFromTotal ? 0 : Math.max(0, billedMin - covered);
