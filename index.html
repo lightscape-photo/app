@@ -1190,7 +1190,7 @@ function renderDetailTable(){
               <td>${t.elapsed}</td>
               <td>${t.over}</td>
               <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input base-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
-              <td>${plainNum(o.extraFee)}</td>
+              <td>${o.excludeBaseFromTotal ? '-' : plainNum(o.extraFee)}</td>
             </tr>
             `;
           }).join('')}
@@ -1370,7 +1370,7 @@ $('exportCsvBtn').addEventListener('click', ()=>{
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
     return [
-      i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), t.elapsed, t.over, o.basePrice, o.extraFee, o.excludeBaseFromTotal ? '是' : ''
+      i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), t.elapsed, t.over, o.excludeBaseFromTotal ? '-' : o.basePrice, o.excludeBaseFromTotal ? '-' : o.extraFee, o.excludeBaseFromTotal ? '是' : ''
     ];
   });
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
@@ -1448,7 +1448,10 @@ $('importCsvInput').addEventListener('change', e=>{
         let extraFeeIdx = isNewFormat ? 8 : 7;
         let excludeIdx = isNewFormat ? 9 : 8;
         
-        const basePrice = parseFloat(r[basePriceIdx]) || 0;
+        // 匯入時，如果看到 '-' 要解析回 0
+        const bpStr = r[basePriceIdx];
+        const basePrice = (bpStr === '-' || !bpStr) ? 0 : parseFloat(bpStr) || 0;
+        
         const excludeBaseFromTotal = r[excludeIdx] === '是' || r[excludeIdx] === '1' || r[excludeIdx] === 'Y';
         const dateParts = dateStr.split('/').map(n => parseInt(n));
         let yyyy, mm, dd;
@@ -1473,7 +1476,8 @@ $('importCsvInput').addEventListener('change', e=>{
         let covered = getCoveredMin(basePrice, isLinked);
         const actualExtraMin = excludeBaseFromTotal ? 0 : Math.max(0, billedMin - covered);
         
-        const extraFee = parseFloat(r[extraFeeIdx]) || 0;
+        const efStr = r[extraFeeIdx];
+        const extraFee = (efStr === '-' || !efStr) ? 0 : parseFloat(efStr) || 0;
         
         imported.push({
           id: genId(),
