@@ -8,9 +8,6 @@
 <meta name="theme-color" id="themeColorMeta" content="#FFFFFF">
 <title>UE跑跑算</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -1251,7 +1248,6 @@ function renderDetailTable(){
       </table>
     </div>
     <p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
-    ${list.some(o=>o.excludeBaseFromTotal) ? '<p style="font-size:11px;color:var(--muted);margin-top:6px;">- 表示疊單共用單價，已計入同組主單，不重複列入總計</p>' : ''}
   `;
 }
 let longPressTimer = null;
