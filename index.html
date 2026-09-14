@@ -1265,11 +1265,13 @@ $('exportPreviewWrap').addEventListener('pointerdown', e=>{
   const cell = e.target.closest('.row-id-cell');
   if(!cell) return;
   const id = cell.getAttribute('data-row-id');
+  // 抓取畫面上該儲存格內顯示的「當前序號數字」
+  const displayIdx = cell.textContent.trim();
   longPressStartX = e.clientX;
   longPressStartY = e.clientY;
   longPressTimer = setTimeout(()=>{
     longPressTimer = null;
-    openDeleteRowConfirm(id);
+    openDeleteRowConfirm(id, displayIdx);
   }, 600);
 });
 $('exportPreviewWrap').addEventListener('pointerup', cancelLongPress);
@@ -1280,11 +1282,12 @@ $('exportPreviewWrap').addEventListener('pointermove', e=>{
   const dy = Math.abs(e.clientY - longPressStartY);
   if(dx > 10 || dy > 10) cancelLongPress();
 });
-function openDeleteRowConfirm(id){
+function openDeleteRowConfirm(id, displayIdx){
   const order = orders.find(o=>o.id===id);
   if(!order) return;
   pendingDeleteRowId = id;
-  $('deleteRowInfo').textContent = `單號：${order.orderNo || '未填寫'} ${fmtDateOnly(order.startTs)} ${fmtHHMM(order.startTs)}~${fmtHHMM(order.endTs)}`;
+  // 將確認視窗文字精準設定為指定內容
+  $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`;
   $('confirmDeleteRowOverlay').classList.add('show');
 }
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{
