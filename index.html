@@ -711,7 +711,7 @@ function openVk(inputEl, layout) {
   }
   
   activeVkInput = inputEl;
-  // 自動將游標叫出來 (有了 inputmode="none" 就不怕原生鍵盤出來亂)
+  // 自動將游標叫出來
   activeVkInput.focus();
   
   // 發光標籤自動判定：單價加在外層容器，單號加在自己身上
@@ -727,17 +727,34 @@ function openVk(inputEl, layout) {
     vkHistoryStateAdded = true;
   }
 
-  // 堅持保留的防擋卡片功能：底部墊高
-  document.body.style.paddingBottom = '320px';
+  const vkContainer = $('vkContainer');
+  
+  // 關鍵動態高度計算：立刻測量當前佈局的高度 (若還沒渲染完預設給個安全值)
+  const vkHeight = vkContainer.offsetHeight || (layout === 'qwerty' ? 260 : 220);
+  
+  // 底部墊高，確保網頁有足夠空間往上推
+  document.body.style.paddingBottom = (vkHeight + 40) + 'px';
 
   requestAnimationFrame(() => {
-    $('vkContainer').classList.add('show');
+    vkContainer.classList.add('show');
     
-    // 將「整張卡片」推到鍵盤上方
+    // 智慧視角安全區運算 (等鍵盤滑出動畫差不多到位後執行)
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
-        cardWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const actualVkHeight = vkContainer.offsetHeight; // 抓取最終真實高度
+        const rect = cardWrap.getBoundingClientRect();
+        
+        // 算出視窗能看見的最下方安全線 (扣除鍵盤高度，再預留 10px 緩衝區)
+        const safeBottom = window.innerHeight - actualVkHeight - 10;
+        
+        // 如果卡片底部 (包含完成按鈕) 被鍵盤蓋住了，精準把它往上推！
+        if (rect.bottom > safeBottom) {
+          window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
+        } else if (rect.top < 60) {
+          // 如果卡片太上面被切掉，也把它拉下來一點
+          window.scrollBy({ top: rect.top - 60, behavior: 'smooth' });
+        }
       }
     }, 180);
   });
@@ -865,7 +882,7 @@ document.addEventListener('keydown', e => {
 
 let pendingNewIds = [];
 
-// 神級減法優化：按下新增一單，直接鎖定新卡片的單價框
+// 神級減法優化：按下新增一單，直接鎖定新卡片的單價框 (初見極速九宮格)
 $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
   active.push({ id, basePrice: 0, startTs: Date.now() });
@@ -873,14 +890,14 @@ $('newOrderBtn').addEventListener('click', ()=>{
   pendingNewIds = [id];
   renderActive();
   
-  // 稍微延遲等待 DOM 重繪與動畫開始後，直接呼叫鍵盤並對焦
+  // 稍微延遲等待 DOM 重繪與動畫開始後，直接呼叫數字鍵盤並對焦
   setTimeout(()=>{
     const newInput = document.querySelector(`input.price-input[data-base="${id}"]`);
     if(newInput) openVk(newInput, 'numpad');
   }, 50);
 });
 
-// 按下疊單，直接鎖定疊單A的單價框
+// 按下疊單，直接鎖定疊單A的單價框 (初見極速九宮格)
 $('newLinkedBtn').addEventListener('click', ()=>{
   const groupId = genId();
   const now = Date.now();
@@ -919,10 +936,10 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 使用 inputmode="none" 阻擋原生鍵盤，但保留游標顯示
+    // 使用 inputmode="none" 阻擋原生鍵盤，但保留游標顯示，並補回 placeholder="單價"
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
-      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" inputmode="none"></div>`;
+      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
     return `
@@ -1051,6 +1068,7 @@ $('activeList').addEventListener('pointerdown', e=>{
     return;
   }
   
+  // 統一手動點擊邏輯：只要點擊卡片上的欄位，一律滑出「英數鍵盤 (qwerty)」，固定視角高度
   const ordInput = e.target.closest('.ordno-input');
   if (ordInput) {
     openVk(ordInput, 'qwerty');
@@ -1059,7 +1077,7 @@ $('activeList').addEventListener('pointerdown', e=>{
   
   const priceInput = e.target.closest('.price-input');
   if (priceInput && !priceInput.classList.contains('locked-price')) {
-    openVk(priceInput, 'numpad');
+    openVk(priceInput, 'qwerty'); // 由 numpad 統一改為 qwerty
     return;
   }
 });
@@ -1202,6 +1220,10 @@ function completeOrder(id){
 
   saveJSON(KEY_ACTIVE, active);
   saveJSON(KEY_ORDERS, orders);
+  
+  // 修復重點：完成訂單時，連動收合鍵盤
+  closeVk();
+  
   renderActive();
   computeTodaySummary();
   renderDetailTable();
@@ -1216,6 +1238,10 @@ function cancelOrder(id){
   active.splice(idx,1);
   saveJSON(KEY_ACTIVE, active);
   saveJSON(KEY_TRASH, trashItems);
+  
+  // 修復重點：滑動刪除卡片時，連動收合鍵盤
+  closeVk();
+  
   renderActive();
   renderTrash();
 }
