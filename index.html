@@ -123,6 +123,14 @@
     padding:12px 14px;touch-action:pan-y;
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
+  
+  /* 鎖定原生輸入手感，改由虛擬鍵盤接管 */
+  .ordno-input, .price-input, #quickPriceInput { cursor: pointer; }
+  .ordno-input.vk-active, .price-input.vk-active, #quickPriceInput.vk-active {
+    border-color: var(--amber) !important;
+    box-shadow: 0 0 0 1px var(--amber);
+  }
+
   .ordno-input{
     flex:1.8;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
     padding:8px 10px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
@@ -153,6 +161,7 @@
   .price-input::placeholder{font-weight:400;font-size:13px;letter-spacing:normal;}
   .price-input:focus{outline:none;}
   .price-input-wrap:focus-within{border-color:var(--amber);}
+  
   .order-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .order-start{font-size:12px;color:var(--muted);}
   .order-start b{color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;}
@@ -291,6 +300,35 @@
   .theme-swatch-cyberpunk{background:linear-gradient(135deg,#FF2A6D 0%,#0A0E17 55%,#05D9E8 100%);}
   .theme-option-label{font-size:13px;color:var(--text);font-weight:600;text-align:center;line-height:1.5;}
   .theme-option-sub{font-size:11px;color:var(--muted);font-weight:400;}
+
+  /* 雙模虛擬鍵盤專屬 CSS */
+  #vkBackdrop {
+    position: fixed; inset: 0; z-index: 9998; display: none;
+  }
+  .vk-container {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding: 14px 10px 24px; box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    user-select: none; -webkit-user-select: none; display: flex; flex-direction: column;
+  }
+  .vk-container.show { transform: translateY(0); }
+  .vk-layout { display: flex; flex-direction: column; width: 100%; max-width: 480px; margin: 0 auto; }
+  .vk-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; }
+  .vk-row:last-child { margin-bottom: 0; }
+  .vk-key {
+    flex: 1; background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 24px; font-weight: 600; padding: 14px 0;
+    cursor: pointer; font-family: system-ui, sans-serif; text-align: center;
+    touch-action: manipulation; display: flex; align-items: center; justify-content: center;
+  }
+  .vk-key:active { background: var(--border); transform: scale(0.94); }
+  .vk-key.action { font-size: 18px; }
+  .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
+  
+  #vkQwerty .vk-key { font-size: 19px; padding: 12px 0; border-radius: 6px; }
+  #vkQwerty .vk-row { gap: 4px; margin-bottom: 6px; }
+  #vkQwerty .vk-key.action { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -428,7 +466,7 @@
     <h3 style="margin-bottom:16px;">輸入單價</h3>
     <div class="quick-price-input-wrap">
       <span>NT$</span>
-      <input type="number" id="quickPriceInput" inputmode="numeric" placeholder="0" min="0">
+      <input type="text" id="quickPriceInput" readonly placeholder="0">
     </div>
     <div class="settings-actions" style="margin-top:20px;">
       <button class="cancel" id="quickPriceSkip">稍後再填</button>
@@ -437,14 +475,49 @@
   </div>
 </div>
 
-<script>
-// 全域：按 Enter 自動收合鍵盤
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.target.blur();
-  }
-});
+<!-- 雙模專屬虛擬鍵盤區 -->
+<div id="vkBackdrop"></div>
+<div id="vkContainer" class="vk-container">
+  <!-- 單價專用：九宮格數字鍵盤 -->
+  <div id="vkNumpad" class="vk-layout" style="display:none;">
+    <div class="vk-row">
+      <button class="vk-key">7</button><button class="vk-key">8</button><button class="vk-key">9</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key">4</button><button class="vk-key">5</button><button class="vk-key">6</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key">1</button><button class="vk-key">2</button><button class="vk-key">3</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key action" data-key="BACKSPACE">⌫ 刪除</button>
+      <button class="vk-key">0</button>
+      <button class="vk-key action enter-key" data-key="ENTER">確認 Enter</button>
+    </div>
+  </div>
+  
+  <!-- 單號專用：QWERTY 純英數鍵盤 -->
+  <div id="vkQwerty" class="vk-layout" style="display:none;">
+    <div class="vk-row">
+      <button class="vk-key">1</button><button class="vk-key">2</button><button class="vk-key">3</button><button class="vk-key">4</button><button class="vk-key">5</button><button class="vk-key">6</button><button class="vk-key">7</button><button class="vk-key">8</button><button class="vk-key">9</button><button class="vk-key">0</button>
+    </div>
+    <div class="vk-row">
+      <button class="vk-key">Q</button><button class="vk-key">W</button><button class="vk-key">E</button><button class="vk-key">R</button><button class="vk-key">T</button><button class="vk-key">Y</button><button class="vk-key">U</button><button class="vk-key">I</button><button class="vk-key">O</button><button class="vk-key">P</button>
+    </div>
+    <div class="vk-row" style="padding:0 5%;">
+      <button class="vk-key">A</button><button class="vk-key">S</button><button class="vk-key">D</button><button class="vk-key">F</button><button class="vk-key">G</button><button class="vk-key">H</button><button class="vk-key">J</button><button class="vk-key">K</button><button class="vk-key">L</button>
+    </div>
+    <div class="vk-row" style="padding:0 10%;">
+      <button class="vk-key">Z</button><button class="vk-key">X</button><button class="vk-key">C</button><button class="vk-key">V</button><button class="vk-key">B</button><button class="vk-key">N</button><button class="vk-key">M</button><button class="vk-key action" data-key="BACKSPACE">⌫</button>
+    </div>
+    <div class="vk-row" style="margin-top: 10px;">
+      <button class="vk-key action" data-key="CANCEL" style="flex: 0.8; background: transparent;">取消</button>
+      <button class="vk-key action enter-key" data-key="ENTER" style="flex: 1.2;">確認完成 Enter</button>
+    </div>
+  </div>
+</div>
 
+<script>
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
@@ -648,6 +721,95 @@ function init(){
   setInterval(tick, 1000);
 }
 
+/* ================== 雙模虛擬鍵盤引擎 ================== */
+let activeVkInput = null;
+
+function openVk(inputEl, layout) {
+  if (activeVkInput) activeVkInput.classList.remove('vk-active');
+  activeVkInput = inputEl;
+  activeVkInput.classList.add('vk-active');
+  
+  $('vkBackdrop').style.display = 'block';
+  $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
+  $('vkQwerty').style.display = layout === 'qwerty' ? 'flex' : 'none';
+  
+  // 延遲一點點確保 display 切換完成後再滑出，視覺更順暢
+  requestAnimationFrame(() => {
+    $('vkContainer').classList.add('show');
+  });
+}
+
+function closeVk() {
+  if (activeVkInput) activeVkInput.classList.remove('vk-active');
+  activeVkInput = null;
+  $('vkContainer').classList.remove('show');
+  setTimeout(() => {
+    $('vkBackdrop').style.display = 'none';
+  }, 250); // 配合 CSS transition 延遲隱藏背景
+}
+
+function handleVkKey(key) {
+  if (!activeVkInput) return;
+  
+  let val = activeVkInput.value;
+  
+  if (key === 'ENTER') {
+    if (activeVkInput.id === 'quickPriceInput') {
+      $('quickPriceOk').click();
+    } else {
+      closeVk(); // 點擊清單內的輸入框確認，單純收合鍵盤
+    }
+    return;
+  }
+  
+  if (key === 'CANCEL') {
+    closeVk();
+    return;
+  }
+  
+  if (key === 'BACKSPACE') {
+    val = val.slice(0, -1);
+  } else {
+    // 防呆長度限制 (避免誤觸打出一長串)
+    if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
+    if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
+    if (activeVkInput.id === 'quickPriceInput' && val.length >= 6) return;
+    val += key;
+  }
+  
+  activeVkInput.value = val;
+  // 模擬觸發原生事件，讓底層負責存檔的邏輯 (input 監聽器) 能夠正常運作
+  activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// 綁定虛擬鍵盤點擊事件
+$('vkContainer').addEventListener('pointerdown', e => {
+  e.preventDefault(); // 避免點擊按鈕時輸入框失去焦點
+  const btn = e.target.closest('.vk-key');
+  if (btn) {
+    const key = btn.getAttribute('data-key') || btn.textContent.trim();
+    handleVkKey(key);
+  }
+});
+
+$('vkBackdrop').addEventListener('pointerdown', closeVk);
+
+// 神級功能：就算開著虛擬鍵盤，實體鍵盤敲擊也能無縫接軌！
+document.addEventListener('keydown', e => {
+  if (!$('vkContainer').classList.contains('show') || !activeVkInput) return;
+  const key = e.key.toUpperCase();
+  
+  if (key === 'ENTER') { e.preventDefault(); handleVkKey('ENTER'); }
+  else if (key === 'BACKSPACE') { e.preventDefault(); handleVkKey('BACKSPACE'); }
+  else if (key === 'ESCAPE') { e.preventDefault(); handleVkKey('CANCEL'); }
+  else if (/^[A-Z0-9]$/.test(key)) {
+    // 如果是實體鍵盤敲打英數字，一樣攔截下來交給虛擬鍵盤引擎處理
+    e.preventDefault();
+    handleVkKey(key);
+  }
+});
+/* ======================================================= */
+
 let pendingNewIds = [];
 let pendingPriceIds = [];
 $('newOrderBtn').addEventListener('click', ()=>{
@@ -677,12 +839,13 @@ function openQuickPrice(ids){
   const input = $('quickPriceInput');
   input.value = '';
   $('quickPriceOverlay').classList.add('show');
-  requestAnimationFrame(()=> input.focus());
+  // 啟動我們的終極九宮格，不再呼叫手機原生鍵盤
+  openVk(input, 'numpad');
 }
 function closeQuickPrice(){
   pendingPriceIds = [];
-  $('quickPriceInput').blur();
   $('quickPriceOverlay').classList.remove('show');
+  closeVk();
 }
 $('quickPriceSkip').addEventListener('click', closeQuickPrice);
 $('quickPriceOk').addEventListener('click', ()=>{
@@ -695,8 +858,10 @@ $('quickPriceOk').addEventListener('click', ()=>{
   renderActive();
   closeQuickPrice();
 });
-$('quickPriceInput').addEventListener('keydown', e=>{
-  if(e.key === 'Enter') $('quickPriceOk').click();
+
+// 當使用者自己去點擊 QuickPrice 視窗裡的輸入框時，再次呼叫九宮格
+$('quickPriceInput').addEventListener('click', e => {
+  openVk(e.target, 'numpad');
 });
 
 function renderActive(){
@@ -719,16 +884,18 @@ function renderActive(){
     const isPrimary = o.linkRole === 'primary';
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
+    
+    // 注意：已將輸入框設為 readonly，徹底封鎖手機原生鍵盤
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
-      : `<div class="price-input-wrap"><span>NT$</span><input type="number" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" min="0"></div>`;
+      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" readonly></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
     return `
     <div class="swipe-card-wrap" data-swipe-card="${o.id}">
       <div class="order-card" data-order-id="${o.id}">
         <div class="ordno-price-row">
-          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" lang="en" inputmode="text" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
+          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" readonly>
           ${priceField}
         </div>
         <div class="order-head">
@@ -842,9 +1009,25 @@ $('activeList').addEventListener('input', e=>{
   }
 });
 
+// 攔截卡片上的點擊，派送專屬虛擬鍵盤！
 $('activeList').addEventListener('click', e=>{
   const completeBtn = e.target.closest('[data-complete]');
-  if(completeBtn) handleCompleteClick(completeBtn);
+  if(completeBtn) {
+    handleCompleteClick(completeBtn);
+    return;
+  }
+  
+  const ordInput = e.target.closest('.ordno-input');
+  if (ordInput) {
+    openVk(ordInput, 'qwerty');
+    return;
+  }
+  
+  const priceInput = e.target.closest('.price-input');
+  if (priceInput && !priceInput.classList.contains('locked-price')) {
+    openVk(priceInput, 'numpad');
+    return;
+  }
 });
 
 const armedIds = new Set();
