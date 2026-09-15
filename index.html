@@ -72,6 +72,7 @@
     display:flex;
     justify-content:center;
     overflow-x:hidden;
+    transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
   .app{width:100%;max-width:480px;padding:20px 16px 60px;}
   .icon-btn{
@@ -461,16 +462,13 @@
   </div>
 </div>
 
+<!-- 極簡化後的單價輸入視窗，拔除多餘的確認/取消按鈕 -->
 <div class="overlay" id="quickPriceOverlay">
   <div class="settings-panel" style="max-width:320px;text-align:center;">
     <h3 style="margin-bottom:16px;">輸入單價</h3>
     <div class="quick-price-input-wrap">
       <span>NT$</span>
       <input type="text" id="quickPriceInput" readonly placeholder="0">
-    </div>
-    <div class="settings-actions" style="margin-top:20px;">
-      <button class="cancel" id="quickPriceSkip">稍後再填</button>
-      <button class="confirm" id="quickPriceOk" style="background:var(--green);color:var(--on-green);">確認</button>
     </div>
   </div>
 </div>
@@ -723,6 +721,7 @@ function init(){
 
 /* ================== 雙模虛擬鍵盤引擎 ================== */
 let activeVkInput = null;
+let vkHistoryStateAdded = false;
 
 function openVk(inputEl, layout) {
   if (activeVkInput) activeVkInput.classList.remove('vk-active');
@@ -733,19 +732,76 @@ function openVk(inputEl, layout) {
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkQwerty').style.display = layout === 'qwerty' ? 'flex' : 'none';
   
-  // 延遲一點點確保 display 切換完成後再滑出，視覺更順暢
+  // 防禦系統退回鍵：塞入假歷史紀錄
+  if (!vkHistoryStateAdded) {
+    history.pushState({vk: true}, '');
+    vkHistoryStateAdded = true;
+  }
+
+  const isQuickPrice = (inputEl.id === 'quickPriceInput');
+
+  // 只有卡片上的輸入框才需要底部墊高與捲動，避免中央單價視窗發生捲動衝突（打架）
+  if (!isQuickPrice) {
+    document.body.style.paddingBottom = '320px';
+  }
+
   requestAnimationFrame(() => {
     $('vkContainer').classList.add('show');
+    
+    // 如果不是中央視窗，才進行視角置中
+    if (!isQuickPrice) {
+      setTimeout(() => {
+        if (activeVkInput === inputEl) {
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
   });
 }
 
-function closeVk() {
+function closeVk(fromPopState = false) {
+  const isQuickPrice = activeVkInput && activeVkInput.id === 'quickPriceInput';
+
   if (activeVkInput) activeVkInput.classList.remove('vk-active');
   activeVkInput = null;
+  
   $('vkContainer').classList.remove('show');
+  
+  // 移除底部保留空間
+  document.body.style.paddingBottom = '';
+
+  // 處理歷史紀錄與防禦系統退回鍵
+  if (vkHistoryStateAdded && !fromPopState) {
+    vkHistoryStateAdded = false;
+    history.back();
+  } else {
+    vkHistoryStateAdded = false;
+  }
+
+  // 第一刀修復重點：連動收合！當鍵盤收起時，連帶把中央的單價視窗一起強制收起
+  if (isQuickPrice) {
+    $('quickPriceOverlay').classList.remove('show');
+    pendingPriceIds = [];
+  }
+
   setTimeout(() => {
-    $('vkBackdrop').style.display = 'none';
-  }, 250); // 配合 CSS transition 延遲隱藏背景
+    if (!$('vkContainer').classList.contains('show')) {
+      $('vkBackdrop').style.display = 'none';
+    }
+  }, 250);
+}
+
+function submitQuickPrice() {
+  const val = parseFloat($('quickPriceInput').value) || 0;
+  pendingPriceIds.forEach(id => {
+    const o = active.find(a => a.id === id);
+    if(o) o.basePrice = val;
+  });
+  saveJSON(KEY_ACTIVE, active);
+  renderActive();
+  
+  // 呼叫 closeVk() 會自動幫我們連動關閉 quickPriceOverlay 並清空 pendingPriceIds
+  closeVk(); 
 }
 
 function handleVkKey(key) {
@@ -755,9 +811,9 @@ function handleVkKey(key) {
   
   if (key === 'ENTER') {
     if (activeVkInput.id === 'quickPriceInput') {
-      $('quickPriceOk').click();
+      submitQuickPrice(); 
     } else {
-      closeVk(); // 點擊清單內的輸入框確認，單純收合鍵盤
+      closeVk();
     }
     return;
   }
@@ -770,7 +826,6 @@ function handleVkKey(key) {
   if (key === 'BACKSPACE') {
     val = val.slice(0, -1);
   } else {
-    // 防呆長度限制 (避免誤觸打出一長串)
     if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
     if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
     if (activeVkInput.id === 'quickPriceInput' && val.length >= 6) return;
@@ -778,13 +833,11 @@ function handleVkKey(key) {
   }
   
   activeVkInput.value = val;
-  // 模擬觸發原生事件，讓底層負責存檔的邏輯 (input 監聽器) 能夠正常運作
   activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-// 綁定虛擬鍵盤點擊事件
 $('vkContainer').addEventListener('pointerdown', e => {
-  e.preventDefault(); // 避免點擊按鈕時輸入框失去焦點
+  e.preventDefault();
   const btn = e.target.closest('.vk-key');
   if (btn) {
     const key = btn.getAttribute('data-key') || btn.textContent.trim();
@@ -792,9 +845,18 @@ $('vkContainer').addEventListener('pointerdown', e => {
   }
 });
 
-$('vkBackdrop').addEventListener('pointerdown', closeVk);
+// 當點擊背景暗區時，觸發關閉鍵盤（並連動關閉孤兒視窗）
+$('vkBackdrop').addEventListener('pointerdown', () => closeVk());
 
-// 神級功能：就算開著虛擬鍵盤，實體鍵盤敲擊也能無縫接軌！
+// 攔截系統退回鍵 (手機原生的上一頁)
+window.addEventListener('popstate', (e) => {
+  if (vkHistoryStateAdded) {
+    vkHistoryStateAdded = false;
+    closeVk(true); 
+  }
+});
+
+// 實體鍵盤無縫支援
 document.addEventListener('keydown', e => {
   if (!$('vkContainer').classList.contains('show') || !activeVkInput) return;
   const key = e.key.toUpperCase();
@@ -803,7 +865,6 @@ document.addEventListener('keydown', e => {
   else if (key === 'BACKSPACE') { e.preventDefault(); handleVkKey('BACKSPACE'); }
   else if (key === 'ESCAPE') { e.preventDefault(); handleVkKey('CANCEL'); }
   else if (/^[A-Z0-9]$/.test(key)) {
-    // 如果是實體鍵盤敲打英數字，一樣攔截下來交給虛擬鍵盤引擎處理
     e.preventDefault();
     handleVkKey(key);
   }
@@ -839,27 +900,9 @@ function openQuickPrice(ids){
   const input = $('quickPriceInput');
   input.value = '';
   $('quickPriceOverlay').classList.add('show');
-  // 啟動我們的終極九宮格，不再呼叫手機原生鍵盤
   openVk(input, 'numpad');
 }
-function closeQuickPrice(){
-  pendingPriceIds = [];
-  $('quickPriceOverlay').classList.remove('show');
-  closeVk();
-}
-$('quickPriceSkip').addEventListener('click', closeQuickPrice);
-$('quickPriceOk').addEventListener('click', ()=>{
-  const val = parseFloat($('quickPriceInput').value) || 0;
-  pendingPriceIds.forEach(id=>{
-    const o = active.find(a=>a.id===id);
-    if(o) o.basePrice = val;
-  });
-  saveJSON(KEY_ACTIVE, active);
-  renderActive();
-  closeQuickPrice();
-});
 
-// 當使用者自己去點擊 QuickPrice 視窗裡的輸入框時，再次呼叫九宮格
 $('quickPriceInput').addEventListener('click', e => {
   openVk(e.target, 'numpad');
 });
@@ -885,7 +928,6 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 注意：已將輸入框設為 readonly，徹底封鎖手機原生鍵盤
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" readonly></div>`;
@@ -1009,7 +1051,6 @@ $('activeList').addEventListener('input', e=>{
   }
 });
 
-// 攔截卡片上的點擊，派送專屬虛擬鍵盤！
 $('activeList').addEventListener('click', e=>{
   const completeBtn = e.target.closest('[data-complete]');
   if(completeBtn) {
