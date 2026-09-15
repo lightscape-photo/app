@@ -125,9 +125,12 @@
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
+  /* ========================================= */
   /* 鎖定原生輸入手感，改由虛擬鍵盤接管 */
-  .ordno-input, .price-input, #quickPriceInput { cursor: pointer; }
-  .ordno-input.vk-active, .price-input.vk-active, #quickPriceInput.vk-active {
+  /* 精準修復：將單號輸入框，與「單價外層圓角容器」設定發光 */
+  /* ========================================= */
+  .ordno-input, .price-input { cursor: pointer; }
+  .ordno-input.vk-active, .price-input-wrap.vk-active {
     border-color: var(--amber) !important;
     box-shadow: 0 0 0 1px var(--amber);
   }
@@ -137,12 +140,13 @@
     padding:8px 10px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
     text-align:center;letter-spacing:1px;color:var(--text);
   }
-  .ordno-input:focus{outline:none;border-color:var(--amber);}
+  .ordno-input:focus{outline:none;}
   .ordno-input::placeholder{font-weight:400;font-size:13px;letter-spacing:normal;}
+  
   .price-input-wrap{
     flex:0.8;min-width:0;display:flex;align-items:center;gap:2px;
     background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
-    padding:8px 10px;
+    padding:8px 10px; transition: border-color 0.2s, box-shadow 0.2s;
   }
   .price-input-wrap span{font-size:14px;color:var(--muted);}
   
@@ -151,8 +155,9 @@
     pointer-events: none;
   }
 
+  /* 內層純透明輸入框，拔除所有邊框與 outline */
   .price-input{
-    flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none;
+    flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none !important;
     color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
     text-align:right;-moz-appearance:textfield;appearance:textfield;
   }
@@ -160,8 +165,6 @@
     -webkit-appearance:none;margin:0;
   }
   .price-input::placeholder{font-weight:400;font-size:13px;letter-spacing:normal;}
-  .price-input:focus{outline:none;}
-  .price-input-wrap:focus-within{border-color:var(--amber);}
   
   .order-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .order-start{font-size:12px;color:var(--muted);}
@@ -213,20 +216,6 @@
     font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;text-align:right;
   }
   .settings-actions{display:flex;gap:10px;margin-top:6px;}
-  .quick-price-input-wrap{
-    display:flex;align-items:center;justify-content:center;gap:8px;
-    background:var(--panel-2);border:2px solid var(--border);border-radius:14px;
-    padding:16px 18px;
-  }
-  .quick-price-input-wrap span{font-size:20px;color:var(--muted);font-weight:600;}
-  .quick-price-input-wrap input{
-    flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none;
-    color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:32px;font-weight:700;
-    text-align:center;-moz-appearance:textfield;appearance:textfield;
-  }
-  .quick-price-input-wrap input::-webkit-outer-spin-button,
-  .quick-price-input-wrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  .quick-price-input-wrap:focus-within{border-color:var(--amber);}
   .settings-actions button{
     flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
   }
@@ -458,17 +447,6 @@
     <div class="settings-actions">
       <button class="cancel" id="confirmDeleteRowCancel">取消</button>
       <button class="confirm" id="confirmDeleteRowOk" style="background:var(--red);color:var(--on-red);">確定刪除</button>
-    </div>
-  </div>
-</div>
-
-<!-- 極簡化後的單價輸入視窗，拔除多餘的確認/取消按鈕 -->
-<div class="overlay" id="quickPriceOverlay">
-  <div class="settings-panel" style="max-width:320px;text-align:center;">
-    <h3 style="margin-bottom:16px;">輸入單價</h3>
-    <div class="quick-price-input-wrap">
-      <span>NT$</span>
-      <input type="text" id="quickPriceInput" readonly placeholder="0">
     </div>
   </div>
 </div>
@@ -721,12 +699,18 @@ function init(){
 
 /* ================== 雙模虛擬鍵盤引擎 ================== */
 let activeVkInput = null;
+let activeVkWrapper = null;
 let vkHistoryStateAdded = false;
 
 function openVk(inputEl, layout) {
-  if (activeVkInput) activeVkInput.classList.remove('vk-active');
+  // 清除上一個發光狀態
+  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active');
+  
   activeVkInput = inputEl;
-  activeVkInput.classList.add('vk-active');
+  
+  // 核心修復：如果點擊的是單價框，發光標籤要加在外層的「圓角容器」上
+  activeVkWrapper = inputEl.classList.contains('price-input') ? inputEl.closest('.price-input-wrap') : inputEl;
+  activeVkWrapper.classList.add('vk-active');
   
   $('vkBackdrop').style.display = 'block';
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
@@ -738,32 +722,25 @@ function openVk(inputEl, layout) {
     vkHistoryStateAdded = true;
   }
 
-  const isQuickPrice = (inputEl.id === 'quickPriceInput');
-
-  // 只有卡片上的輸入框才需要底部墊高與捲動，避免中央單價視窗發生捲動衝突（打架）
-  if (!isQuickPrice) {
-    document.body.style.paddingBottom = '320px';
-  }
+  // 堅持保留的防擋卡片功能：底部墊高
+  document.body.style.paddingBottom = '320px';
 
   requestAnimationFrame(() => {
     $('vkContainer').classList.add('show');
     
-    // 如果不是中央視窗，才進行視角置中
-    if (!isQuickPrice) {
-      setTimeout(() => {
-        if (activeVkInput === inputEl) {
-          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-    }
+    // 延遲讓鍵盤滑出後，平滑滾動讓當前輸入框置中
+    setTimeout(() => {
+      if (activeVkWrapper) {
+        activeVkWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 180);
   });
 }
 
 function closeVk(fromPopState = false) {
-  const isQuickPrice = activeVkInput && activeVkInput.id === 'quickPriceInput';
-
-  if (activeVkInput) activeVkInput.classList.remove('vk-active');
+  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active');
   activeVkInput = null;
+  activeVkWrapper = null;
   
   $('vkContainer').classList.remove('show');
   
@@ -778,30 +755,11 @@ function closeVk(fromPopState = false) {
     vkHistoryStateAdded = false;
   }
 
-  // 第一刀修復重點：連動收合！當鍵盤收起時，連帶把中央的單價視窗一起強制收起
-  if (isQuickPrice) {
-    $('quickPriceOverlay').classList.remove('show');
-    pendingPriceIds = [];
-  }
-
   setTimeout(() => {
     if (!$('vkContainer').classList.contains('show')) {
       $('vkBackdrop').style.display = 'none';
     }
   }, 250);
-}
-
-function submitQuickPrice() {
-  const val = parseFloat($('quickPriceInput').value) || 0;
-  pendingPriceIds.forEach(id => {
-    const o = active.find(a => a.id === id);
-    if(o) o.basePrice = val;
-  });
-  saveJSON(KEY_ACTIVE, active);
-  renderActive();
-  
-  // 呼叫 closeVk() 會自動幫我們連動關閉 quickPriceOverlay 並清空 pendingPriceIds
-  closeVk(); 
 }
 
 function handleVkKey(key) {
@@ -810,11 +768,7 @@ function handleVkKey(key) {
   let val = activeVkInput.value;
   
   if (key === 'ENTER') {
-    if (activeVkInput.id === 'quickPriceInput') {
-      submitQuickPrice(); 
-    } else {
-      closeVk();
-    }
+    closeVk();
     return;
   }
   
@@ -826,13 +780,14 @@ function handleVkKey(key) {
   if (key === 'BACKSPACE') {
     val = val.slice(0, -1);
   } else {
+    // 防呆長度限制
     if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
     if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
-    if (activeVkInput.id === 'quickPriceInput' && val.length >= 6) return;
     val += key;
   }
   
   activeVkInput.value = val;
+  // 直接觸發原生 input 事件，交給底層原有的存檔邏輯處理
   activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -845,7 +800,7 @@ $('vkContainer').addEventListener('pointerdown', e => {
   }
 });
 
-// 當點擊背景暗區時，觸發關閉鍵盤（並連動關閉孤兒視窗）
+// 當點擊背景暗區時，觸發關閉鍵盤
 $('vkBackdrop').addEventListener('pointerdown', () => closeVk());
 
 // 攔截系統退回鍵 (手機原生的上一頁)
@@ -872,16 +827,23 @@ document.addEventListener('keydown', e => {
 /* ======================================================= */
 
 let pendingNewIds = [];
-let pendingPriceIds = [];
+
+// 神級減法優化：按下新增一單，直接鎖定新卡片的單價框
 $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
   active.push({ id, basePrice: 0, startTs: Date.now() });
   saveJSON(KEY_ACTIVE, active);
   pendingNewIds = [id];
   renderActive();
-  openQuickPrice([id]);
+  
+  // 稍微延遲等待 DOM 重繪與動畫開始後，直接呼叫鍵盤並對焦
+  setTimeout(()=>{
+    const newInput = document.querySelector(`input.price-input[data-base="${id}"]`);
+    if(newInput) openVk(newInput, 'numpad');
+  }, 50);
 });
 
+// 按下疊單，直接鎖定疊單A的單價框
 $('newLinkedBtn').addEventListener('click', ()=>{
   const groupId = genId();
   const now = Date.now();
@@ -892,19 +854,11 @@ $('newLinkedBtn').addEventListener('click', ()=>{
   saveJSON(KEY_ACTIVE, active);
   pendingNewIds = [idA, idB];
   renderActive();
-  openQuickPrice([idA, idB]);
-});
-
-function openQuickPrice(ids){
-  pendingPriceIds = ids;
-  const input = $('quickPriceInput');
-  input.value = '';
-  $('quickPriceOverlay').classList.add('show');
-  openVk(input, 'numpad');
-}
-
-$('quickPriceInput').addEventListener('click', e => {
-  openVk(e.target, 'numpad');
+  
+  setTimeout(()=>{
+    const newInputA = document.querySelector(`input.price-input[data-base="${idA}"]`);
+    if(newInputA) openVk(newInputA, 'numpad');
+  }, 50);
 });
 
 function renderActive(){
@@ -928,9 +882,10 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
+    // 移除了 placeholder="單價"，因為我們現在直接對焦，不填預設就是空值或 0
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
-      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" readonly></div>`;
+      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" readonly></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
     return `
