@@ -118,19 +118,17 @@
   .active-header h2{font-size:14px;color:var(--muted);font-weight:600;margin:0;}
   .active-header .count{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:var(--amber);}
 
-  .swipe-card-wrap{position:relative;margin-bottom:10px;border-radius:14px;overflow:hidden;}
+  .swipe-card-wrap{position:relative;margin-bottom:10px;border-radius:14px;overflow:hidden; transition: background-color 0.2s ease;}
   .order-card{
     position:relative;background:var(--panel);border:1px solid var(--border);border-radius:14px;
-    padding:12px 14px;touch-action:pan-y;
+    padding:12px 14px;touch-action:pan-y; z-index:1; /* 保證卡片在底色上方 */
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
-  /* ========================================= */
   /* 輸入框樣式優化：原生游標回歸、發光外框 */
-  /* ========================================= */
   .ordno-input, .price-input { 
     cursor: text; 
-    caret-color: var(--amber); /* 讓閃爍游標變成質感琥珀色 */
+    caret-color: var(--amber);
   }
   
   .ordno-input.vk-active, .price-input-wrap.vk-active {
@@ -158,7 +156,6 @@
     pointer-events: none;
   }
 
-  /* 內層純透明輸入框，拔除所有邊框與 outline */
   .price-input{
     flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none !important;
     color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
@@ -173,9 +170,9 @@
   .order-start{font-size:12px;color:var(--muted);}
   .order-start b{color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;}
 
+  /* 拔除按鈕後，這列成為卡片最底端，移除 padding 與 border */
   .order-status-row{
     display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-    padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--border);
   }
   .order-timer{
     font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;
@@ -183,13 +180,6 @@
   }
   .order-fee{font-size:11px;color:var(--muted);text-align:right;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;}
   .order-fee.over{color:var(--amber);}
-
-  .complete-btn{
-    width:100%;padding:11px;border-radius:12px;border:none;background:var(--green);
-    color:var(--on-green);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;
-  }
-  .complete-btn:active{transform:scale(0.98);}
-  .complete-btn.armed{background:var(--red);color:var(--on-red);}
 
   .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
   .summary .card{
@@ -294,7 +284,7 @@
   .theme-option-label{font-size:13px;color:var(--text);font-weight:600;text-align:center;line-height:1.5;}
   .theme-option-sub{font-size:11px;color:var(--muted);font-weight:400;}
 
-  /* 雙模虛擬鍵盤專屬 CSS (拔除了全螢幕阻擋 backdrop) */
+  /* 雙模虛擬鍵盤專屬 CSS */
   .vk-container {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
     background: var(--panel); border-top: 1px solid var(--border);
@@ -702,7 +692,6 @@ let activeVkWrapper = null;
 let vkHistoryStateAdded = false;
 
 function openVk(inputEl, layout) {
-  // 如果點擊其他欄位，先清空上一個欄位的游標和發光狀態
   if (activeVkInput && activeVkInput !== inputEl) {
     activeVkInput.blur();
   }
@@ -711,48 +700,35 @@ function openVk(inputEl, layout) {
   }
   
   activeVkInput = inputEl;
-  // 自動將游標叫出來
   activeVkInput.focus();
   
-  // 發光標籤自動判定：單價加在外層容器，單號加在自己身上
   activeVkWrapper = inputEl.classList.contains('price-input') ? inputEl.closest('.price-input-wrap') : inputEl;
   activeVkWrapper.classList.add('vk-active');
   
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkQwerty').style.display = layout === 'qwerty' ? 'flex' : 'none';
   
-  // 防禦系統退回鍵：塞入假歷史紀錄
   if (!vkHistoryStateAdded) {
     history.pushState({vk: true}, '');
     vkHistoryStateAdded = true;
   }
 
   const vkContainer = $('vkContainer');
-  
-  // 關鍵動態高度計算：立刻測量當前佈局的高度 (若還沒渲染完預設給個安全值)
   const vkHeight = vkContainer.offsetHeight || (layout === 'qwerty' ? 260 : 220);
-  
-  // 底部墊高，確保網頁有足夠空間往上推
   document.body.style.paddingBottom = (vkHeight + 40) + 'px';
 
   requestAnimationFrame(() => {
     vkContainer.classList.add('show');
-    
-    // 智慧視角安全區運算 (等鍵盤滑出動畫差不多到位後執行)
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
-        const actualVkHeight = vkContainer.offsetHeight; // 抓取最終真實高度
+        const actualVkHeight = vkContainer.offsetHeight; 
         const rect = cardWrap.getBoundingClientRect();
-        
-        // 算出視窗能看見的最下方安全線 (扣除鍵盤高度，再預留 10px 緩衝區)
         const safeBottom = window.innerHeight - actualVkHeight - 10;
         
-        // 如果卡片底部 (包含完成按鈕) 被鍵盤蓋住了，精準把它往上推！
         if (rect.bottom > safeBottom) {
           window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
         } else if (rect.top < 60) {
-          // 如果卡片太上面被切掉，也把它拉下來一點
           window.scrollBy({ top: rect.top - 60, behavior: 'smooth' });
         }
       }
@@ -761,18 +737,15 @@ function openVk(inputEl, layout) {
 }
 
 function closeVk(fromPopState = false) {
-  if (activeVkInput) activeVkInput.blur(); // 收起游標
-  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active'); // 移除發光
+  if (activeVkInput) activeVkInput.blur(); 
+  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active'); 
   
   activeVkInput = null;
   activeVkWrapper = null;
   
   $('vkContainer').classList.remove('show');
-  
-  // 移除底部保留空間
   document.body.style.paddingBottom = '';
 
-  // 處理歷史紀錄與防禦系統退回鍵
   if (vkHistoryStateAdded && !fromPopState) {
     vkHistoryStateAdded = false;
     history.back();
@@ -789,7 +762,6 @@ function handleVkKey(key) {
     return;
   }
   
-  // 原生打字邏輯體驗：取得目前游標位置
   let val = activeVkInput.value;
   let start = activeVkInput.selectionStart || 0;
   let end = activeVkInput.selectionEnd || 0;
@@ -805,7 +777,6 @@ function handleVkKey(key) {
       activeVkInput.setSelectionRange(start, start);
     }
   } else {
-    // 沒選取文字時，執行長度防呆限制
     if (start === end) {
       if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
       if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
@@ -827,12 +798,9 @@ $('vkContainer').addEventListener('pointerdown', e => {
   }
 });
 
-// ==========================================
-// 原生級別的「滑動偵測雷達」
-// 點擊背景收起鍵盤，但長壓滑動卡片時保留鍵盤！
-// ==========================================
 let vkPointerDownX = 0;
 let vkPointerDownY = 0;
+window.swipeDragging = false; // 全域防呆：判定目前是否正在滑動卡片
 
 document.addEventListener('pointerdown', (e) => {
   vkPointerDownX = e.clientX;
@@ -841,23 +809,17 @@ document.addEventListener('pointerdown', (e) => {
 
 document.addEventListener('pointerup', (e) => {
   if (!$('vkContainer').classList.contains('show')) return;
-  // 如果點擊的是虛擬鍵盤本身，絕對不收合
   if (e.target.closest('#vkContainer')) return; 
 
   const dx = Math.abs(e.clientX - vkPointerDownX);
   const dy = Math.abs(e.clientY - vkPointerDownY);
 
-  // 如果手指移動距離超過 10px，判定為「滑動卡片 / 滾動畫面」，保持鍵盤開啟
   if (dx > 10 || dy > 10) return;
-
-  // 如果點擊的是某個輸入框，交給輸入框的事件去處理 (切換焦點)，這裡不強制關閉
   if (e.target.closest('input')) return;
 
-  // 判定為點擊背景或卡片空白處 -> 聰明收起鍵盤
   closeVk();
 });
 
-// 攔截系統退回鍵 (手機原生的上一頁)
 window.addEventListener('popstate', (e) => {
   if (vkHistoryStateAdded) {
     vkHistoryStateAdded = false;
@@ -865,7 +827,6 @@ window.addEventListener('popstate', (e) => {
   }
 });
 
-// 實體鍵盤無縫支援 (輸入時防阻原生雙重輸入)
 document.addEventListener('keydown', e => {
   if (!$('vkContainer').classList.contains('show') || !activeVkInput) return;
   const key = e.key.toUpperCase();
@@ -882,7 +843,6 @@ document.addEventListener('keydown', e => {
 
 let pendingNewIds = [];
 
-// 神級減法優化：按下新增一單，直接鎖定新卡片的單價框 (初見極速九宮格)
 $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
   active.push({ id, basePrice: 0, startTs: Date.now() });
@@ -890,14 +850,12 @@ $('newOrderBtn').addEventListener('click', ()=>{
   pendingNewIds = [id];
   renderActive();
   
-  // 稍微延遲等待 DOM 重繪與動畫開始後，直接呼叫數字鍵盤並對焦
   setTimeout(()=>{
     const newInput = document.querySelector(`input.price-input[data-base="${id}"]`);
     if(newInput) openVk(newInput, 'numpad');
   }, 50);
 });
 
-// 按下疊單，直接鎖定疊單A的單價框 (初見極速九宮格)
 $('newLinkedBtn').addEventListener('click', ()=>{
   const groupId = genId();
   const now = Date.now();
@@ -916,7 +874,6 @@ $('newLinkedBtn').addEventListener('click', ()=>{
 });
 
 function renderActive(){
-  armedIds.clear();
   const list = $('activeList');
   $('activeCount').textContent = active.length + ' 單';
 
@@ -936,7 +893,6 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 使用 inputmode="none" 阻擋原生鍵盤，但保留游標顯示，並補回 placeholder="單價"
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
@@ -956,13 +912,13 @@ function renderActive(){
           <span class="order-timer" data-timer="${o.id}">00:00</span>
           <span class="order-fee${feeStatus.over ? ' over' : ''}" data-fee="${o.id}">${feeStatus.text}</span>
         </div>
-        <button class="complete-btn" data-complete="${o.id}">完成</button>
       </div>
     </div>
   `;
   }).join('');
 
-  initCardSwipeCancel();
+  // 初始化雙向手勢引擎
+  initCardSwipe();
 
   const wraps = Array.from(list.querySelectorAll('.swipe-card-wrap'));
   const animating = [];
@@ -1060,15 +1016,10 @@ $('activeList').addEventListener('input', e=>{
   }
 });
 
-// 使用 pointerdown 取代 click，反應更靈敏，且完美配合游標邏輯
-$('activeList').addEventListener('pointerdown', e=>{
-  const completeBtn = e.target.closest('[data-complete]');
-  if(completeBtn) {
-    handleCompleteClick(completeBtn);
-    return;
-  }
+// 使用 click 來攔截虛擬鍵盤彈出，若判定在「滑動中 (swipeDragging)」，則阻擋！
+$('activeList').addEventListener('click', e=>{
+  if(window.swipeDragging) return; // 終極防呆：滑動中絕對不彈鍵盤
   
-  // 統一手動點擊邏輯：只要點擊卡片上的欄位，一律滑出「英數鍵盤 (qwerty)」，固定視角高度
   const ordInput = e.target.closest('.ordno-input');
   if (ordInput) {
     openVk(ordInput, 'qwerty');
@@ -1077,49 +1028,15 @@ $('activeList').addEventListener('pointerdown', e=>{
   
   const priceInput = e.target.closest('.price-input');
   if (priceInput && !priceInput.classList.contains('locked-price')) {
-    openVk(priceInput, 'qwerty'); // 由 numpad 統一改為 qwerty
+    openVk(priceInput, 'qwerty'); // 統一高度：手動點擊皆為英數 QWERTY
     return;
   }
 });
 
-const armedIds = new Set();
-function handleCompleteClick(btn){
-  const id = btn.getAttribute('data-complete');
-  if(armedIds.has(id)){
-    armedIds.delete(id);
-    animateCompleteExit(id, ()=> completeOrder(id));
-    return;
-  }
-  armedIds.add(id);
-  btn.textContent = '確認完成';
-  btn.classList.add('armed');
-}
-
-function animateCompleteExit(id, callback){
-  const wrap = document.querySelector(`.swipe-card-wrap[data-swipe-card="${id}"]`);
-  if(!wrap){ callback(); return; }
-  const card = wrap.querySelector('.order-card');
-  card.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
-  card.style.transform = 'scale(0.94)';
-  card.style.opacity = '0';
-  
-  const item = active.find(a => a.id === id);
-  if(item && item.linkGroupId){
-    const linkedItem = active.find(a => a.linkGroupId === item.linkGroupId && a.id !== id);
-    if(linkedItem){
-      const linkWrap = document.querySelector(`.swipe-card-wrap[data-swipe-card="${linkedItem.id}"]`);
-      if(linkWrap){
-        const linkCard = linkWrap.querySelector('.order-card');
-        linkCard.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
-        linkCard.style.transform = 'scale(0.94)';
-        linkCard.style.opacity = '0';
-      }
-    }
-  }
-  setTimeout(callback, 180);
-}
-
-function initCardSwipeCancel(){
+// ==========================================
+// 全新引擎：純色底層，雙向手勢 (右滑完成 / 左滑刪除)
+// ==========================================
+function initCardSwipe(){
   document.querySelectorAll('.swipe-card-wrap').forEach(wrap=>{
     const id = wrap.getAttribute('data-swipe-card');
     const card = wrap.querySelector('.order-card');
@@ -1130,7 +1047,7 @@ function initCardSwipeCancel(){
     let currentX = 0;
 
     function onPointerDown(e){
-      if(e.target.closest('input, button')) return;
+      // 容許從任何地方起滑！就算點在輸入框上也能滑動卡片！
       dragging = true;
       decided = false;
       cancelled = false;
@@ -1138,44 +1055,73 @@ function initCardSwipeCancel(){
       startX = e.clientX;
       startY = e.clientY;
       card.style.transition = 'none';
+      wrap.style.backgroundColor = 'transparent'; // 重置底色
     }
     function onPointerMove(e){
       if(!dragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
+      
       if(!decided){
-        if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if(Math.abs(dx) < 10 && Math.abs(dy) < 10) return; // 容錯判定
         decided = true;
         if(Math.abs(dy) > Math.abs(dx)){
           cancelled = true;
           dragging = false;
           return;
         }
+        
+        // 判定為水平滑動！奪取控制權
         card.setPointerCapture(e.pointerId);
+        window.swipeDragging = true;
+        
+        // 瞬間抹殺游標與鍵盤！
+        if (document.activeElement && card.contains(document.activeElement)) {
+           document.activeElement.blur();
+        }
+        closeVk();
       }
+      
       if(cancelled) return;
-      currentX = Math.min(0, dx);
+      currentX = dx; 
       card.style.transform = `translateX(${currentX}px)`;
-      const maxDist = wrap.clientWidth * 0.15;
-      const progress = Math.min(1, Math.abs(currentX) / maxDist);
-      card.style.opacity = String(1 - progress * 0.6);
+      
+      // 動態漸變純淨底色：右滑變綠，左滑變紅
+      if (currentX > 0) {
+        wrap.style.backgroundColor = 'var(--green)';
+      } else if (currentX < 0) {
+        wrap.style.backgroundColor = 'var(--red)';
+      }
     }
-    function onPointerUp(){
+    
+    function onPointerUp(e){
       if(!dragging) return;
       dragging = false;
       if(cancelled) return;
-      const maxDist = wrap.clientWidth * 0.15;
+      
+      const maxDist = wrap.clientWidth * 0.25; // 觸發閾值：25% 卡片寬度
       card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      if(Math.abs(currentX) >= maxDist){
+      
+      if(currentX >= maxDist){
+        // 往右超過閾值：完成訂單 (飛出右邊界)
+        card.style.transform = `translateX(${wrap.clientWidth}px)`;
+        card.style.opacity = '0';
+        setTimeout(()=> completeOrder(id), 180);
+      } else if(currentX <= -maxDist){
+        // 往左超過閾值：刪除訂單 (飛出左邊界)
         card.style.transform = `translateX(-${wrap.clientWidth}px)`;
         card.style.opacity = '0';
         setTimeout(()=> cancelOrder(id), 180);
-      }else{
+      } else {
+        // 未達閾值：Ｑ彈回歸原位
         card.style.transform = 'translateX(0)';
-        card.style.opacity = '1';
+        wrap.style.backgroundColor = 'transparent';
       }
+      
       currentX = 0;
+      setTimeout(()=>{ window.swipeDragging = false; }, 50); // 延遲解除防呆
     }
+    
     wrap.addEventListener('pointerdown', onPointerDown);
     wrap.addEventListener('pointermove', onPointerMove);
     wrap.addEventListener('pointerup', onPointerUp);
@@ -1221,9 +1167,7 @@ function completeOrder(id){
   saveJSON(KEY_ACTIVE, active);
   saveJSON(KEY_ORDERS, orders);
   
-  // 修復重點：完成訂單時，連動收合鍵盤
   closeVk();
-  
   renderActive();
   computeTodaySummary();
   renderDetailTable();
@@ -1239,9 +1183,7 @@ function cancelOrder(id){
   saveJSON(KEY_ACTIVE, active);
   saveJSON(KEY_TRASH, trashItems);
   
-  // 修復重點：滑動刪除卡片時，連動收合鍵盤
   closeVk();
-  
   renderActive();
   renderTrash();
 }
@@ -1430,7 +1372,6 @@ function renderDetailTable(){
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   
-  // 將資料封裝以保留原始編號，並支援排序
   let displayList = list.map((o, i) => {
     return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs };
   });
@@ -1468,7 +1409,6 @@ function renderDetailTable(){
           ${displayList.map(item => {
             const o = item._obj;
             const t = getExactTimes(o);
-            // 差額為 0 時，統一改為顯示 "-"
             const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
             return `
             <tr>
@@ -1504,7 +1444,6 @@ $('exportPreviewWrap').addEventListener('pointerdown', e=>{
   const cell = e.target.closest('.row-id-cell');
   if(!cell) return;
   const id = cell.getAttribute('data-row-id');
-  // 抓取畫面上該儲存格內顯示的「當前序號數字」
   const displayIdx = cell.textContent.trim();
   longPressStartX = e.clientX;
   longPressStartY = e.clientY;
@@ -1525,7 +1464,6 @@ function openDeleteRowConfirm(id, displayIdx){
   const order = orders.find(o=>o.id===id);
   if(!order) return;
   pendingDeleteRowId = id;
-  // 將確認視窗文字精準設定為指定內容
   $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`;
   $('confirmDeleteRowOverlay').classList.add('show');
 }
@@ -1661,7 +1599,6 @@ $('exportCsvBtn').addEventListener('click', ()=>{
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
-    // 匯出時如果本該顯示 "-"，則一律換成空字串 "" 給 Excel
     const outElapsed = t.elapsed;
     const outOver = t.over === '-' ? '' : t.over;
     const outBase = o.excludeBaseFromTotal ? '' : o.basePrice;
@@ -1746,7 +1683,6 @@ $('importCsvInput').addEventListener('change', e=>{
         let extraFeeIdx = isNewFormat ? 8 : 7;
         let excludeIdx = isNewFormat ? 9 : 8;
         
-        // 匯入時，如果看到 '-' 或空字串 ''，一律完美還原回 0
         const bpStr = r[basePriceIdx];
         const basePrice = (bpStr === '-' || !bpStr) ? 0 : parseFloat(bpStr) || 0;
         
