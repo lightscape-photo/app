@@ -1301,6 +1301,10 @@ function applyTheme(theme){
     const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' };
     metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark);
   }
+  
+  if (window.AndroidBridge && window.AndroidBridge.updateTheme) {
+    window.AndroidBridge.updateTheme(theme);
+  }
 }
 document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{
