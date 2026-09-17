@@ -1301,6 +1301,11 @@ function applyTheme(theme){
     const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' };
     metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark);
   }
+  
+  // 新增：發送主題訊號給 Android 懸浮窗
+  if (window.AndroidTheme && window.AndroidTheme.updateTheme) {
+      window.AndroidTheme.updateTheme(theme);
+  }
 }
 document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{
