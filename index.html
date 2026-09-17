@@ -1286,26 +1286,44 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
+// ====== 🚀 終極動態變色版 JS Bridge ======
 const KEY_THEME = 'meter_theme';
 function applyTheme(theme){
+  // 1. 切換 CSS 變數
   if(theme === 'light' || theme === 'cyberpunk'){
     document.documentElement.setAttribute('data-theme', theme);
   }else{
     document.documentElement.removeAttribute('data-theme');
   }
+  
+  // 2. 切換按鈕亮起狀態
   document.querySelectorAll('.theme-option').forEach(btn=>{
     btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === theme);
   });
+
+  // 3. 建立主題配置表：未來新增主題，只要在這裡補上一行，Android 端完全不用改！
+  // bg: 對齊 CSS 內的背景色 / darkIcon: 是否需要黑色的時間與電量圖示
+  const themeConfig = {
+    'light': { bg: '#FFFFFF', darkIcon: true },
+    'dark': { bg: '#1B1F24', darkIcon: false },
+    'cyberpunk': { bg: '#0A0E17', darkIcon: false }
+  };
+  
+  // 找出當前主題設定（找不到就預設為 dark）
+  const currentConfig = themeConfig[theme] || themeConfig['dark'];
+
+  // 4. 更新給瀏覽器看的 meta tag
   const metaTheme = $('themeColorMeta');
   if(metaTheme){
-    const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' };
-    metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark);
+    metaTheme.setAttribute('content', currentConfig.bg);
   }
   
-  if (window.AndroidBridge && window.AndroidBridge.updateTheme) {
-    window.AndroidBridge.updateTheme(theme);
+  // 5. 將「底色」與「圖示深淺」直接傳給 Android 橋樑
+  if (window.AndroidBridge && window.AndroidBridge.updateThemeColor) {
+    window.AndroidBridge.updateThemeColor(currentConfig.bg, currentConfig.darkIcon);
   }
 }
+
 document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const theme = btn.getAttribute('data-theme-choice');
