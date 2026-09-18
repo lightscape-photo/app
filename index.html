@@ -34,8 +34,8 @@
     --panel-2:#F1F2F4;
     --text:#1B1F24;
     --muted:#6B7280;
-    --amber:#1B1F24;     /* 原本的琥珀色改為極簡高級黑 */
-    --amber-dim:#E1E3E6; /* 按下狀態的質感淺灰 */
+    --amber:#1B1F24;
+    --amber-dim:#E1E3E6;
     --green:#3B814B;
     --green-dim:#E4F2E8;
     --red:#C23A3A;
@@ -497,11 +497,19 @@ let active = [];
 let orders = [];
 let trashItems = [];
 
-// 明細表排序變數
 let sortCol = null;
 let sortAsc = true;
 
 const $ = id => document.getElementById(id);
+
+// 🚀 核心同步通訊引擎：即時向 Android 回報狀態
+function reportUiState() {
+  if (window.AndroidDownloader && window.AndroidDownloader.updateUiState) {
+    const vkOpen = $('vkContainer').classList.contains('show');
+    const overlayOpen = document.querySelectorAll('.overlay.show').length > 0;
+    window.AndroidDownloader.updateUiState(vkOpen || overlayOpen);
+  }
+}
 
 function loadJSON(key, fallback){
   try{
@@ -559,7 +567,6 @@ function plainNum(n){
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
 
-/* ================== 新版專法核心計算邏輯 ================== */
 function getBilledMinutes(startTs, endTs) {
   const totalSec = Math.max(0, Math.floor((endTs - startTs) / 1000));
   const m = Math.floor(totalSec / 60);
@@ -666,7 +673,6 @@ function getFeeStatus(o, now) {
 
   return { text: '尚未達標', over: false };
 }
-/* ======================================================= */
 
 function init(){
   active = loadJSON(KEY_ACTIVE, []);
@@ -690,12 +696,12 @@ function init(){
   renderDetailTable();
   renderTrash();
   setInterval(tick, 1000);
+  reportUiState(); // 初始化回報狀態
 }
 
-/* ================== 雙模虛擬鍵盤引擎 ================== */
+/* ================== 雙模虛擬鍵盤引擎 (無原生鍵盤免疫版) ================== */
 let activeVkInput = null;
 let activeVkWrapper = null;
-let vkHistoryStateAdded = false;
 
 function openVk(inputEl, layout) {
   if (activeVkInput && activeVkInput !== inputEl) {
@@ -714,18 +720,13 @@ function openVk(inputEl, layout) {
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
   
-  // 🚀 核心修復：加上 '#vk' 錨點，強迫 Android WebView 紀錄系統上一頁！
-  if (!vkHistoryStateAdded) {
-    history.pushState({vk: true}, '', '#vk');
-    vkHistoryStateAdded = true;
-  }
-
   const vkContainer = $('vkContainer');
   const vkHeight = vkContainer.offsetHeight || 220;
   document.body.style.paddingBottom = (vkHeight + 40) + 'px';
 
   requestAnimationFrame(() => {
     vkContainer.classList.add('show');
+    reportUiState(); // 🚀 即時回報 Android 鍵盤已開
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
@@ -743,7 +744,7 @@ function openVk(inputEl, layout) {
   });
 }
 
-function closeVk(fromPopState = false) {
+function closeVk() {
   if (activeVkInput) activeVkInput.blur(); 
   if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active'); 
   
@@ -752,13 +753,7 @@ function closeVk(fromPopState = false) {
   
   $('vkContainer').classList.remove('show');
   document.body.style.paddingBottom = '';
-
-  if (vkHistoryStateAdded && !fromPopState) {
-    vkHistoryStateAdded = false;
-    history.back();
-  } else {
-    vkHistoryStateAdded = false;
-  }
+  reportUiState(); // 🚀 即時回報 Android 鍵盤已關
 }
 
 function handleVkKey(key) {
@@ -827,13 +822,6 @@ document.addEventListener('pointerup', (e) => {
   closeVk();
 });
 
-window.addEventListener('popstate', (e) => {
-  if (vkHistoryStateAdded) {
-    vkHistoryStateAdded = false;
-    closeVk(true); 
-  }
-});
-
 document.addEventListener('keydown', e => {
   if (!$('vkContainer').classList.contains('show') || !activeVkInput) return;
   const key = e.key.toUpperCase();
@@ -900,16 +888,17 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
+    // 🚀 核心防護魔法：輸入框「永久綁定 readonly」，徹底根絕原生鍵盤彈出！
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
-      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
+      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" readonly tabindex="-1"></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
     return `
     <div class="swipe-card-wrap" data-swipe-card="${o.id}">
       <div class="order-card" data-order-id="${o.id}">
         <div class="ordno-price-row">
-          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" inputmode="none">
+          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" readonly tabindex="-1">
           ${priceField}
         </div>
         <div class="order-head">
@@ -1216,15 +1205,17 @@ $('trashList').addEventListener('click', e=>{
   renderActive();
   renderTrash();
 });
-$('clearTrashBtn').addEventListener('click', ()=>{$('confirmClearTrashOverlay').classList.add('show');
-});
-$('confirmClearTrashCancel').addEventListener('click', ()=>{$('confirmClearTrashOverlay').classList.remove('show');
-});
-$('confirmClearTrashOk').addEventListener('click', ()=>{
+
+// 🚀 對話框開關也一併觸發狀態回報，防護滴水不漏
+function showOverlay(id) { $(id).classList.add('show'); reportUiState(); }
+function hideOverlay(id) { $(id).classList.remove('show'); reportUiState(); }
+
+$('clearTrashBtn').addEventListener('click', ()=> showOverlay('confirmClearTrashOverlay'));
+$('confirmClearTrashCancel').addEventListener('click', ()=> hideOverlay('confirmClearTrashOverlay'));$('confirmClearTrashOk').addEventListener('click', ()=>{
   trashItems = [];
   saveJSON(KEY_TRASH, trashItems);
   renderTrash();
-  $('confirmClearTrashOverlay').classList.remove('show');
+  hideOverlay('confirmClearTrashOverlay');
 });
 
 function updateFeeDisplay(o){
@@ -1252,16 +1243,13 @@ function computeTodaySummary(){
   $('todayFeeSum').textContent = money(todayOrders.reduce((s,o)=>s+o.extraFee,0));
 }
 
-$('clearAllBtn').addEventListener('click', ()=>{$('confirmClearOverlay').classList.add('show');
-});
-$('confirmClearCancel').addEventListener('click', ()=>{$('confirmClearOverlay').classList.remove('show');
-});
-$('confirmClearOk').addEventListener('click', ()=>{
+$('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
+$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{
   orders = [];
   saveJSON(KEY_ORDERS, orders);
   computeTodaySummary();
   renderDetailTable();
-  $('confirmClearOverlay').classList.remove('show');
+  hideOverlay('confirmClearOverlay');
 });
 
 const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', trash: 'tabTrash', settings: 'tabSettings' };
@@ -1336,7 +1324,6 @@ function fmtDateFull(ts){
   return `${yyyy}/${mm}/${dd}`;
 }
 
-// 監聽表頭點擊排序
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
   if (th) {
@@ -1454,13 +1441,9 @@ function openDeleteRowConfirm(id, displayIdx){
   if(!order) return;
   pendingDeleteRowId = id;
   $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`;
-  $('confirmDeleteRowOverlay').classList.add('show');
+  showOverlay('confirmDeleteRowOverlay');
 }
-$('confirmDeleteRowCancel').addEventListener('click', ()=>{
-  pendingDeleteRowId = null;
-  $('confirmDeleteRowOverlay').classList.remove('show');
-});
-$('confirmDeleteRowOk').addEventListener('click', ()=>{
+$('confirmDeleteRowCancel').addEventListener('click', ()=>{   pendingDeleteRowId = null;   hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
   if(pendingDeleteRowId){
     orders = orders.filter(o=>o.id!==pendingDeleteRowId);
     saveJSON(KEY_ORDERS, orders);
@@ -1468,7 +1451,7 @@ $('confirmDeleteRowOk').addEventListener('click', ()=>{
     renderDetailTable();
   }
   pendingDeleteRowId = null;
-  $('confirmDeleteRowOverlay').classList.remove('show');
+  hideOverlay('confirmDeleteRowOverlay');
 });
 
 $('exportPreviewWrap').addEventListener('input', e=>{
@@ -1731,23 +1714,6 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
     e.target.value = '';
   };
   reader.readAsText(file, 'UTF-8');
-});
-
-let vkWasFocused = false;
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    if ($('vkContainer').classList.contains('show') && activeVkInput) {
-      activeVkInput.blur();
-      vkWasFocused = true;
-    }
-  } else {
-    if ($('vkContainer').classList.contains('show') && vkWasFocused && activeVkInput) {
-      setTimeout(() => {
-        activeVkInput.focus();
-        vkWasFocused = false;
-      }, 300);
-    }
-  }
 });
 
 init();
