@@ -1188,7 +1188,8 @@ function cancelOrder(id){
 }
 
 function renderTrash(){
-  const el = $('trashList');$('clearTrashBtn').style.display = trashItems.length === 0 ? 'none' : 'block';
+  const el = $('trashList');
+  $('clearTrashBtn').style.display = trashItems.length === 0 ? 'none' : 'block';
   if(trashItems.length === 0){
     el.innerHTML = '<div class="empty">垃圾桶是空的</div>';
     return;
@@ -1220,9 +1221,11 @@ $('trashList').addEventListener('click', e=>{
   renderActive();
   renderTrash();
 });
-$('clearTrashBtn').addEventListener('click', ()=>{$('confirmClearTrashOverlay').classList.add('show');
+$('clearTrashBtn').addEventListener('click', ()=>{
+  $('confirmClearTrashOverlay').classList.add('show');
 });
-$('confirmClearTrashCancel').addEventListener('click', ()=>{$('confirmClearTrashOverlay').classList.remove('show');
+$('confirmClearTrashCancel').addEventListener('click', ()=>{
+  $('confirmClearTrashOverlay').classList.remove('show');
 });
 $('confirmClearTrashOk').addEventListener('click', ()=>{
   trashItems = [];
@@ -1256,9 +1259,11 @@ function computeTodaySummary(){
   $('todayFeeSum').textContent = money(todayOrders.reduce((s,o)=>s+o.extraFee,0));
 }
 
-$('clearAllBtn').addEventListener('click', ()=>{$('confirmClearOverlay').classList.add('show');
+$('clearAllBtn').addEventListener('click', ()=>{
+  $('confirmClearOverlay').classList.add('show');
 });
-$('confirmClearCancel').addEventListener('click', ()=>{$('confirmClearOverlay').classList.remove('show');
+$('confirmClearCancel').addEventListener('click', ()=>{
+  $('confirmClearOverlay').classList.remove('show');
 });
 $('confirmClearOk').addEventListener('click', ()=>{
   orders = [];
@@ -1447,7 +1452,8 @@ $('exportPreviewWrap').addEventListener('pointerdown', e=>{
   }, 600);
 });
 $('exportPreviewWrap').addEventListener('pointerup', cancelLongPress);
-$('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);$('exportPreviewWrap').addEventListener('pointermove', e=>{
+$('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);
+$('exportPreviewWrap').addEventListener('pointermove', e=>{
   if(!longPressTimer) return;
   const dx = Math.abs(e.clientX - longPressStartX);
   const dy = Math.abs(e.clientY - longPressStartY);
@@ -1575,10 +1581,11 @@ $('exportPreviewWrap').addEventListener('change', e=>{
 });
 
 $('exportRange').addEventListener('change', ()=>{
-  $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none';
+  $('customDateRow').style.display = $('exportRange').value === 'custom' ? 'flex' : 'none';
   renderDetailTable();
 });
-$('rangeStart').addEventListener('change', renderDetailTable);$('rangeEnd').addEventListener('change', renderDetailTable);
+$('rangeStart').addEventListener('change', renderDetailTable);
+$('rangeEnd').addEventListener('change', renderDetailTable);
 
 function csvEscape(v){
   const s = String(v ?? '');
@@ -1605,24 +1612,17 @@ $('exportCsvBtn').addEventListener('click', ()=>{
   const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
   
   const csv = '\uFEFF' + [header, ...rows, totalRow].map(r => r.map(csvEscape).join(',')).join('\r\n');
-  
-  // 🚀 核心修復：偵測如果是 App，直接把字串編碼拋接給 Android 原生下載機制
-  if (window.AndroidDownloader) {
-      const base64 = btoa(unescape(encodeURIComponent(csv)));
-      window.AndroidDownloader.getBase64FromBlobData("data:text/csv;base64," + base64, 'text/csv');
-  } else {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const now = new Date();
-      const fname = `外送紀錄_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
-      a.href = url;
-      a.download = fname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-  }
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const fname = `外送紀錄_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
 
 function showImportStatus(msg){
@@ -1657,7 +1657,8 @@ function parseCsvText(text){
   const lines = clean.split(/\r\n|\n/).filter(l => l.trim().length > 0);
   return lines.map(parseCsvLine);
 }
-$('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$('importCsvInput').addEventListener('change', e=>{
+$('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());
+$('importCsvInput').addEventListener('change', e=>{
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
