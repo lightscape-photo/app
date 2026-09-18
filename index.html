@@ -81,7 +81,6 @@
   }
   .icon-btn:active{transform:scale(0.96);}
 
-  /* 復原：輕盈的虛線按鈕 */
   .new-order-btn{
     flex:1;padding:16px 8px;border-radius:16px;border:2px dashed var(--amber);
     background:transparent;color:var(--amber);font-weight:600;font-size:15px;
@@ -130,12 +129,12 @@
   
   .ordno-input, .price-input { 
     cursor: text; 
-    caret-color: var(--amber); /* 這裡會自動變成純黑游標 */
+    caret-color: var(--amber); 
   }
   
   .ordno-input.vk-active, .price-input-wrap.vk-active {
     border-color: var(--amber) !important;
-    box-shadow: 0 0 0 1px var(--amber); /* 發光邊框變成純黑 */
+    box-shadow: 0 0 0 1px var(--amber);
   }
 
   .ordno-input{
@@ -264,7 +263,6 @@
     padding:9px 2px;color:var(--muted);font-weight:600;font-size:15px;
     cursor:pointer;font-family:inherit;
   }
-  /* 點選的分頁會自動套用 var(--amber)，在白底主題下就是純黑！ */
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
@@ -442,7 +440,6 @@
 <!-- 雙模專屬虛擬鍵盤區 -->
 <div id="vkContainer" class="vk-container">
   
-  <!-- 單價專用：九宮格數字鍵盤 -->
   <div id="vkNumpad" class="vk-layout" style="display:none;">
     <div class="vk-row">
       <button class="vk-key">7</button><button class="vk-key">8</button><button class="vk-key">9</button>
@@ -460,7 +457,6 @@
     </div>
   </div>
   
-  <!-- 單號專用：Uber 16進位大按鍵專屬鍵盤 (左2欄字母 直向閱讀A-C/D-F + 右3欄數字) -->
   <div id="vkHex" class="vk-layout" style="display:none;">
     <div class="vk-row">
       <button class="vk-key">A</button>
@@ -484,7 +480,6 @@
       <button class="vk-key">3</button>
     </div>
     <div class="vk-row">
-      <!-- 取消鍵寬度精準對齊上方 A, D 兩個按鍵 (包含間距) -->
       <button class="vk-key action" data-key="CANCEL" style="flex: 0 0 calc(40% - 3.6px);">取消</button>
       <button class="vk-key action" data-key="BACKSPACE">⌫</button>
       <button class="vk-key">0</button>
@@ -719,8 +714,9 @@ function openVk(inputEl, layout) {
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
   
+  // 🚀 核心修復：加上 '#vk' 錨點，強迫 Android WebView 紀錄系統上一頁！
   if (!vkHistoryStateAdded) {
-    history.pushState({vk: true}, '');
+    history.pushState({vk: true}, '', '#vk');
     vkHistoryStateAdded = true;
   }
 
@@ -1606,7 +1602,6 @@ $('exportCsvBtn').addEventListener('click', ()=>{
   
   const csv = '\uFEFF' + [header, ...rows, totalRow].map(r => r.map(csvEscape).join(',')).join('\r\n');
   
-  // 🚀 核心修復：偵測如果是 App，直接把字串編碼拋接給 Android 原生下載機制
   if (window.AndroidDownloader) {
       const base64 = btoa(unescape(encodeURIComponent(csv)));
       window.AndroidDownloader.getBase64FromBlobData("data:text/csv;base64," + base64, 'text/csv');
