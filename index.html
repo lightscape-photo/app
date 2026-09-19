@@ -126,92 +126,47 @@
     padding:12px 14px;touch-action:pan-y; z-index:1;
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
-
-  /* 🚀 問題 5 修復：純 CSS 虛擬輸入框，永不觸發 Android 原生鍵盤 */
-  .custom-input {
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    display: inline-flex;
-    align-items: center;
-    position: relative;
-    box-sizing: border-box;
+  
+  /* 🚀 回歸原生：簡潔、高效、無負擔 */
+  .ordno-input, .price-input { 
+    cursor: text; 
+    caret-color: var(--amber); 
   }
-  .ordno-input {
-    flex: 1.8;
-    min-width: 0;
-    height: 44px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0 10px;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-variant-numeric: tabular-nums;
-    font-size: 18px;
-    font-weight: 700;
-    justify-content: center;
-    letter-spacing: 1px;
-    color: var(--text);
-  }
-  .price-input-wrap {
-    flex: 0.8;
-    min-width: 0;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0 10px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-  }
-  .price-input-wrap span.currency {
-    font-size: 14px;
-    color: var(--muted);
-  }
-  .price-input-val {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    color: var(--text);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-variant-numeric: tabular-nums;
-    font-size: 18px;
-    font-weight: 700;
-  }
-  .custom-input.vk-active, .price-input-wrap.vk-active {
+  
+  .ordno-input.vk-active, .price-input-wrap.vk-active {
     border-color: var(--amber) !important;
     box-shadow: 0 0 0 1px var(--amber);
   }
+
+  .ordno-input{
+    flex:1.8;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+    padding:8px 10px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
+    text-align:center;letter-spacing:1px;color:var(--text);
+  }
+  .ordno-input:focus{outline:none;}
+  .ordno-input::placeholder{font-weight:400;font-size:13px;letter-spacing:normal;}
+  
+  .price-input-wrap{
+    flex:0.8;min-width:0;display:flex;align-items:center;gap:2px;
+    background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+    padding:8px 10px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .price-input-wrap span{font-size:14px;color:var(--muted);}
+  
   .price-input-wrap.locked-price {
     opacity: 0.5;
     pointer-events: none;
   }
-  .input-placeholder {
-    color: var(--muted);
-    font-weight: 400;
-    font-size: 13px;
-    letter-spacing: normal;
-  }
 
-  /* 🚀 琥珀色閃爍游標 */
-  .blinking-cursor {
-    display: inline-block;
-    width: 2px;
-    height: 20px;
-    background-color: var(--amber);
-    margin-left: 2px;
-    vertical-align: middle;
-    animation: blink-caret 1s step-end infinite;
+  .price-input{
+    flex:1;min-width:0;width:100%;background:transparent;border:none;outline:none !important;
+    color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;
+    text-align:right;-moz-appearance:textfield;appearance:textfield;
   }
-  @keyframes blink-caret {
-    from, to { opacity: 1; }
-    50% { opacity: 0; }
+  .price-input::-webkit-outer-spin-button,.price-input::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
   }
+  .price-input::placeholder{font-weight:400;font-size:13px;letter-spacing:normal;}
   
   .order-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .order-start{font-size:12px;color:var(--muted);}
@@ -483,6 +438,7 @@
   </div>
 </div>
 
+<!-- 雙模專屬虛擬鍵盤區 -->
 <div id="vkContainer" class="vk-container">
   <div id="vkNumpad" class="vk-layout" style="display:none;">
     <div class="vk-row">
@@ -742,11 +698,24 @@ function init(){
   reportUiState();
 }
 
-/* ================== 雙模虛擬鍵盤 ＋ 虛擬游標引擎 ================== */
-let activeVkInput = null; // { type: 'ordno' | 'price', id: string }
+/* ================== 雙模虛擬鍵盤引擎 (回歸原生輸入框) ================== */
+let activeVkInput = null;
+let activeVkWrapper = null;
 
-function openVk(type, id, layout) {
-  activeVkInput = { type, id };
+function openVk(inputEl, layout) {
+  if (activeVkInput && activeVkInput !== inputEl) {
+    activeVkInput.blur();
+  }
+  if (activeVkWrapper) {
+    activeVkWrapper.classList.remove('vk-active');
+  }
+  
+  activeVkInput = inputEl;
+  activeVkInput.focus();
+  
+  activeVkWrapper = inputEl.classList.contains('price-input') ? inputEl.closest('.price-input-wrap') : inputEl;
+  activeVkWrapper.classList.add('vk-active');
+  
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
   
@@ -757,82 +726,70 @@ function openVk(type, id, layout) {
   requestAnimationFrame(() => {
     vkContainer.classList.add('show');
     reportUiState();
-    renderActive(); // 顯示游標與高亮
+    
+    // 🚀 復活：鍵盤彈出時精準定位防遮擋，滑動畫面至最合適高度
+    setTimeout(() => {
+      const cardWrap = inputEl.closest('.swipe-card-wrap');
+      if (cardWrap) {
+        const actualVkHeight = vkContainer.offsetHeight; 
+        const rect = cardWrap.getBoundingClientRect();
+        const safeBottom = window.innerHeight - actualVkHeight - 10;
+        
+        if (rect.bottom > safeBottom) {
+          window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
+        } else if (rect.top < 60) {
+          window.scrollBy({ top: rect.top - 60, behavior: 'smooth' });
+        }
+      }
+    }, 180);
   });
 }
 
 function closeVk() {
+  if (activeVkInput) activeVkInput.blur(); 
+  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active'); 
+  
   activeVkInput = null;
+  activeVkWrapper = null;
+  
   $('vkContainer').classList.remove('show');
   document.body.style.paddingBottom = '';
   reportUiState();
-  renderActive(); // 隱藏游標與高亮
-}
-
-function updateInputDisplay(id, type) {
-  const o = active.find(a => a.id === id);
-  if (!o) return;
-  if (type === 'ordno') {
-    const el = document.querySelector(`.ordno-input[data-ordno="${id}"]`);
-    if (el) {
-      const val = o.orderNo || '';
-      const isAct = activeVkInput && activeVkInput.type === 'ordno' && activeVkInput.id === id;
-      el.innerHTML = val 
-        ? `<span class="val-text">${val}</span>${isAct ? '<span class="blinking-cursor"></span>' : ''}`
-        : (isAct ? '<span class="blinking-cursor"></span>' : '<span class="input-placeholder">單號</span>');
-    }
-  } else if (type === 'price') {
-    const el = document.querySelector(`.price-input-val[data-base="${id}"]`);
-    if (el) {
-      const val = o.basePrice ? String(o.basePrice) : '';
-      const isAct = activeVkInput && activeVkInput.type === 'price' && activeVkInput.id === id;
-      el.innerHTML = val 
-        ? `<span class="val-text">${val}</span>${isAct ? '<span class="blinking-cursor"></span>' : ''}`
-        : (isAct ? '<span class="blinking-cursor"></span>' : '<span class="input-placeholder">單價</span>');
-    }
-  }
 }
 
 function handleVkKey(key) {
   if (!activeVkInput) return;
+  
   if (key === 'ENTER' || key === 'CANCEL') {
     closeVk();
     return;
   }
-  const o = active.find(a => a.id === activeVkInput.id);
-  if (!o) return;
-
-  if (activeVkInput.type === 'ordno') {
-    let val = o.orderNo || '';
-    if (key === 'BACKSPACE') {
-      val = val.slice(0, -1);
-    } else {
-      if (val.length >= 10) return;
-      val += key;
+  
+  let val = activeVkInput.value;
+  let start = activeVkInput.selectionStart || 0;
+  let end = activeVkInput.selectionEnd || 0;
+  
+  if (key === 'BACKSPACE') {
+    if (start === end && start > 0) {
+      val = val.slice(0, start - 1) + val.slice(end);
+      activeVkInput.value = val;
+      activeVkInput.setSelectionRange(start - 1, start - 1);
+    } else if (start !== end) {
+      val = val.slice(0, start) + val.slice(end);
+      activeVkInput.value = val;
+      activeVkInput.setSelectionRange(start, start);
     }
-    o.orderNo = val.toUpperCase();
-    saveJSON(KEY_ACTIVE, active);
-    updateInputDisplay(o.id, 'ordno');
-  } else if (activeVkInput.type === 'price') {
-    let val = o.basePrice ? String(o.basePrice) : '';
-    if (key === 'BACKSPACE') {
-      val = val.slice(0, -1);
-    } else {
-      if (val.length >= 6) return;
-      val += key;
+  } else {
+    if (start === end) {
+      if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
+      if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
     }
-    const num = parseFloat(val) || 0;
-    o.basePrice = num;
-    if (o.linkRole === 'primary' && o.linkGroupId) {
-      active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec => {
-        sec.basePrice = o.basePrice;
-        updateFeeDisplay(sec);
-      });
-    }
-    saveJSON(KEY_ACTIVE, active);
-    updateFeeDisplay(o);
-    updateInputDisplay(o.id, 'price');
+    val = val.slice(0, start) + key + val.slice(end);
+    activeVkInput.value = val;
+    activeVkInput.setSelectionRange(start + key.length, start + key.length);
   }
+  
+  activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 $('vkContainer').addEventListener('pointerdown', e => {
@@ -861,7 +818,7 @@ document.addEventListener('pointerup', (e) => {
   const dy = Math.abs(e.clientY - vkPointerDownY);
 
   if (dx > 10 || dy > 10) return;
-  if (e.target.closest('.custom-input') || e.target.closest('.price-input-wrap')) return;
+  if (e.target.closest('input')) return;
 
   closeVk();
 });
@@ -890,7 +847,8 @@ $('newOrderBtn').addEventListener('click', ()=>{
   renderActive();
   
   setTimeout(()=>{
-    openVk('price', id, 'numpad');
+    const newInput = document.querySelector(`input.price-input[data-base="${id}"]`);
+    if(newInput) openVk(newInput, 'numpad');
   }, 50);
 });
 
@@ -906,7 +864,8 @@ $('newLinkedBtn').addEventListener('click', ()=>{
   renderActive();
   
   setTimeout(()=>{
-    openVk('price', idA, 'numpad');
+    const newInputA = document.querySelector(`input.price-input[data-base="${idA}"]`);
+    if(newInputA) openVk(newInputA, 'numpad');
   }, 50);
 });
 
@@ -930,29 +889,17 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 🚀 問題 5 修復：純 CSS 虛擬游標渲染邏輯
-    const isOrdActive = activeVkInput && activeVkInput.type === 'ordno' && activeVkInput.id === o.id;
-    const ordnoVal = o.orderNo || '';
-    const ordnoContent = ordnoVal 
-      ? `<span class="val-text">${ordnoVal}</span>${isOrdActive ? '<span class="blinking-cursor"></span>' : ''}`
-      : (isOrdActive ? '<span class="blinking-cursor"></span>' : '<span class="input-placeholder">單號</span>');
-
-    const isPriceActive = activeVkInput && activeVkInput.type === 'price' && activeVkInput.id === o.id;
-    const priceVal = o.basePrice ? String(o.basePrice) : '';
-    const priceContent = priceVal
-      ? `<span class="val-text">${priceVal}</span>${isPriceActive ? '<span class="blinking-cursor"></span>' : ''}`
-      : (isPriceActive ? '<span class="blinking-cursor"></span>' : '<span class="input-placeholder">單價</span>');
-
+    // 🚀 回歸原生 input，並套用 inputmode="none" 做第一層防禦
     const priceField = isSecondary
-      ? `<div class="price-input-wrap locked-price"><span class="currency">NT$</span><div class="price-input-val"><span class="val-text">-</span></div></div>`
-      : `<div class="price-input-wrap${isPriceActive ? ' vk-active' : ''}" data-base-wrap="${o.id}"><span class="currency">NT$</span><div class="price-input-val custom-input" data-base="${o.id}">${priceContent}</div></div>`;
+      ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
+      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
     
     const feeStatus = getFeeStatus(o, now0);
     return `
     <div class="swipe-card-wrap" data-swipe-card="${o.id}">
       <div class="order-card" data-order-id="${o.id}">
         <div class="ordno-price-row">
-          <div class="custom-input ordno-input${isOrdActive ? ' vk-active' : ''}" data-ordno="${o.id}">${ordnoContent}</div>
+          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" inputmode="none">
           ${priceField}
         </div>
         <div class="order-head">
@@ -1033,20 +980,50 @@ function renderActive(){
   }
 }
 
+$('activeList').addEventListener('input', e=>{
+  const baseId = e.target.getAttribute('data-base');
+  const ordId = e.target.getAttribute('data-ordno');
+  if(baseId){
+    const o = active.find(a=>a.id===baseId);
+    if(o){
+      o.basePrice = parseFloat(e.target.value) || 0;
+      if(o.linkRole === 'primary' && o.linkGroupId){
+        active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec=>{
+          sec.basePrice = o.basePrice;
+          updateFeeDisplay(sec);
+        });
+      }
+      saveJSON(KEY_ACTIVE, active);
+      updateFeeDisplay(o);
+    }
+  }
+  if(ordId){
+    const o = active.find(a=>a.id===ordId);
+    if(o){
+      const upper = e.target.value.toUpperCase();
+      o.orderNo = upper;
+      if(e.target.value !== upper){
+        const cursorPos = e.target.selectionStart;
+        e.target.value = upper;
+        e.target.setSelectionRange(cursorPos, cursorPos);
+      }
+      saveJSON(KEY_ACTIVE, active);
+    }
+  }
+});
+
 $('activeList').addEventListener('click', e=>{
   if(window.swipeDragging) return; 
   
   const ordInput = e.target.closest('.ordno-input');
   if (ordInput) {
-    const id = ordInput.getAttribute('data-ordno');
-    openVk('ordno', id, 'hex');
+    openVk(ordInput, 'hex');
     return;
   }
   
-  const priceWrap = e.target.closest('.price-input-wrap');
-  if (priceWrap && !priceWrap.classList.contains('locked-price')) {
-    const id = priceWrap.getAttribute('data-base-wrap');
-    openVk('price', id, 'hex'); 
+  const priceInput = e.target.closest('.price-input');
+  if (priceInput && !priceInput.classList.contains('locked-price')) {
+    openVk(priceInput, 'hex'); 
     return;
   }
 });
@@ -1087,6 +1064,11 @@ function initCardSwipe(){
         
         card.setPointerCapture(e.pointerId);
         window.swipeDragging = true;
+        
+        // 🚀 復活：原生 blur() 能在滑動瞬間完美收起鍵盤與焦點
+        if (document.activeElement && card.contains(document.activeElement)) {
+           document.activeElement.blur();
+        }
         closeVk();
       }
       
