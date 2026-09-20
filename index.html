@@ -63,7 +63,12 @@
     --on-red:#0A0E17;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;}
+  
+  /* 🚀 封印系統邊緣回彈效果 */
+  html,body{
+    margin:0;padding:0;
+    overscroll-behavior-y: none;
+  }
   body{
     background:var(--bg);
     color:var(--text);
@@ -74,20 +79,39 @@
     overflow-x:hidden;
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
-  .app{width:100%;max-width:480px;padding:20px 16px 60px;}
+  /* 🚀 移除上方 padding，交給 top-sticky-zone 管理 */
+  .app{width:100%;max-width:480px;padding:0 16px 60px;}
+  
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;flex-shrink:0;
   }
   .icon-btn:active{transform:scale(0.96);}
 
-  /* 🚀 修改：新增按鈕列階梯式吸頂 */
-  .new-order-row{
-    display:flex;gap:10px;margin-bottom:18px;
-    position:sticky;top:65px;z-index:900;
-    background:var(--bg);padding:10px 0;margin-top:-10px;
+  /* 🚀 一體化吸頂防護罩 (包含導覽列與按鈕) */
+  .top-sticky-zone {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--bg);
+    padding-top: 20px;
+    padding-bottom: 18px; /* 用 padding 取代 margin，確保底色完美覆蓋防穿透 */
+    margin-bottom: 0;
   }
-  
+
+  .tabs{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    padding-bottom:14px;
+    /* 取消原本混亂的 margin 設定 */
+  }
+
+  .new-order-row{
+    display:flex;gap:10px;
+    padding-top:18px;
+    /* 取消原本的 sticky 屬性，交給外層 top-sticky-zone 統一吸頂 */
+  }
+
   .new-order-btn{
     flex:1;padding:16px 8px;border-radius:16px;border:2px dashed var(--amber);
     background:transparent;color:var(--amber);font-weight:600;font-size:15px;
@@ -133,7 +157,6 @@
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
-  /* 🚀 回歸原生：簡潔、高效、無負擔 */
   .ordno-input, .price-input { 
     cursor: text; 
     caret-color: var(--amber); 
@@ -260,14 +283,6 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
-  /* 🚀 修改：導覽列完美凍結吸頂，附加防穿透背景與邊距對齊 */
-  .tabs{
-    display:flex;align-items:flex-end;justify-content:space-between;
-    border-bottom:1px solid var(--border);
-    padding:20px 0 14px; margin:-20px 0 18px;
-    position:sticky;top:0;z-index:1000;background:var(--bg);
-  }
-  
   .tab-group{display:flex;gap:22px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
@@ -323,21 +338,28 @@
 </head>
 <body>
 <div class="app">
-  <div class="tabs">
-    <div class="tab-group">
-      <button class="tab-btn active" data-tab="main">主頁</button>
-      <button class="tab-btn" data-tab="detail">明細</button>
-      <button class="tab-btn" data-tab="trash">垃圾桶</button>
-      <button class="tab-btn" data-tab="settings">設定</button>
-    </div>
-    <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
-  </div>
 
-  <div id="tabMain" class="tab-panel active">
-    <div class="new-order-row">
+  <!-- 🚀 將導覽列與按鈕包裝在一體化的吸頂區塊內 -->
+  <div class="top-sticky-zone">
+    <div class="tabs">
+      <div class="tab-group">
+        <button class="tab-btn active" data-tab="main">主頁</button>
+        <button class="tab-btn" data-tab="detail">明細</button>
+        <button class="tab-btn" data-tab="trash">垃圾桶</button>
+        <button class="tab-btn" data-tab="settings">設定</button>
+      </div>
+      <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
+    </div>
+
+    <!-- 按鈕列放入一體化防護罩中 -->
+    <div class="new-order-row" id="stickyNewOrderRow">
       <button class="new-order-btn" id="newOrderBtn">＋ 新增一單</button>
       <button class="linked-btn" id="newLinkedBtn">＋ 新增疊單</button>
     </div>
+  </div>
+
+  <div id="tabMain" class="tab-panel active">
+    <!-- 原本在此的新增按鈕已移至上方 top-sticky-zone -->
 
     <div class="active-header">
       <h2>進行中的訂單</h2>
@@ -380,7 +402,6 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
         <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
-        <!-- 📍 放寬的 CSV 匯入標籤 -->
         <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
       </div>
       <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
@@ -742,6 +763,7 @@ function openVk(inputEl, layout) {
     reportUiState();
     
     // 🚀 復活：鍵盤彈出時精準定位防遮擋，滑動畫面至最合適高度
+    // 因上方吸頂區域變大，將觸發捲動的防護高度從 60 拉高至 160
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
@@ -751,8 +773,8 @@ function openVk(inputEl, layout) {
         
         if (rect.bottom > safeBottom) {
           window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
-        } else if (rect.top < 60) {
-          window.scrollBy({ top: rect.top - 60, behavior: 'smooth' });
+        } else if (rect.top < 160) {
+          window.scrollBy({ top: rect.top - 160, behavior: 'smooth' });
         }
       }
     }, 180);
@@ -1275,6 +1297,10 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const tab = btn.getAttribute('data-tab');
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');
+    
+    // 🚀 當切換到非主頁時，自動隱藏新增按鈕列，讓版面保持乾淨
+    $('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
+    
     if(tab === 'detail') renderDetailTable();
     if(tab === 'trash') renderTrash();
   });
