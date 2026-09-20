@@ -367,7 +367,8 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
         <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
-        <input type="file" id="importCsvInput" accept=".csv" style="display:none;">
+        <!-- 📍 在此處放寬 accept 限制，讓 Android 手機能順利選取本機檔案 -->
+        <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
       </div>
       <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
     </div>
