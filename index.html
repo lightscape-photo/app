@@ -359,8 +359,6 @@
   </div>
 
   <div id="tabMain" class="tab-panel active">
-    <!-- 原本在此的新增按鈕已移至上方 top-sticky-zone -->
-
     <div class="active-header">
       <h2>進行中的訂單</h2>
       <span class="count" id="activeCount">0 單</span>
@@ -763,7 +761,6 @@ function openVk(inputEl, layout) {
     reportUiState();
     
     // 🚀 復活：鍵盤彈出時精準定位防遮擋，滑動畫面至最合適高度
-    // 因上方吸頂區域變大，將觸發捲動的防護高度從 60 拉高至 160
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
@@ -871,6 +868,14 @@ document.addEventListener('keydown', e => {
     handleVkKey(key);
   }
 });
+
+// 🚀 背景焦點防護：當 App 退到背景時，主動收合鍵盤並清除焦點，防止系統喚醒原生鍵盤
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    closeVk();
+  }
+});
+
 /* ======================================================= */
 
 let pendingNewIds = [];
