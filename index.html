@@ -81,20 +81,6 @@
   }
   .icon-btn:active{transform:scale(0.96);}
 
-  .new-order-btn{
-    flex:1;padding:16px 8px;border-radius:16px;border:2px dashed var(--amber);
-    background:transparent;color:var(--amber);font-weight:600;font-size:15px;
-    cursor:pointer;font-family:inherit;
-  }
-  .new-order-btn:active{background:var(--amber-dim);}
-
-  .linked-btn{
-    flex:1;padding:16px 8px;border-radius:16px;border:2px dashed var(--green);
-    background:transparent;color:var(--green);font-weight:600;font-size:15px;
-    cursor:pointer;font-family:inherit;
-  }
-  .linked-btn:active{background:var(--green-dim);}
-
   .link-badge{
     display:inline-block;font-size:11px;font-weight:600;color:var(--green);
     background:var(--green-dim);border-radius:6px;padding:2px 7px;margin-left:8px;
@@ -114,7 +100,6 @@
     cursor:pointer;font-family:inherit;
   }
   .trash-restore-btn:active{transform:scale(0.96);}
-  .new-order-row{display:flex;gap:10px;margin-bottom:18px;}
   
   .active-header{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;}
   .active-header h2{font-size:14px;color:var(--muted);font-weight:600;margin:0;}
@@ -127,7 +112,6 @@
   }
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
-  /* 🚀 回歸原生：簡潔、高效、無負擔 */
   .ordno-input, .price-input { 
     cursor: text; 
     caret-color: var(--amber); 
@@ -254,7 +238,14 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
-  .tabs{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  /* 🚀 改動 A：導覽列完美凍結吸頂，附加防穿透背景與邊距對齊 */
+  .tabs{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    padding:20px 0 14px; 
+    margin:-20px 0 18px; 
+    position:sticky;top:0;z-index:1000;background:var(--bg);
+  }
   .tab-group{display:flex;gap:22px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
@@ -284,6 +275,49 @@
   .theme-swatch-cyberpunk{background:linear-gradient(135deg,#FF2A6D 0%,#0A0E17 55%,#05D9E8 100%);}
   .theme-option-label{font-size:13px;color:var(--text);font-weight:600;text-align:center;line-height:1.5;}
   .theme-option-sub{font-size:11px;color:var(--muted);font-weight:400;}
+
+  /* 🚀 改動 B：左上角懸浮按鈕 (FAB) 專屬佈局與動態隱身 */
+  .fab-wrapper {
+    position: sticky;
+    top: 75px; 
+    width: 100%;
+    height: 0;
+    z-index: 900;
+    pointer-events: none; /* 讓本體不阻擋點擊 */
+  }
+  .fab-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: auto; /* 按鈕恢復點擊 */
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .fab-container.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-15px);
+  }
+  .fab-btn {
+    width: 56px;
+    height: 56px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.15s, background 0.2s;
+    padding: 0;
+  }
+  .fab-btn:active {
+    transform: scale(0.92);
+    background: var(--panel-2);
+  }
 
   /* 雙模虛擬鍵盤專屬 CSS */
   .vk-container {
@@ -321,9 +355,38 @@
   </div>
 
   <div id="tabMain" class="tab-panel active">
-    <div class="new-order-row">
-      <button class="new-order-btn" id="newOrderBtn">＋ 新增一單</button>
-      <button class="linked-btn" id="newLinkedBtn">＋ 新增疊單</button>
+    
+    <!-- 🚀 改動 B：純 CSS 繪製主題變色 SVG 懸浮按鈕 -->
+    <div class="fab-wrapper">
+      <div class="fab-container" id="fabContainer">
+        <!-- 懸浮：單 -->
+        <button class="fab-btn" id="newOrderBtn">
+          <svg viewBox="0 0 100 100" style="width: 42px; height: 42px;">
+            <path d="M22,12 h32 l22,22 v50 a8,8 0 0 1 -8,8 h-46 a8,8 0 0 1 -8,-8 v-64 a8,8 0 0 1 8,-8 z" fill="var(--text)"/>
+            <path d="M54,12 v16 a6,6 0 0 0 6,6 h16 z" fill="var(--green)"/>
+            <rect x="32" y="42" width="30" height="8" rx="4" fill="var(--panel)"/>
+            <rect x="32" y="58" width="18" height="8" rx="4" fill="var(--panel)"/>
+            <circle cx="72" cy="72" r="28" fill="var(--panel)"/>
+            <circle cx="72" cy="72" r="24" fill="var(--green)"/>
+            <path d="M68,58 h8 v10 h10 v8 h-10 v10 h-8 v-10 h-10 v-8 h10 z" fill="var(--on-green)"/>
+          </svg>
+        </button>
+        <!-- 懸浮：疊 -->
+        <button class="fab-btn" id="newLinkedBtn">
+          <svg viewBox="0 0 100 100" style="width: 42px; height: 42px;">
+            <path d="M14,14 h30 l20,20 v45 a8,8 0 0 1 -8,8 h-42 a8,8 0 0 1 -8,-8 v-57 a8,8 0 0 1 8,-8 z" fill="var(--text)"/>
+            <path d="M44,14 v16 a6,6 0 0 0 6,6 h16 z" fill="var(--green)"/>
+            <path d="M30,30 h30 l20,20 v45 a8,8 0 0 1 -8,8 h-42 a8,8 0 0 1 -8,-8 v-57 a8,8 0 0 1 8,-8 z" fill="var(--panel)" stroke="var(--panel)" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M30,30 h30 l20,20 v45 a8,8 0 0 1 -8,8 h-42 a8,8 0 0 1 -8,-8 v-57 a8,8 0 0 1 8,-8 z" fill="var(--text)"/>
+            <path d="M60,30 v16 a6,6 0 0 0 6,6 h16 z" fill="var(--green)"/>
+            <rect x="40" y="55" width="26" height="7" rx="3.5" fill="var(--panel)"/>
+            <rect x="40" y="68" width="16" height="7" rx="3.5" fill="var(--panel)"/>
+            <circle cx="74" cy="74" r="26" fill="var(--panel)"/>
+            <circle cx="74" cy="74" r="22" fill="var(--green)"/>
+            <path d="M70,60 h8 v10 h10 v8 h-10 v10 h-8 v-10 h-10 v-8 h10 z" fill="var(--on-green)"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="active-header">
@@ -727,7 +790,10 @@ function openVk(inputEl, layout) {
     vkContainer.classList.add('show');
     reportUiState();
     
-    // 🚀 復活：鍵盤彈出時精準定位防遮擋，滑動畫面至最合適高度
+    // 🚀 改動 D：虛擬鍵盤彈出時，懸浮按鈕自動隱身
+    const fab = $('fabContainer');
+    if(fab) fab.classList.add('hidden');
+    
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
@@ -755,6 +821,10 @@ function closeVk() {
   $('vkContainer').classList.remove('show');
   document.body.style.paddingBottom = '';
   reportUiState();
+  
+  // 🚀 改動 D：虛擬鍵盤收起時，懸浮按鈕恢復顯示
+  const fab = $('fabContainer');
+  if(fab && !window.swipeDragging) fab.classList.remove('hidden');
 }
 
 function handleVkKey(key) {
@@ -889,7 +959,6 @@ function renderActive(){
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 🚀 回歸原生 input，並套用 inputmode="none" 做第一層防禦
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
@@ -1065,7 +1134,10 @@ function initCardSwipe(){
         card.setPointerCapture(e.pointerId);
         window.swipeDragging = true;
         
-        // 🚀 復活：原生 blur() 能在滑動瞬間完美收起鍵盤與焦點
+        // 🚀 改動 D：手指拖曳滑動瞬間，懸浮按鈕立刻隱身防誤觸
+        const fab = document.getElementById('fabContainer');
+        if(fab) fab.classList.add('hidden');
+        
         if (document.activeElement && card.contains(document.activeElement)) {
            document.activeElement.blur();
         }
@@ -1105,7 +1177,14 @@ function initCardSwipe(){
       }
       
       currentX = 0;
-      setTimeout(()=>{ window.swipeDragging = false; }, 50); 
+      setTimeout(()=>{ 
+        window.swipeDragging = false; 
+        // 🚀 改動 D：放開卡片且沒有虛擬鍵盤干擾時，懸浮按鈕歸位
+        const fab = document.getElementById('fabContainer');
+        if(fab && !$('vkContainer').classList.contains('show')) {
+           fab.classList.remove('hidden');
+        }
+      }, 50); 
     }
     
     wrap.addEventListener('pointerdown', onPointerDown);
