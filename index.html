@@ -81,6 +81,13 @@
   }
   .icon-btn:active{transform:scale(0.96);}
 
+  /* 🚀 修改：新增按鈕列階梯式吸頂 */
+  .new-order-row{
+    display:flex;gap:10px;margin-bottom:18px;
+    position:sticky;top:65px;z-index:900;
+    background:var(--bg);padding:10px 0;margin-top:-10px;
+  }
+  
   .new-order-btn{
     flex:1;padding:16px 8px;border-radius:16px;border:2px dashed var(--amber);
     background:transparent;color:var(--amber);font-weight:600;font-size:15px;
@@ -114,7 +121,6 @@
     cursor:pointer;font-family:inherit;
   }
   .trash-restore-btn:active{transform:scale(0.96);}
-  .new-order-row{display:flex;gap:10px;margin-bottom:18px;}
   
   .active-header{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;}
   .active-header h2{font-size:14px;color:var(--muted);font-weight:600;margin:0;}
@@ -254,7 +260,14 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
-  .tabs{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  /* 🚀 修改：導覽列完美凍結吸頂，附加防穿透背景與邊距對齊 */
+  .tabs{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    padding:20px 0 14px; margin:-20px 0 18px;
+    position:sticky;top:0;z-index:1000;background:var(--bg);
+  }
+  
   .tab-group{display:flex;gap:22px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
@@ -367,7 +380,7 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
         <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
-        <!-- 📍 在此處放寬 accept 限制，讓 Android 手機能順利選取本機檔案 -->
+        <!-- 📍 放寬的 CSV 匯入標籤 -->
         <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
       </div>
       <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
