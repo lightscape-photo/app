@@ -526,13 +526,21 @@ let sortAsc = true;
 
 const $ = id => document.getElementById(id);
 
+// 🚀 核心升級：將完整的訂單核心參數傳給 Android 讓懸浮窗能即時心跳
 function syncActiveToAndroid() {
   if (window.AndroidDownloader && window.AndroidDownloader.syncActiveOrders) {
     const list = active.map(o => {
       let no = (o.orderNo || '').replace(/[^A-Za-z0-9]/g, '');
       if (no.length > 3) no = no.slice(-3);
       if (!no) no = '---';
-      return { id: o.id, no: no };
+      return { 
+        id: o.id, 
+        no: no,
+        startTs: o.startTs,
+        basePrice: o.basePrice || 0,
+        linkGroupId: o.linkGroupId || '',
+        linkRole: o.linkRole || ''
+      };
     });
     window.AndroidDownloader.syncActiveOrders(JSON.stringify(list));
   }
@@ -540,6 +548,11 @@ function syncActiveToAndroid() {
 
 window.completeOrderById = function(id) {
   completeOrder(id);
+};
+
+// 🚀 支援從懸浮窗直接把單刷進垃圾桶
+window.cancelOrderById = function(id) {
+  cancelOrder(id);
 };
 
 window.reorderActiveOrders = function(jsonStr) {
@@ -901,7 +914,6 @@ document.addEventListener('visibilitychange', () => {
 
 let pendingNewIds = [];
 
-// 🚀 改為 unshift()，讓新單直接排在最上方
 $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
   active.unshift({ id, basePrice: 0, startTs: Date.now() });
@@ -916,7 +928,6 @@ $('newOrderBtn').addEventListener('click', ()=>{
   }, 50);
 });
 
-// 🚀 改為 unshift()，並確保 A 單在上，B 單在下
 $('newLinkedBtn').addEventListener('click', ()=>{
   const groupId = genId();
   const now = Date.now();
@@ -1059,6 +1070,7 @@ $('activeList').addEventListener('input', e=>{
       }
       saveJSON(KEY_ACTIVE, active);
       updateFeeDisplay(o);
+      syncActiveToAndroid();
     }
   }
   if(ordId){
@@ -1205,7 +1217,6 @@ function renderTrash(){
   }).join('');
 }
 
-// 🚀 改為 unshift()，讓垃圾桶還原的訂單也直接出現在最上面
 $('trashList').addEventListener('click', e=>{
   const btn = e.target.closest('[data-trash-restore]');
   if(!btn) return;
