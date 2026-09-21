@@ -535,6 +535,44 @@ let sortAsc = true;
 
 const $ = id => document.getElementById(id);
 
+// 🚀 情報網：自動打包最新 6 筆末 3 碼單號給 Android 懸浮球
+function syncActiveToAndroid() {
+  if (window.AndroidDownloader && window.AndroidDownloader.syncActiveOrders) {
+    const list = active.map(o => {
+      let no = (o.orderNo || '').replace(/[^A-Za-z0-9]/g, '');
+      if (no.length > 3) no = no.slice(-3);
+      if (!no) no = '---';
+      return { id: o.id, no: no };
+    });
+    window.AndroidDownloader.syncActiveOrders(JSON.stringify(list));
+  }
+}
+
+// 🚀 接收遙控：從 Android 懸浮球雙擊結單
+window.completeOrderById = function(id) {
+  completeOrder(id);
+};
+
+// 🚀 接收遙控：從 Android 懸浮球拖曳排序同步
+window.reorderActiveOrders = function(jsonStr) {
+  try {
+    const idList = JSON.parse(jsonStr);
+    const newActive = [];
+    idList.forEach(id => {
+      const idx = active.findIndex(a => a.id === id);
+      if (idx > -1) {
+        newActive.push(active[idx]);
+        active.splice(idx, 1);
+      }
+    });
+    newActive.push(...active);
+    active = newActive;
+    saveJSON(KEY_ACTIVE, active);
+    renderActive(); 
+    // 不再呼叫 sync 避免迴圈，由 Android 主動保持最新
+  } catch(e) {}
+};
+
 function reportUiState() {
   if (window.AndroidDownloader && window.AndroidDownloader.updateUiState) {
     const vkOpen = $('vkContainer').classList.contains('show');
@@ -729,9 +767,11 @@ function init(){
   renderTrash();
   setInterval(tick, 1000);
   reportUiState();
+  
+  // 初始化發送同步資料給懸浮球
+  syncActiveToAndroid();
 }
 
-/* ================== 雙模虛擬鍵盤引擎 (回歸原生輸入框) ================== */
 let activeVkInput = null;
 let activeVkWrapper = null;
 
@@ -884,6 +924,7 @@ $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
   active.push({ id, basePrice: 0, startTs: Date.now() });
   saveJSON(KEY_ACTIVE, active);
+  syncActiveToAndroid(); // 更新
   pendingNewIds = [id];
   renderActive();
   
@@ -901,6 +942,7 @@ $('newLinkedBtn').addEventListener('click', ()=>{
   active.push({ id: idA, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'primary' });
   active.push({ id: idB, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'secondary' });
   saveJSON(KEY_ACTIVE, active);
+  syncActiveToAndroid(); // 更新
   pendingNewIds = [idA, idB];
   renderActive();
   
@@ -911,8 +953,7 @@ $('newLinkedBtn').addEventListener('click', ()=>{
 });
 
 function renderActive(){
-  const list = $('activeList');
-  $('activeCount').textContent = active.length + ' 單';
+  const list = $('activeList');$('activeCount').textContent = active.length + ' 單';
 
   const prevRects = {};
   list.querySelectorAll('.swipe-card-wrap').forEach(el=>{
@@ -923,14 +964,14 @@ function renderActive(){
     list.innerHTML = '<div class="empty">目前沒有進行中的訂單</div>';
     return;
   }
-  const sorted = [...active].sort((a,b)=>b.startTs-a.startTs);
+  
+  // 🚀 關鍵修復：不再強制排序，直接尊重陣列的自訂順序
   const now0 = Date.now();
-  list.innerHTML = sorted.map(o => {
+  list.innerHTML = active.map(o => {
     const isPrimary = o.linkRole === 'primary';
     const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
     
-    // 🚀 回歸原生 input，並套用 inputmode="none" 做第一層防禦
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
@@ -1049,6 +1090,7 @@ $('activeList').addEventListener('input', e=>{
         e.target.setSelectionRange(cursorPos, cursorPos);
       }
       saveJSON(KEY_ACTIVE, active);
+      syncActiveToAndroid(); // 同步
     }
   }
 });
@@ -1057,16 +1099,10 @@ $('activeList').addEventListener('click', e=>{
   if(window.swipeDragging) return; 
   
   const ordInput = e.target.closest('.ordno-input');
-  if (ordInput) {
-    openVk(ordInput, 'hex');
-    return;
-  }
+  if (ordInput) { openVk(ordInput, 'hex'); return; }
   
   const priceInput = e.target.closest('.price-input');
-  if (priceInput && !priceInput.classList.contains('locked-price')) {
-    openVk(priceInput, 'hex'); 
-    return;
-  }
+  if (priceInput && !priceInput.classList.contains('locked-price')) { openVk(priceInput, 'hex'); return; }
 });
 
 function initCardSwipe(){
@@ -1080,73 +1116,44 @@ function initCardSwipe(){
     let currentX = 0;
 
     function onPointerDown(e){
-      dragging = true;
-      decided = false;
-      cancelled = false;
-      currentX = 0;
-      startX = e.clientX;
-      startY = e.clientY;
-      card.style.transition = 'none';
-      wrap.style.backgroundColor = 'transparent'; 
+      dragging = true; decided = false; cancelled = false; currentX = 0;
+      startX = e.clientX; startY = e.clientY;
+      card.style.transition = 'none'; wrap.style.backgroundColor = 'transparent'; 
     }
     function onPointerMove(e){
       if(!dragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      
+      const dx = e.clientX - startX; const dy = e.clientY - startY;
       if(!decided){
         if(Math.abs(dx) < 10 && Math.abs(dy) < 10) return; 
         decided = true;
-        if(Math.abs(dy) > Math.abs(dx)){
-          cancelled = true;
-          dragging = false;
-          return;
-        }
-        
-        card.setPointerCapture(e.pointerId);
-        window.swipeDragging = true;
-        
-        // 🚀 復活：原生 blur() 能在滑動瞬間完美收起鍵盤與焦點
-        if (document.activeElement && card.contains(document.activeElement)) {
-           document.activeElement.blur();
-        }
+        if(Math.abs(dy) > Math.abs(dx)){ cancelled = true; dragging = false; return; }
+        card.setPointerCapture(e.pointerId); window.swipeDragging = true;
+        if (document.activeElement && card.contains(document.activeElement)) document.activeElement.blur();
         closeVk();
       }
-      
       if(cancelled) return;
       currentX = dx; 
       card.style.transform = `translateX(${currentX}px)`;
-      
-      if (currentX > 0) {
-        wrap.style.backgroundColor = 'var(--green)';
-      } else if (currentX < 0) {
-        wrap.style.backgroundColor = 'var(--red)';
-      }
+      if (currentX > 0) wrap.style.backgroundColor = 'var(--green)';
+      else if (currentX < 0) wrap.style.backgroundColor = 'var(--red)';
     }
     
     function onPointerUp(e){
       if(!dragging) return;
-      dragging = false;
-      if(cancelled) return;
-      
+      dragging = false; if(cancelled) return;
       const maxDist = wrap.clientWidth * 0.25; 
       card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
       
       if(currentX >= maxDist){
-        card.style.transform = `translateX(${wrap.clientWidth}px)`;
-        card.style.opacity = '0';
+        card.style.transform = `translateX(${wrap.clientWidth}px)`; card.style.opacity = '0';
         setTimeout(()=> completeOrder(id), 180);
       } else if(currentX <= -maxDist){
-        card.style.transform = `translateX(-${wrap.clientWidth}px)`;
-        card.style.opacity = '0';
+        card.style.transform = `translateX(-${wrap.clientWidth}px)`; card.style.opacity = '0';
         setTimeout(()=> cancelOrder(id), 180);
       } else {
-        card.style.transform = 'translateX(0)';
-        wrap.style.backgroundColor = 'transparent';
+        card.style.transform = 'translateX(0)'; wrap.style.backgroundColor = 'transparent';
       }
-      
-      currentX = 0;
-      setTimeout(()=>{ window.swipeDragging = false; }, 50); 
+      currentX = 0; setTimeout(()=>{ window.swipeDragging = false; }, 50); 
     }
     
     wrap.addEventListener('pointerdown', onPointerDown);
@@ -1161,29 +1168,18 @@ function completeOrder(id){
   if(idx === -1) return;
   const o = active[idx];
   const endTs = Date.now();
-
-  let toComplete = [o];
-  if (o.linkGroupId) {
-    toComplete = active.filter(a => a.linkGroupId === o.linkGroupId);
-  }
+  let toComplete = o.linkGroupId ? active.filter(a => a.linkGroupId === o.linkGroupId) : [o];
 
   toComplete.forEach(item => {
     const { billedMin, extraMin, extraFee } = calcOrderSubsidy(item, endTs);
     const isSec = item.linkRole === 'secondary';
     
     const record = {
-      id: genId(),
-      orderNo: item.orderNo || '',
-      basePrice: item.basePrice || 0,
-      excludeBaseFromTotal: isSec,
-      startTs: item.startTs,
-      endTs,
-      elapsedMinCeil: billedMin,
-      extraMin: extraMin,
-      extraFee: extraFee,
+      id: genId(), orderNo: item.orderNo || '', basePrice: item.basePrice || 0,
+      excludeBaseFromTotal: isSec, startTs: item.startTs, endTs,
+      elapsedMinCeil: billedMin, extraMin: extraMin, extraFee: extraFee,
       total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
-      linkGroupId: item.linkGroupId,
-      linkRole: item.linkRole
+      linkGroupId: item.linkGroupId, linkRole: item.linkRole
     };
     
     orders.unshift(record);
@@ -1191,13 +1187,9 @@ function completeOrder(id){
     if(rIdx > -1) active.splice(rIdx,1);
   });
 
-  saveJSON(KEY_ACTIVE, active);
-  saveJSON(KEY_ORDERS, orders);
-  
-  closeVk();
-  renderActive();
-  computeTodaySummary();
-  renderDetailTable();
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders);
+  syncActiveToAndroid(); // 同步
+  closeVk(); renderActive(); computeTodaySummary(); renderDetailTable();
 }
 
 function cancelOrder(id){
@@ -1207,12 +1199,9 @@ function cancelOrder(id){
   item.deletedAt = Date.now();
   trashItems.unshift(item);
   active.splice(idx,1);
-  saveJSON(KEY_ACTIVE, active);
-  saveJSON(KEY_TRASH, trashItems);
-  
-  closeVk();
-  renderActive();
-  renderTrash();
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
+  syncActiveToAndroid(); // 同步
+  closeVk(); renderActive(); renderTrash();
 }
 
 function renderTrash(){
@@ -1233,6 +1222,7 @@ function renderTrash(){
     </div>`;
   }).join('');
 }
+
 $('trashList').addEventListener('click', e=>{
   const btn = e.target.closest('[data-trash-restore]');
   if(!btn) return;
@@ -1243,29 +1233,22 @@ $('trashList').addEventListener('click', e=>{
   delete item.deletedAt;
   active.push(item);
   trashItems.splice(idx,1);
-  saveJSON(KEY_ACTIVE, active);
-  saveJSON(KEY_TRASH, trashItems);
-  renderActive();
-  renderTrash();
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
+  syncActiveToAndroid(); // 同步
+  renderActive(); renderTrash();
 });
 
 function showOverlay(id) { $(id).classList.add('show'); reportUiState(); }
 function hideOverlay(id) { $(id).classList.remove('show'); reportUiState(); }
 
 $('clearTrashBtn').addEventListener('click', ()=> showOverlay('confirmClearTrashOverlay'));
-$('confirmClearTrashCancel').addEventListener('click', ()=> hideOverlay('confirmClearTrashOverlay'));$('confirmClearTrashOk').addEventListener('click', ()=>{
-  trashItems = [];
-  saveJSON(KEY_TRASH, trashItems);
-  renderTrash();
-  hideOverlay('confirmClearTrashOverlay');
-});
+$('confirmClearTrashCancel').addEventListener('click', ()=> hideOverlay('confirmClearTrashOverlay'));$('confirmClearTrashOk').addEventListener('click', ()=>{ trashItems = []; saveJSON(KEY_TRASH, trashItems); renderTrash(); hideOverlay('confirmClearTrashOverlay'); });
 
 function updateFeeDisplay(o){
   const feeEl = document.querySelector(`[data-fee="${o.id}"]`);
   if(!feeEl) return;
   const status = getFeeStatus(o, Date.now());
-  feeEl.innerHTML = status.text;
-  feeEl.classList.toggle('over', status.over);
+  feeEl.innerHTML = status.text; feeEl.classList.toggle('over', status.over);
 }
 function tick(){
   if(active.length === 0) return;
@@ -1286,13 +1269,7 @@ function computeTodaySummary(){
 }
 
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
-$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{
-  orders = [];
-  saveJSON(KEY_ORDERS, orders);
-  computeTodaySummary();
-  renderDetailTable();
-  hideOverlay('confirmClearOverlay');
-});
+$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
 
 const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', trash: 'tabTrash', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -1301,11 +1278,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.classList.add('active');
     const tab = btn.getAttribute('data-tab');
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-    $(TAB_ID_MAP[tab]).classList.add('active');
-    
-    // 🚀 當切換到非主頁時，自動隱藏新增按鈕列，讓版面保持乾淨
-    $('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
-    
+    $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     if(tab === 'detail') renderDetailTable();
     if(tab === 'trash') renderTrash();
   });
@@ -1313,14 +1286,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 const KEY_THEME = 'meter_theme';
 function applyTheme(theme){
-  if(theme === 'light' || theme === 'cyberpunk'){
-    document.documentElement.setAttribute('data-theme', theme);
-  }else{
-    document.documentElement.removeAttribute('data-theme');
-  }
-  document.querySelectorAll('.theme-option').forEach(btn=>{
-    btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === theme);
-  });
+  if(theme === 'light' || theme === 'cyberpunk'){ document.documentElement.setAttribute('data-theme', theme); }
+  else{ document.documentElement.removeAttribute('data-theme'); }
+  document.querySelectorAll('.theme-option').forEach(btn=>{ btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === theme); });
   const metaTheme = $('themeColorMeta');
   if(metaTheme){
     const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' };
@@ -1328,76 +1296,43 @@ function applyTheme(theme){
   }
 }
 document.querySelectorAll('.theme-option').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const theme = btn.getAttribute('data-theme-choice');
-    applyTheme(theme);
-    saveJSON(KEY_THEME, theme);
-  });
+  btn.addEventListener('click', ()=>{ const theme = btn.getAttribute('data-theme-choice'); applyTheme(theme); saveJSON(KEY_THEME, theme); });
 });
 
-function dayStart(dateStr){
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.getTime();
-}
+function dayStart(dateStr){ return new Date(dateStr + 'T00:00:00').getTime(); }
 function getExportOrders(){
-  const range = $('exportRange').value;
-  const chronological = [...orders].reverse();
-  if(range === 'today'){
-    const today = new Date().toDateString();
-    return chronological.filter(o => new Date(o.startTs).toDateString() === today);
-  }
+  const range = $('exportRange').value; const chronological = [...orders].reverse();
+  if(range === 'today'){ const today = new Date().toDateString(); return chronological.filter(o => new Date(o.startTs).toDateString() === today); }
   if(range === 'custom'){
-    const startVal = $('rangeStart').value;
-    const endVal = $('rangeEnd').value;
-    if(!startVal || !endVal) return [];
-    const startMs = dayStart(startVal);
-    const endMs = dayStart(endVal) + 24*60*60*1000;
+    const startVal = $('rangeStart').value; const endVal =$('rangeEnd').value; if(!startVal || !endVal) return [];
+    const startMs = dayStart(startVal); const endMs = dayStart(endVal) + 24*60*60*1000;
     return chronological.filter(o => o.startTs >= startMs && o.startTs < endMs);
   }
   return chronological;
 }
 function fmtDateOnly(ts){
-  const d = new Date(ts);
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  return `${mm}/${dd}`;
+  const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
 }
 function fmtDateFull(ts){
-  const d = new Date(ts);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  return `${yyyy}/${mm}/${dd}`;
+  const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
 }
 
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
   if (th) {
     const col = th.getAttribute('data-sort');
-    if (sortCol === col) {
-      sortAsc = !sortAsc;
-    } else {
-      sortCol = col;
-      sortAsc = true;
-    }
+    if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
     renderDetailTable();
   }
 });
 
 function renderDetailTable(){
-  const wrap = $('exportPreviewWrap');
-  let list = getExportOrders();
-  $('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
-  if(list.length === 0){
-    wrap.innerHTML = '<div class="export-empty">這個範圍內沒有紀錄</div>';
-    return;
-  }
+  const wrap = $('exportPreviewWrap'); let list = getExportOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
+  if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這個範圍內沒有紀錄</div>'; return; }
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   
-  let displayList = list.map((o, i) => {
-    return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs };
-  });
+  let displayList = list.map((o, i) => { return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs }; });
 
   if (sortCol) {
     displayList.sort((a, b) => {
@@ -1407,7 +1342,6 @@ function renderDetailTable(){
       else if (sortCol === 'overtime') { valA = a._obj.extraMin; valB = b._obj.extraMin; }
       else if (sortCol === 'base') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.basePrice || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.basePrice || 0); }
       else if (sortCol === 'fee') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.extraFee || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.extraFee || 0); }
-
       if (valA < valB) return sortAsc ? -1 : 1;
       if (valA > valB) return sortAsc ? 1 : -1;
       return 0;
@@ -1418,20 +1352,13 @@ function renderDetailTable(){
     <div class="export-table-scroll">
       <table class="export-table">
         <thead><tr>
-          <th data-sort="id" class="sortable">編號</th>
-          <th>單號</th>
-          <th>日期</th>
-          <th>開始</th>
-          <th>結束</th>
-          <th data-sort="elapsed" class="sortable">用時</th>
-          <th data-sort="overtime" class="sortable">超時</th>
-          <th data-sort="base" class="sortable">單價</th>
-          <th data-sort="fee" class="sortable">差額</th>
+          <th data-sort="id" class="sortable">編號</th><th>單號</th><th>日期</th><th>開始</th><th>結束</th>
+          <th data-sort="elapsed" class="sortable">用時</th><th data-sort="overtime" class="sortable">超時</th>
+          <th data-sort="base" class="sortable">單價</th><th data-sort="fee" class="sortable">差額</th>
         </tr></thead>
         <tbody>
           ${displayList.map(item => {
-            const o = item._obj;
-            const t = getExactTimes(o);
+            const o = item._obj; const t = getExactTimes(o);
             const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
             return `
             <tr>
@@ -1440,323 +1367,142 @@ function renderDetailTable(){
               <td>${fmtDateOnly(o.startTs)}</td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="HH:MM"></td>
               <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input time-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="HH:MM"></td>
-              <td>${t.elapsed}</td>
-              <td>${t.over}</td>
+              <td>${t.elapsed}</td><td>${t.over}</td>
               <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input base-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
               <td>${displayFee}</td>
-            </tr>
-            `;
+            </tr>`;
           }).join('')}
         </tbody>
-        <tfoot>
-          <tr><td colspan="7">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr>
-        </tfoot>
+        <tfoot><tr><td colspan="7">總計</td><td>${plainNum(baseSum)}</td><td>${plainNum(feeSum)}</td></tr></tfoot>
       </table>
-    </div>
-    <p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
+    </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
   `;
 }
-let longPressTimer = null;
-let longPressStartX = 0, longPressStartY = 0;
-let pendingDeleteRowId = null;
-
-function cancelLongPress(){
-  if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; }
-}
-$('exportPreviewWrap').addEventListener('pointerdown', e=>{
-  const cell = e.target.closest('.row-id-cell');
-  if(!cell) return;
-  const id = cell.getAttribute('data-row-id');
-  const displayIdx = cell.textContent.trim();
-  longPressStartX = e.clientX;
-  longPressStartY = e.clientY;
-  longPressTimer = setTimeout(()=>{
-    longPressTimer = null;
-    openDeleteRowConfirm(id, displayIdx);
-  }, 600);
-});
-$('exportPreviewWrap').addEventListener('pointerup', cancelLongPress);
-$('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);$('exportPreviewWrap').addEventListener('pointermove', e=>{
+let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
+function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
+$('exportPreviewWrap').addEventListener('pointerdown', e=>{   const cell = e.target.closest('.row-id-cell'); if(!cell) return;   longPressStartX = e.clientX; longPressStartY = e.clientY;   longPressTimer = setTimeout(()=>{ longPressTimer = null; openDeleteRowConfirm(cell.getAttribute('data-row-id'), cell.textContent.trim()); }, 600); });$('exportPreviewWrap').addEventListener('pointerup', cancelLongPress); $('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);$('exportPreviewWrap').addEventListener('pointermove', e=>{
   if(!longPressTimer) return;
-  const dx = Math.abs(e.clientX - longPressStartX);
-  const dy = Math.abs(e.clientY - longPressStartY);
-  if(dx > 10 || dy > 10) cancelLongPress();
+  if(Math.abs(e.clientX - longPressStartX) > 10 || Math.abs(e.clientY - longPressStartY) > 10) cancelLongPress();
 });
 function openDeleteRowConfirm(id, displayIdx){
-  const order = orders.find(o=>o.id===id);
-  if(!order) return;
-  pendingDeleteRowId = id;
-  $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`;
-  showOverlay('confirmDeleteRowOverlay');
+  if(!orders.find(o=>o.id===id)) return;
+  pendingDeleteRowId = id; $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`; showOverlay('confirmDeleteRowOverlay');
 }
-$('confirmDeleteRowCancel').addEventListener('click', ()=>{   pendingDeleteRowId = null;   hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
-  if(pendingDeleteRowId){
-    orders = orders.filter(o=>o.id!==pendingDeleteRowId);
-    saveJSON(KEY_ORDERS, orders);
-    computeTodaySummary();
-    renderDetailTable();
-  }
-  pendingDeleteRowId = null;
-  hideOverlay('confirmDeleteRowOverlay');
+$('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
+  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); }
+  pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
 
 $('exportPreviewWrap').addEventListener('input', e=>{
-  const ordnoId = e.target.getAttribute('data-edit-ordno');
-  if(!ordnoId) return;
+  const ordnoId = e.target.getAttribute('data-edit-ordno'); if(!ordnoId) return;
   const upper = e.target.value.toUpperCase();
-  if(e.target.value !== upper){
-    const cursorPos = e.target.selectionStart;
-    e.target.value = upper;
-    e.target.setSelectionRange(cursorPos, cursorPos);
-  }
+  if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
 });
 $('exportPreviewWrap').addEventListener('change', e=>{
-  const baseId = e.target.getAttribute('data-edit-base');
-  const ordnoId = e.target.getAttribute('data-edit-ordno');
-  const startId = e.target.getAttribute('data-edit-start');
-  const endId = e.target.getAttribute('data-edit-end');
-
+  const baseId = e.target.getAttribute('data-edit-base'); const ordnoId = e.target.getAttribute('data-edit-ordno');
+  const startId = e.target.getAttribute('data-edit-start'); const endId = e.target.getAttribute('data-edit-end');
   if(baseId){
     const order = orders.find(o => o.id === baseId);
     if(order){
-      const newVal = parseFloat(e.target.value) || 0;
-      order.basePrice = newVal;
-      const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
-      order.extraMin = extraMin;
-      order.extraFee = extraFee;
-      order.total = newVal + order.extraFee;
-      saveJSON(KEY_ORDERS, orders);
-      computeTodaySummary();
-      renderDetailTable();
+      order.basePrice = parseFloat(e.target.value) || 0; const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
+      order.extraMin = extraMin; order.extraFee = extraFee; order.total = order.basePrice + order.extraFee;
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
     }
     return;
   }
-
   if(ordnoId){
     const order = orders.find(o => o.id === ordnoId);
-    if(order){
-      order.orderNo = e.target.value.toUpperCase();
-      saveJSON(KEY_ORDERS, orders);
-      renderDetailTable();
-    }
+    if(order){ order.orderNo = e.target.value.toUpperCase(); saveJSON(KEY_ORDERS, orders); renderDetailTable(); }
     return;
   }
-
   if(startId || endId){
-    const id = startId || endId;
-    const order = orders.find(o => o.id === id);
-    if(!order) return;
+    const id = startId || endId; const order = orders.find(o => o.id === id); if(!order) return;
     const parsed = parseTimeInput(e.target.value);
     if(!parsed){
-      const err = $('editTimeError');
-      err.textContent = '時間格式看不懂，請輸入像 14:30 或 1430 這樣的格式，已還原修改';
-      err.style.display = 'block';
-      setTimeout(()=>{ err.style.display = 'none'; }, 3000);
-      renderDetailTable();
-      return;
+      const err = $('editTimeError'); err.textContent = '時間格式看不懂，請輸入像 14:30 或 1430 這樣的格式，已還原修改';
+      err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
     }
-    const { h, m } = parsed;
-
-    let newStartTs = order.startTs;
-    let newEndTs = order.endTs;
-    if(startId){
-      const d = new Date(order.startTs);
-      d.setHours(h, m, 0, 0);
-      newStartTs = d.getTime();
-    }else{
-      const d = new Date(order.endTs);
-      d.setHours(h, m, 0, 0);
-      newEndTs = d.getTime();
-    }
-
+    let newStartTs = order.startTs; let newEndTs = order.endTs;
+    if(startId){ const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime(); }
+    else{ const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime(); }
     if(newEndTs <= newStartTs){
-      const err = $('editTimeError');
-      err.textContent = '完成時間必須晚於開始時間，已還原修改';
-      err.style.display = 'block';
-      setTimeout(()=>{ err.style.display = 'none'; }, 3000);
-      renderDetailTable();
-      return;
+      const err = $('editTimeError'); err.textContent = '完成時間必須晚於開始時間，已還原修改';
+      err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
     }
-
-    let group = [order];
-    if (order.linkGroupId) {
-      group = orders.filter(o => o.linkGroupId === order.linkGroupId);
-    }
-    
+    let group = order.linkGroupId ? orders.filter(o => o.linkGroupId === order.linkGroupId) : [order];
     group.forEach(go => {
-      go.startTs = newStartTs;
-      go.endTs = newEndTs;
-      const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
-      go.elapsedMinCeil = billedMin;
-      go.extraMin = extraMin;
-      go.extraFee = extraFee;
+      go.startTs = newStartTs; go.endTs = newEndTs; const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
+      go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
       go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
     });
-
-    saveJSON(KEY_ORDERS, orders);
-    computeTodaySummary();
-    renderDetailTable();
+    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
   }
 });
 
-$('exportRange').addEventListener('change', ()=>{
-  $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none';
-  renderDetailTable();
-});
+$('exportRange').addEventListener('change', ()=>{ $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none'; renderDetailTable(); });
 $('rangeStart').addEventListener('change', renderDetailTable);$('rangeEnd').addEventListener('change', renderDetailTable);
 
-function csvEscape(v){
-  const s = String(v ?? '');
-  return '"' + s.replace(/"/g,'""') + '"';
-}
+function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 $('exportCsvBtn').addEventListener('click', ()=>{
-  const list = getExportOrders();
-  if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
-  
+  const list = getExportOrders(); if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用'];
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
-    const outElapsed = t.elapsed;
-    const outOver = t.over === '-' ? '' : t.over;
-    const outBase = o.excludeBaseFromTotal ? '' : o.basePrice;
-    const outFee = o.excludeBaseFromTotal ? '' : (o.extraFee === 0 ? '' : o.extraFee);
-
-    return [
-      i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), outElapsed, outOver, outBase, outFee, o.excludeBaseFromTotal ? '是' : ''
-    ];
+    return [ i+1, o.orderNo || '', fmtDateFull(o.startTs), fmtHHMM(o.startTs), fmtHHMM(o.endTs), t.elapsed, t.over === '-' ? '' : t.over, o.excludeBaseFromTotal ? '' : o.basePrice, o.excludeBaseFromTotal ? '' : (o.extraFee === 0 ? '' : o.extraFee), o.excludeBaseFromTotal ? '是' : '' ];
   });
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   const totalRow = ['','總計','','','','','', baseSum.toFixed(1), feeSum.toFixed(1), ''];
-  
   const csv = '\uFEFF' + [header, ...rows, totalRow].map(r => r.map(csvEscape).join(',')).join('\r\n');
-  
-  if (window.AndroidDownloader) {
-      const base64 = btoa(unescape(encodeURIComponent(csv)));
-      window.AndroidDownloader.getBase64FromBlobData("data:text/csv;base64," + base64, 'text/csv');
-  } else {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const now = new Date();
-      const fname = `外送紀錄_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
-      a.href = url;
-      a.download = fname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  if (window.AndroidDownloader) { window.AndroidDownloader.getBase64FromBlobData("data:text/csv;base64," + btoa(unescape(encodeURIComponent(csv))), 'text/csv'); } 
+  else {
+      const a = document.createElement('a'); const now = new Date();
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      a.download = `外送紀錄_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 });
 
-function showImportStatus(msg){
-  const el = $('importStatus');
-  el.textContent = msg;
-  setTimeout(()=>{ if(el.textContent === msg) el.textContent = ''; }, 5000);
-}
+function showImportStatus(msg){ const el = $('importStatus'); el.textContent = msg; setTimeout(()=>{ if(el.textContent === msg) el.textContent = ''; }, 5000); }
 function parseCsvLine(line){
-  const result = [];
-  let cur = '';
-  let inQuotes = false;
+  const result = []; let cur = ''; let inQuotes = false;
   for(let i = 0; i < line.length; i++){
     const ch = line[i];
-    if(inQuotes){
-      if(ch === '"'){
-        if(line[i+1] === '"'){ cur += '"'; i++; }
-        else { inQuotes = false; }
-      }else{
-        cur += ch;
-      }
-    }else{
-      if(ch === '"'){ inQuotes = true; }
-      else if(ch === ','){ result.push(cur); cur = ''; }
-      else { cur += ch; }
-    }
+    if(inQuotes){ if(ch === '"'){ if(line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; } }else{ cur += ch; } }
+    else{ if(ch === '"'){ inQuotes = true; } else if(ch === ','){ result.push(cur); cur = ''; } else { cur += ch; } }
   }
-  result.push(cur);
-  return result;
-}
-function parseCsvText(text){
-  const clean = text.replace(/^\uFEFF/, '');
-  const lines = clean.split(/\r\n|\n/).filter(l => l.trim().length > 0);
-  return lines.map(parseCsvLine);
+  result.push(cur); return result;
 }
 $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$('importCsvInput').addEventListener('change', e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+  const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = ()=>{
     try{
-      const rows = parseCsvText(reader.result);
+      const rows = reader.result.replace(/^\uFEFF/, '').split(/\r\n|\n/).filter(l => l.trim().length > 0).map(parseCsvLine);
       if(rows.length < 2){ showImportStatus('CSV內容是空的'); e.target.value=''; return; }
-      const dataRows = rows.slice(1);
-      const currentYear = new Date().getFullYear();
-      const imported = [];
-      dataRows.forEach(r=>{
-        if(r.length < 8) return;
-        const orderNo = r[1];
-        if(orderNo === '總計') return;
-        const dateStr = r[2];
-        const startStr = r[3];
-        const endStr = r[4];
-        
-        const isNewFormat = (r.length >= 10 && (r[9] === '是' || r[9] === '' || r[8] === '是' || r[8] === '')); 
-        let basePriceIdx = isNewFormat ? 7 : 6;
-        let extraFeeIdx = isNewFormat ? 8 : 7;
-        let excludeIdx = isNewFormat ? 9 : 8;
-        
-        const bpStr = r[basePriceIdx];
-        const basePrice = (bpStr === '-' || !bpStr) ? 0 : parseFloat(bpStr) || 0;
-        
-        const excludeBaseFromTotal = r[excludeIdx] === '是' || r[excludeIdx] === '1' || r[excludeIdx] === 'Y';
-        const dateParts = dateStr.split('/').map(n => parseInt(n));
+      const currentYear = new Date().getFullYear(); const imported = [];
+      rows.slice(1).forEach(r=>{
+        if(r.length < 8 || r[1] === '總計') return;
+        const isNew = (r.length >= 10 && (r[9] === '是' || r[9] === '' || r[8] === '是' || r[8] === '')); 
+        const bpStr = r[isNew ? 7 : 6]; const basePrice = (bpStr === '-' || !bpStr) ? 0 : parseFloat(bpStr) || 0;
+        const exclude = r[isNew ? 9 : 8] === '是' || r[isNew ? 9 : 8] === '1' || r[isNew ? 9 : 8] === 'Y';
+        const dateParts = r[2].split('/').map(n => parseInt(n));
         let yyyy, mm, dd;
-        if(dateParts.length === 3){
-          [yyyy, mm, dd] = dateParts;
-        }else if(dateParts.length === 2){
-          [mm, dd] = dateParts;
-          yyyy = currentYear;
-        }else{
-          return;
-        }
+        if(dateParts.length === 3){ [yyyy, mm, dd] = dateParts; }else if(dateParts.length === 2){ [mm, dd] = dateParts; yyyy = currentYear; }else return;
         if(!yyyy || !mm || !dd) return;
-        const [sh, sm] = startStr.split(':').map(n => parseInt(n));
-        const [eh, em] = endStr.split(':').map(n => parseInt(n));
+        const [sh, sm] = r[3].split(':').map(n => parseInt(n)); const [eh, em] = r[4].split(':').map(n => parseInt(n));
         const startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime();
         let endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
         if(endTs <= startTs) endTs += 24*60*60*1000;
-        
         const billedMin = getBilledMinutes(startTs, endTs);
-        
-        const isLinked = !excludeBaseFromTotal ? false : true; 
-        let covered = getCoveredMin(basePrice, isLinked);
-        const actualExtraMin = excludeBaseFromTotal ? 0 : Math.max(0, billedMin - covered);
-        
-        const efStr = r[extraFeeIdx];
-        const extraFee = (efStr === '-' || !efStr) ? 0 : parseFloat(efStr) || 0;
-        
-        imported.push({
-          id: genId(),
-          orderNo: orderNo || '',
-          basePrice,
-          excludeBaseFromTotal,
-          startTs, endTs,
-          elapsedMinCeil: billedMin, 
-          extraMin: actualExtraMin, 
-          extraFee,
-          total: (excludeBaseFromTotal ? 0 : basePrice) + extraFee
-        });
+        const actualExtraMin = exclude ? 0 : Math.max(0, billedMin - getCoveredMin(basePrice, exclude ? true : false));
+        const efStr = r[isNew ? 8 : 7]; const extraFee = (efStr === '-' || !efStr) ? 0 : parseFloat(efStr) || 0;
+        imported.push({ id: genId(), orderNo: r[1] || '', basePrice, excludeBaseFromTotal: exclude, startTs, endTs, elapsedMinCeil: billedMin, extraMin: actualExtraMin, extraFee, total: (exclude ? 0 : basePrice) + extraFee });
       });
-      if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄，請確認CSV格式'); e.target.value=''; return; }
-      orders = orders.concat(imported);
-      orders.sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders);
-      computeTodaySummary();
-      renderDetailTable();
-      showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
-    }catch(err){
-      showImportStatus('匯入失敗，請確認CSV格式是否正確');
-    }
+      if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
+      orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
+    }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
   };
   reader.readAsText(file, 'UTF-8');
@@ -1764,11 +1510,7 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
 
 init();
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  });
-}
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }); }
 </script>
 </body>
 </html>
