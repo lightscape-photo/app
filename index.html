@@ -64,7 +64,6 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   
-  /* 🚀 封印系統邊緣回彈效果 */
   html,body{
     margin:0;padding:0;
     overscroll-behavior-y: none;
@@ -79,7 +78,6 @@
     overflow-x:hidden;
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
-  /* 🚀 移除上方 padding，交給 top-sticky-zone 管理 */
   .app{width:100%;max-width:480px;padding:0 16px 60px;}
   
   .icon-btn{
@@ -88,14 +86,13 @@
   }
   .icon-btn:active{transform:scale(0.96);}
 
-  /* 🚀 一體化吸頂防護罩 (包含導覽列與按鈕) */
   .top-sticky-zone {
     position: sticky;
     top: 0;
     z-index: 1000;
     background: var(--bg);
     padding-top: 20px;
-    padding-bottom: 18px; /* 用 padding 取代 margin，確保底色完美覆蓋防穿透 */
+    padding-bottom: 18px; 
     margin-bottom: 0;
   }
 
@@ -103,13 +100,11 @@
     display:flex;align-items:flex-end;justify-content:space-between;
     border-bottom:1px solid var(--border);
     padding-bottom:14px;
-    /* 取消原本混亂的 margin 設定 */
   }
 
   .new-order-row{
     display:flex;gap:10px;
     padding-top:18px;
-    /* 取消原本的 sticky 屬性，交給外層 top-sticky-zone 統一吸頂 */
   }
 
   .new-order-btn{
@@ -313,7 +308,6 @@
   .theme-option-label{font-size:13px;color:var(--text);font-weight:600;text-align:center;line-height:1.5;}
   .theme-option-sub{font-size:11px;color:var(--muted);font-weight:400;}
 
-  /* 雙模虛擬鍵盤專屬 CSS */
   .vk-container {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
     background: var(--panel); border-top: 1px solid var(--border);
@@ -339,7 +333,6 @@
 <body>
 <div class="app">
 
-  <!-- 🚀 將導覽列與按鈕包裝在一體化的吸頂區塊內 -->
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
@@ -351,7 +344,6 @@
       <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
     </div>
 
-    <!-- 按鈕列放入一體化防護罩中 -->
     <div class="new-order-row" id="stickyNewOrderRow">
       <button class="new-order-btn" id="newOrderBtn">＋ 新增一單</button>
       <button class="linked-btn" id="newLinkedBtn">＋ 新增疊單</button>
@@ -471,7 +463,6 @@
   </div>
 </div>
 
-<!-- 雙模專屬虛擬鍵盤區 -->
 <div id="vkContainer" class="vk-container">
   <div id="vkNumpad" class="vk-layout" style="display:none;">
     <div class="vk-row">
@@ -535,7 +526,6 @@ let sortAsc = true;
 
 const $ = id => document.getElementById(id);
 
-// 🚀 情報網：自動打包最新 6 筆末 3 碼單號給 Android 懸浮球
 function syncActiveToAndroid() {
   if (window.AndroidDownloader && window.AndroidDownloader.syncActiveOrders) {
     const list = active.map(o => {
@@ -548,12 +538,10 @@ function syncActiveToAndroid() {
   }
 }
 
-// 🚀 接收遙控：從 Android 懸浮球雙擊結單
 window.completeOrderById = function(id) {
   completeOrder(id);
 };
 
-// 🚀 接收遙控：從 Android 懸浮球拖曳排序同步
 window.reorderActiveOrders = function(jsonStr) {
   try {
     const idList = JSON.parse(jsonStr);
@@ -569,7 +557,6 @@ window.reorderActiveOrders = function(jsonStr) {
     active = newActive;
     saveJSON(KEY_ACTIVE, active);
     renderActive(); 
-    // 不再呼叫 sync 避免迴圈，由 Android 主動保持最新
   } catch(e) {}
 };
 
@@ -767,8 +754,6 @@ function init(){
   renderTrash();
   setInterval(tick, 1000);
   reportUiState();
-  
-  // 初始化發送同步資料給懸浮球
   syncActiveToAndroid();
 }
 
@@ -800,7 +785,6 @@ function openVk(inputEl, layout) {
     vkContainer.classList.add('show');
     reportUiState();
     
-    // 🚀 復活：鍵盤彈出時精準定位防遮擋，滑動畫面至最合適高度
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
@@ -909,22 +893,20 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// 🚀 背景焦點防護：當 App 退到背景時，主動收合鍵盤並清除焦點，防止系統喚醒原生鍵盤
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     closeVk();
   }
 });
 
-/* ======================================================= */
-
 let pendingNewIds = [];
 
+// 🚀 改為 unshift()，讓新單直接排在最上方
 $('newOrderBtn').addEventListener('click', ()=>{
   const id = genId();
-  active.push({ id, basePrice: 0, startTs: Date.now() });
+  active.unshift({ id, basePrice: 0, startTs: Date.now() });
   saveJSON(KEY_ACTIVE, active);
-  syncActiveToAndroid(); // 更新
+  syncActiveToAndroid();
   pendingNewIds = [id];
   renderActive();
   
@@ -934,15 +916,16 @@ $('newOrderBtn').addEventListener('click', ()=>{
   }, 50);
 });
 
+// 🚀 改為 unshift()，並確保 A 單在上，B 單在下
 $('newLinkedBtn').addEventListener('click', ()=>{
   const groupId = genId();
   const now = Date.now();
   const idA = genId();
   const idB = genId();
-  active.push({ id: idA, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'primary' });
-  active.push({ id: idB, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'secondary' });
+  active.unshift({ id: idB, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'secondary' });
+  active.unshift({ id: idA, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'primary' });
   saveJSON(KEY_ACTIVE, active);
-  syncActiveToAndroid(); // 更新
+  syncActiveToAndroid();
   pendingNewIds = [idA, idB];
   renderActive();
   
@@ -965,7 +948,6 @@ function renderActive(){
     return;
   }
   
-  // 🚀 關鍵修復：不再強制排序，直接尊重陣列的自訂順序
   const now0 = Date.now();
   list.innerHTML = active.map(o => {
     const isPrimary = o.linkRole === 'primary';
@@ -1090,7 +1072,7 @@ $('activeList').addEventListener('input', e=>{
         e.target.setSelectionRange(cursorPos, cursorPos);
       }
       saveJSON(KEY_ACTIVE, active);
-      syncActiveToAndroid(); // 同步
+      syncActiveToAndroid(); 
     }
   }
 });
@@ -1188,7 +1170,7 @@ function completeOrder(id){
   });
 
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders);
-  syncActiveToAndroid(); // 同步
+  syncActiveToAndroid(); 
   closeVk(); renderActive(); computeTodaySummary(); renderDetailTable();
 }
 
@@ -1200,7 +1182,7 @@ function cancelOrder(id){
   trashItems.unshift(item);
   active.splice(idx,1);
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
-  syncActiveToAndroid(); // 同步
+  syncActiveToAndroid(); 
   closeVk(); renderActive(); renderTrash();
 }
 
@@ -1223,6 +1205,7 @@ function renderTrash(){
   }).join('');
 }
 
+// 🚀 改為 unshift()，讓垃圾桶還原的訂單也直接出現在最上面
 $('trashList').addEventListener('click', e=>{
   const btn = e.target.closest('[data-trash-restore]');
   if(!btn) return;
@@ -1231,10 +1214,10 @@ $('trashList').addEventListener('click', e=>{
   if(idx === -1) return;
   const item = trashItems[idx];
   delete item.deletedAt;
-  active.push(item);
+  active.unshift(item);
   trashItems.splice(idx,1);
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
-  syncActiveToAndroid(); // 同步
+  syncActiveToAndroid(); 
   renderActive(); renderTrash();
 });
 
