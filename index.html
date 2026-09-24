@@ -387,6 +387,7 @@
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
+        <!-- 🚀 確保分頁順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定 -->
         <button class="tab-btn active" data-tab="main">主頁</button>
         <button class="tab-btn" data-tab="detail">明細</button>
         <button class="tab-btn" data-tab="weekly">週報</button>
@@ -424,24 +425,18 @@
     </div>
   </div>
 
-  <!-- 🚀 明細分頁 (已還原為乾淨下拉選單) -->
   <div id="tabDetail" class="tab-panel">
-    <div class="settings-row" style="flex-wrap:wrap;margin-bottom:12px;">
-      <label>範圍</label>
-      <select id="exportRange" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;font-size:14px;">
-        <option value="today">今天</option>
-        <option value="all">全部歷史</option>
-        <option value="custom">自訂日期範圍</option>
-      </select>
+    <!-- 🚀 極簡單日模式切換列 (拔除多餘選單) -->
+    <div class="settings-row" style="justify-content:center; gap:16px; margin-bottom:12px;">
+      <button class="icon-btn" id="prevDayBtn" style="width:32px;height:32px;">&lt;</button>
+      <input type="date" id="singleDateInput" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
+      <button class="icon-btn" id="nextDayBtn" style="width:32px;height:32px;">&gt;</button>
     </div>
-    <div class="settings-row" id="customDateRow" style="display:none;margin-bottom:12px;">
-      <input type="date" id="rangeStart" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
-      <span style="color:var(--muted);">至</span>
-      <input type="date" id="rangeEnd" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
-    </div>
+    
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
       <div style="display:flex;gap:8px;align-items:center;">
+        <!-- 🚀 無損全局匯出按鈕 -->
         <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
         <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
         <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
@@ -1001,6 +996,9 @@ function init(){
   if(migrated) saveJSON(KEY_ORDERS, orders);
   applyTheme(loadJSON(KEY_THEME, 'light'));
   
+  // 🚀 初始化明細單日模式的日期
+  $('singleDateInput').value = formatDateInput(new Date());
+
   renderActive();
   computeTodaySummary();
   computeWeeklyData();
@@ -1357,23 +1355,37 @@ document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{ const theme = btn.getAttribute('data-theme-choice'); applyTheme(theme); saveJSON(KEY_THEME, theme); });
 });
 
-function dayStart(dateStr){ return new Date(dateStr + 'T00:00:00').getTime(); }
-
-function getExportOrders(){
-  const range = $('exportRange').value; const chronological = [...orders].reverse();
-  if(range === 'today'){ const today = new Date().toDateString(); return chronological.filter(o => new Date(o.startTs).toDateString() === today); }
-  if(range === 'custom'){
-    const startVal = $('rangeStart').value; const endVal =$('rangeEnd').value; if(!startVal || !endVal) return [];
-    const startMs = dayStart(startVal); const endMs = dayStart(endVal) + 24*60*60*1000;
-    return chronological.filter(o => o.startTs >= startMs && o.startTs < endMs);
-  }
-  return chronological;
+// 🚀 日期格式化助手 
+function formatDateInput(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-$('exportRange').addEventListener('change', ()=>{ 
-  $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none'; 
-  renderDetailTable(); 
-});
+// 🚀 單日模式切換控制
+function changeSingleDay(offset) {
+  const parts = $('singleDateInput').value.split('-');
+  if(parts.length !== 3) return;
+  const current = new Date(parts[0], parts[1]-1, parts[2]);
+  current.setDate(current.getDate() + offset);
+  $('singleDateInput').value = formatDateInput(current);
+  renderDetailTable();
+}
+$('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));
+$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));$('singleDateInput').addEventListener('change', renderDetailTable);
+
+// 🚀 明細表：只顯示選擇的單日
+function getDisplayOrders(){
+  const dVal = $('singleDateInput').value;
+  if(!dVal) return [];
+  const targetD = new Date(dVal);
+  const targetY = targetD.getFullYear(); const targetM = targetD.getMonth(); const targetDt = targetD.getDate();
+  return [...orders].reverse().filter(o => {
+    const od = new Date(o.startTs);
+    return od.getFullYear() === targetY && od.getMonth() === targetM && od.getDate() === targetDt;
+  });
+}
 
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
@@ -1384,8 +1396,8 @@ $('exportPreviewWrap').addEventListener('click', e => {
 });
 
 function renderDetailTable(){
-  const wrap = $('exportPreviewWrap'); let list = getExportOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
-  if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這個範圍內沒有紀錄</div>'; return; }
+  const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
+  if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這天沒有任何紀錄</div>'; return; }
   const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
   const feeSum = list.reduce((s,o)=>s+o.extraFee,0);
   
@@ -1497,11 +1509,11 @@ $('exportPreviewWrap').addEventListener('change', e=>{
   }
 });
 
-$('rangeStart').addEventListener('change', renderDetailTable);$('rangeEnd').addEventListener('change', renderDetailTable);
-
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
+// 🚀 全局無損備份：無視選擇日期，一律匯出所有歷史資料
 $('exportCsvBtn').addEventListener('click', ()=>{
-  const list = getExportOrders(); if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
+  const list = [...orders].reverse();
+  if(list.length === 0){ alert('目前沒有任何紀錄可以匯出'); return; }
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用','系統開始戳','系統結束戳'];
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
