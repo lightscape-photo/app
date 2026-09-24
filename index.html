@@ -86,6 +86,7 @@
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
   }
   .icon-btn:active{transform:scale(0.96);}
 
@@ -334,7 +335,7 @@
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
-  /* 🚀 質感升級：高階數據儀表板與雙色堆疊圖表 */
+  /* 🚀 週報高階數據看板 */
   .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
@@ -349,22 +350,17 @@
   .metric-card.main .metric-val { font-size:38px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:14px; }
 
-  .chart-area { position:relative; width:100%; height:220px; display:flex; align-items:flex-end; padding-bottom:30px; border-bottom:1px dashed var(--border); margin-bottom:16px; }
-  .chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative; z-index:2; cursor:pointer; }
+  /* 🚀 圖表防重疊分離排版 */
+  .chart-area { position:relative; width:100%; height:220px; display:flex; margin-bottom:16px; }
+  .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
+  .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
-  /* 雙色堆疊柱體設計 */
-  .chart-stack { width:65%; display:flex; flex-direction:column; justify-content:flex-end; border-radius:6px 6px 0 0; overflow:hidden; transition: height 0.3s ease, opacity 0.2s ease; position:relative; background:var(--panel-2);}
-  .chart-bar-fee { width:100%; background:var(--amber); transition:height 0.3s ease;}
-  .chart-bar-base { width:100%; background:var(--chart-blue); transition:height 0.3s ease;}
+  .chart-bar-zone { flex:1; display:flex; align-items:flex-end; justify-content:center; border-bottom:1px dashed var(--border); }
+  .chart-bar { width:65%; background:var(--chart-blue); border-radius:4px 4px 0 0; transition: height 0.3s ease; }
   
-  .chart-area.has-selection .chart-col:not(.active) .chart-stack { opacity: 0.3; }
-  
-  .chart-label-group { position:absolute; bottom:-24px; text-align:center; width:100%; }
-  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; }
-  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; }
-  
-  .insight-bar { display:flex; align-items:center; justify-content:center; gap:8px; background:var(--green-dim); color:var(--green); padding:12px 16px; border-radius:12px; font-size:13px; font-weight:600; margin-bottom:20px; animation: fadeIn 0.3s ease;}
-  @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+  .chart-label-group { height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:4px; }
+  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
+  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; line-height:1.2; }
 
   /* 歷史週數選取清單 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
@@ -391,9 +387,10 @@
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
+        <!-- 🚀 更新分頁順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定 -->
         <button class="tab-btn active" data-tab="main">主頁</button>
-        <button class="tab-btn" data-tab="weekly">週報</button>
         <button class="tab-btn" data-tab="detail">明細</button>
+        <button class="tab-btn" data-tab="weekly">週報</button>
         <button class="tab-btn" data-tab="settings">設定</button>
       </div>
       <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
@@ -428,7 +425,40 @@
     </div>
   </div>
 
-  <!-- 🚀 全新高質感數據儀表板週報 -->
+  <div id="tabDetail" class="tab-panel">
+    <div class="settings-row" style="flex-wrap:wrap;margin-bottom:12px;">
+      <label>範圍</label>
+      <select id="exportRange" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;font-size:14px;">
+        <option value="single">單日模式</option>
+        <option value="all">全部歷史</option>
+        <option value="custom">自訂日期範圍</option>
+      </select>
+    </div>
+    <!-- 🚀 單日模式前後切換列 -->
+    <div class="settings-row" id="singleDateRow" style="justify-content:center; gap:16px; margin-bottom:12px;">
+      <button class="icon-btn" id="prevDayBtn" style="width:32px;height:32px;">&lt;</button>
+      <input type="date" id="singleDateInput" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
+      <button class="icon-btn" id="nextDayBtn" style="width:32px;height:32px;">&gt;</button>
+    </div>
+    
+    <div class="settings-row" id="customDateRow" style="display:none;margin-bottom:12px;">
+      <input type="date" id="rangeStart" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
+      <span style="color:var(--muted);">至</span>
+      <input type="date" id="rangeEnd" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
+    </div>
+    
+    <div id="exportPreviewWrap"></div>
+    <div class="history-actions">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
+        <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
+        <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
+      </div>
+      <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
+    </div>
+    <p id="importStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
+  </div>
+
   <div id="tabWeekly" class="tab-panel">
     <div class="week-header">
       <button class="icon-btn" id="prevWeekBtn">&lt;</button>
@@ -465,39 +495,8 @@
     <div class="chart-area" id="mainChartWrap">
       <!-- 柱狀圖由 JS 注入 -->
     </div>
-
-    <div class="insight-bar" id="weekInsight" style="display:none;">
-      <!-- 亮點由 JS 注入 -->
-    </div>
   </div>
 
-  <div id="tabDetail" class="tab-panel">
-    <div class="settings-row" style="flex-wrap:wrap;margin-bottom:12px;">
-      <label>範圍</label>
-      <select id="exportRange" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;font-size:14px;">
-        <option value="today">今天</option>
-        <option value="all">全部歷史</option>
-        <option value="custom">自訂日期範圍</option>
-      </select>
-    </div>
-    <div class="settings-row" id="customDateRow" style="display:none;margin-bottom:12px;">
-      <input type="date" id="rangeStart" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
-      <span style="color:var(--muted);">至</span>
-      <input type="date" id="rangeEnd" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
-    </div>
-    <div id="exportPreviewWrap"></div>
-    <div class="history-actions">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
-        <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
-        <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
-      </div>
-      <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
-    </div>
-    <p id="importStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
-  </div>
-
-  <!-- 🚀 垃圾桶整合至設定面板 -->
   <div id="tabSettings" class="tab-panel">
     <div class="active-header">
       <h2>主題色</h2>
@@ -561,7 +560,6 @@
   </div>
 </div>
 
-<!-- 🚀 歷史週數選取清單覆蓋層 -->
 <div class="overlay" id="weekSelectOverlay">
   <div class="settings-panel" style="max-width:400px; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
     <div class="week-select-top">
@@ -639,7 +637,6 @@ let trashItems = [];
 let sortCol = null;
 let sortAsc = true;
 
-// 🚀 週報全局變數
 let weeklyDataCache = [];
 let currentViewingWeekIndex = 0;
 let selectedDayIndex = null;
@@ -727,7 +724,6 @@ function plainNum(n){
   const r = Math.round(n*10)/10; return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
 
-// 🚀 格式化工具：大寫美金顯示、小時、時薪、均單
 function fmtDisplayMoney(n){
   return '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
 }
@@ -807,7 +803,7 @@ function getFeeStatus(o, now) {
   return { text: '尚未達標', over: false };
 }
 
-// ================= 🚀 全新高階週報核心演算法 =================
+// ================= 週報核心演算法 =================
 
 function getMondayTs(ts) {
   const d = new Date(ts);
@@ -866,7 +862,6 @@ function computeWeeklyData() {
       d.baseSum += bPrice;
       d.feeSum += eFee;
 
-      // 時長計算：排除 B 單以避免重複加總
       if (!o.excludeBaseFromTotal) {
         const elMs = Math.max(0, o.endTs - o.startTs);
         w.activeMs += elMs;
@@ -890,7 +885,6 @@ function renderWeeklyTab() {
     $('mCount').textContent = '0'; $('mAvg').textContent = '$0';
     $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
     $('mainChartWrap').innerHTML = '<div style="width:100%;text-align:center;color:var(--muted);font-size:14px;align-self:center;">尚無訂單紀錄</div>';
-    $('weekInsight').style.display = 'none';
     return;
   }
 
@@ -903,7 +897,6 @@ function renderWeeklyTab() {
   $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
   $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
 
-  // 🚀 動態切換：頂部數據看板
   if(selectedDayIndex !== null) {
     const d = wData.days[selectedDayIndex];
     $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
@@ -922,17 +915,14 @@ function renderWeeklyTab() {
     $('mRate').textContent = formatHrRate(wData.total, wData.activeMs);
   }
 
-  // 🚀 動態渲染：雙色堆疊長條圖
+  // 🚀 防重疊純色長條圖渲染
   const chartHtml = wData.days.map((d, idx) => {
     const isSelected = selectedDayIndex === idx;
     const heightPct = Math.max(2, (d.total / wData.maxDayTotal) * 100); 
-    const feePct = d.total > 0 ? (d.feeSum / d.total) * 100 : 0;
-    const basePct = d.total > 0 ? (d.baseSum / d.total) * 100 : 0;
     return `
       <div class="chart-col ${isSelected ? 'active' : ''}" data-day-idx="${idx}">
-        <div class="chart-stack" style="height:${heightPct}%;">
-          <div class="chart-bar-fee" style="height:${feePct}%;"></div>
-          <div class="chart-bar-base" style="height:${basePct}%;"></div>
+        <div class="chart-bar-zone">
+          <div class="chart-bar" style="height:${heightPct}%;"></div>
         </div>
         <div class="chart-label-group">
           <div class="chart-date">${d.dayNum}</div>
@@ -945,17 +935,6 @@ function renderWeeklyTab() {
   const chartWrap = $('mainChartWrap');
   chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
   chartWrap.innerHTML = chartHtml;
-
-  // 🚀 智慧亮點：最佳收益日
-  let bestDay = null; let maxD = 0;
-  wData.days.forEach(d => { if(d.total > maxD) { maxD = d.total; bestDay = d; } });
-  const insightEl = $('weekInsight');
-  if(bestDay && bestDay.total > 0) {
-      insightEl.style.display = 'flex';
-      insightEl.innerHTML = `👑 最佳收益日：${bestDay.dayName} (${fmtDisplayMoney(bestDay.total)})`;
-  } else {
-      insightEl.style.display = 'none';
-  }
 }
 
 $('mainChartWrap').addEventListener('click', e => {
@@ -1032,9 +1011,13 @@ function init(){
   });
   if(migrated) saveJSON(KEY_ORDERS, orders);
   applyTheme(loadJSON(KEY_THEME, 'light'));
+  
+  // 初始化明細單日模式的日期
+  $('singleDateInput').value = formatDateInput(new Date());
+
   renderActive();
   computeTodaySummary();
-  computeWeeklyData(); // 🚀 初始化週報
+  computeWeeklyData();
   renderWeeklyTab();
   renderDetailTable();
   renderTrash();
@@ -1047,19 +1030,12 @@ let activeVkInput = null;
 let activeVkWrapper = null;
 
 function openVk(inputEl, layout) {
-  if (activeVkInput && activeVkInput !== inputEl) {
-    activeVkInput.blur();
-  }
-  if (activeVkWrapper) {
-    activeVkWrapper.classList.remove('vk-active');
-  }
+  if (activeVkInput && activeVkInput !== inputEl) activeVkInput.blur();
+  if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active');
   
-  activeVkInput = inputEl;
-  activeVkInput.focus();
-  
+  activeVkInput = inputEl; activeVkInput.focus();
   activeVkWrapper = inputEl.classList.contains('price-input') ? inputEl.closest('.price-input-wrap') : inputEl;
   activeVkWrapper.classList.add('vk-active');
-  
   $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
   $('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
   
@@ -1068,21 +1044,15 @@ function openVk(inputEl, layout) {
   document.body.style.paddingBottom = (vkHeight + 40) + 'px';
 
   requestAnimationFrame(() => {
-    vkContainer.classList.add('show');
-    reportUiState();
-    
+    vkContainer.classList.add('show'); reportUiState();
     setTimeout(() => {
       const cardWrap = inputEl.closest('.swipe-card-wrap');
       if (cardWrap) {
         const actualVkHeight = vkContainer.offsetHeight; 
         const rect = cardWrap.getBoundingClientRect();
         const safeBottom = window.innerHeight - actualVkHeight - 10;
-        
-        if (rect.bottom > safeBottom) {
-          window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
-        } else if (rect.top < 160) {
-          window.scrollBy({ top: rect.top - 160, behavior: 'smooth' });
-        }
+        if (rect.bottom > safeBottom) window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
+        else if (rect.top < 160) window.scrollBy({ top: rect.top - 160, behavior: 'smooth' });
       }
     }, 180);
   });
@@ -1091,157 +1061,86 @@ function openVk(inputEl, layout) {
 function closeVk() {
   if (activeVkInput) activeVkInput.blur(); 
   if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active'); 
-  
-  activeVkInput = null;
-  activeVkWrapper = null;
-  
+  activeVkInput = null; activeVkWrapper = null;
   $('vkContainer').classList.remove('show');
-  document.body.style.paddingBottom = '';
-  reportUiState();
+  document.body.style.paddingBottom = ''; reportUiState();
 }
 
 function handleVkKey(key) {
   if (!activeVkInput) return;
-  
-  if (key === 'ENTER' || key === 'CANCEL') {
-    closeVk();
-    return;
-  }
+  if (key === 'ENTER' || key === 'CANCEL') { closeVk(); return; }
   
   let val = activeVkInput.value;
-  let start = activeVkInput.selectionStart || 0;
-  let end = activeVkInput.selectionEnd || 0;
-  
+  let start = activeVkInput.selectionStart || 0; let end = activeVkInput.selectionEnd || 0;
   if (key === 'BACKSPACE') {
-    if (start === end && start > 0) {
-      val = val.slice(0, start - 1) + val.slice(end);
-      activeVkInput.value = val;
-      activeVkInput.setSelectionRange(start - 1, start - 1);
-    } else if (start !== end) {
-      val = val.slice(0, start) + val.slice(end);
-      activeVkInput.value = val;
-      activeVkInput.setSelectionRange(start, start);
-    }
+    if (start === end && start > 0) { val = val.slice(0, start - 1) + val.slice(end); activeVkInput.value = val; activeVkInput.setSelectionRange(start - 1, start - 1); } 
+    else if (start !== end) { val = val.slice(0, start) + val.slice(end); activeVkInput.value = val; activeVkInput.setSelectionRange(start, start); }
   } else {
     if (start === end) {
       if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
       if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
     }
     val = val.slice(0, start) + key + val.slice(end);
-    activeVkInput.value = val;
-    activeVkInput.setSelectionRange(start + key.length, start + key.length);
+    activeVkInput.value = val; activeVkInput.setSelectionRange(start + key.length, start + key.length);
   }
-  
   activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 $('vkContainer').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  const btn = e.target.closest('.vk-key');
-  if (btn) {
-    const key = btn.getAttribute('data-key') || btn.textContent.trim();
-    handleVkKey(key);
-  }
+  e.preventDefault(); const btn = e.target.closest('.vk-key');
+  if (btn) handleVkKey(btn.getAttribute('data-key') || btn.textContent.trim());
 });
 
-let vkPointerDownX = 0;
-let vkPointerDownY = 0;
-window.swipeDragging = false; 
-
-document.addEventListener('pointerdown', (e) => {
-  vkPointerDownX = e.clientX;
-  vkPointerDownY = e.clientY;
-});
-
-document.addEventListener('pointerup', (e) => {
+let vkPointerDownX = 0; let vkPointerDownY = 0; window.swipeDragging = false; 
+document.addEventListener('pointerdown', e => { vkPointerDownX = e.clientX; vkPointerDownY = e.clientY; });
+document.addEventListener('pointerup', e => {
   if (!$('vkContainer').classList.contains('show')) return;
   if (e.target.closest('#vkContainer')) return; 
-
-  const dx = Math.abs(e.clientX - vkPointerDownX);
-  const dy = Math.abs(e.clientY - vkPointerDownY);
-
-  if (dx > 10 || dy > 10) return;
+  if (Math.abs(e.clientX - vkPointerDownX) > 10 || Math.abs(e.clientY - vkPointerDownY) > 10) return;
   if (e.target.closest('input')) return;
-
   closeVk();
 });
 
 document.addEventListener('keydown', e => {
   if (!$('vkContainer').classList.contains('show') || !activeVkInput) return;
   const key = e.key.toUpperCase();
-  
   if (key === 'ENTER') { e.preventDefault(); handleVkKey('ENTER'); }
   else if (key === 'BACKSPACE') { e.preventDefault(); handleVkKey('BACKSPACE'); }
   else if (key === 'ESCAPE') { e.preventDefault(); handleVkKey('CANCEL'); }
-  else if (/^[A-Z0-9]$/.test(key)) {
-    e.preventDefault();
-    handleVkKey(key);
-  }
+  else if (/^[A-Z0-9]$/.test(key)) { e.preventDefault(); handleVkKey(key); }
 });
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    closeVk();
-  }
-});
+document.addEventListener('visibilitychange', () => { if (document.hidden) closeVk(); });
 
 let pendingNewIds = [];
 
 $('newOrderBtn').addEventListener('click', ()=>{
-  const id = genId();
-  active.unshift({ id, basePrice: 0, startTs: Date.now() });
-  saveJSON(KEY_ACTIVE, active);
-  syncActiveToAndroid();
-  pendingNewIds = [id];
-  renderActive();
-  
-  setTimeout(()=>{
-    const newInput = document.querySelector(`input.price-input[data-base="${id}"]`);
-    if(newInput) openVk(newInput, 'numpad');
-  }, 50);
+  const id = genId(); active.unshift({ id, basePrice: 0, startTs: Date.now() });
+  saveJSON(KEY_ACTIVE, active); syncActiveToAndroid(); pendingNewIds = [id]; renderActive();
+  setTimeout(()=>{ const newInput = document.querySelector(`input.price-input[data-base="${id}"]`); if(newInput) openVk(newInput, 'numpad'); }, 50);
 });
 
 $('newLinkedBtn').addEventListener('click', ()=>{
-  const groupId = genId();
-  const now = Date.now();
-  const idA = genId();
-  const idB = genId();
+  const groupId = genId(); const now = Date.now(); const idA = genId(); const idB = genId();
   active.unshift({ id: idB, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'secondary' });
   active.unshift({ id: idA, basePrice: 0, startTs: now, linkGroupId: groupId, linkRole: 'primary' });
-  saveJSON(KEY_ACTIVE, active);
-  syncActiveToAndroid();
-  pendingNewIds = [idA, idB];
-  renderActive();
-  
-  setTimeout(()=>{
-    const newInputA = document.querySelector(`input.price-input[data-base="${idA}"]`);
-    if(newInputA) openVk(newInputA, 'numpad');
-  }, 50);
+  saveJSON(KEY_ACTIVE, active); syncActiveToAndroid(); pendingNewIds = [idA, idB]; renderActive();
+  setTimeout(()=>{ const newInputA = document.querySelector(`input.price-input[data-base="${idA}"]`); if(newInputA) openVk(newInputA, 'numpad'); }, 50);
 });
 
 function renderActive(){
   const list = $('activeList');$('activeCount').textContent = active.length + ' 單';
+  const prevRects = {}; list.querySelectorAll('.swipe-card-wrap').forEach(el=>{ prevRects[el.getAttribute('data-swipe-card')] = el.getBoundingClientRect(); });
 
-  const prevRects = {};
-  list.querySelectorAll('.swipe-card-wrap').forEach(el=>{
-    prevRects[el.getAttribute('data-swipe-card')] = el.getBoundingClientRect();
-  });
-
-  if(active.length === 0){
-    list.innerHTML = '<div class="empty">目前沒有進行中的訂單</div>';
-    return;
-  }
+  if(active.length === 0){ list.innerHTML = '<div class="empty">目前沒有進行中的訂單</div>'; return; }
   
   const now0 = Date.now();
   list.innerHTML = active.map(o => {
-    const isPrimary = o.linkRole === 'primary';
-    const isSecondary = o.linkRole === 'secondary';
+    const isPrimary = o.linkRole === 'primary'; const isSecondary = o.linkRole === 'secondary';
     const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
-    
     const priceField = isSecondary
       ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
       : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
-    
     const feeStatus = getFeeStatus(o, now0);
     return `
     <div class="swipe-card-wrap" data-swipe-card="${o.id}">
@@ -1250,16 +1149,13 @@ function renderActive(){
           <input type="text" class="ordno-input" data-ordno="${o.id}" value="${o.orderNo ? o.orderNo.replace(/"/g,'&quot;') : ''}" placeholder="單號" inputmode="none">
           ${priceField}
         </div>
-        <div class="order-head">
-          <span class="order-start">開始 <b>${fmtHHMM(o.startTs)}</b>${badge}</span>
-        </div>
+        <div class="order-head"><span class="order-start">開始 <b>${fmtHHMM(o.startTs)}</b>${badge}</span></div>
         <div class="order-status-row">
           <span class="order-timer" data-timer="${o.id}">00:00</span>
           <span class="order-fee${feeStatus.over ? ' over' : ''}" data-fee="${o.id}">${feeStatus.text}</span>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
   }).join('');
 
   initCardSwipe();
@@ -1267,61 +1163,30 @@ function renderActive(){
   const wraps = Array.from(list.querySelectorAll('.swipe-card-wrap'));
   const animating = [];
   wraps.forEach((el, idx)=>{
-    const id = el.getAttribute('data-swipe-card');
-    const prev = prevRects[id];
+    const id = el.getAttribute('data-swipe-card'); const prev = prevRects[id];
     el.style.zIndex = String(wraps.length - idx);
     if(!prev) return;
-    const next = el.getBoundingClientRect();
-    const dy = prev.top - next.top;
-    if(Math.abs(dy) < 1) return;
-    animating.push({ el, dy });
+    const next = el.getBoundingClientRect(); const dy = prev.top - next.top;
+    if(Math.abs(dy) < 1) return; animating.push({ el, dy });
   });
-  animating.forEach(({el, dy})=>{
-    el.style.transition = 'none';
-    el.style.transform = `translateY(${dy}px)`;
-  });
+  animating.forEach(({el, dy})=>{ el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)`; });
   if(animating.length){
     void list.offsetHeight;
     requestAnimationFrame(()=>{
-      animating.forEach(({el})=>{
-        el.style.transition = 'transform 0.15s ease';
-        el.style.transform = 'translateY(0)';
-      });
-      setTimeout(()=>{
-        animating.forEach(({el})=>{
-          el.style.transition = '';
-          el.style.transform = '';
-          el.style.zIndex = '';
-        });
-      }, 170);
+      animating.forEach(({el})=>{ el.style.transition = 'transform 0.15s ease'; el.style.transform = 'translateY(0)'; });
+      setTimeout(()=>{ animating.forEach(({el})=>{ el.style.transition = ''; el.style.transform = ''; el.style.zIndex = ''; }); }, 170);
     });
   }
 
   if(pendingNewIds.length){
-    const newEls = pendingNewIds
-      .map(id => list.querySelector(`.swipe-card-wrap[data-swipe-card="${id}"]`))
-      .filter(Boolean);
+    const newEls = pendingNewIds.map(id => list.querySelector(`.swipe-card-wrap[data-swipe-card="${id}"]`)).filter(Boolean);
     const pushDelay = animating.length ? 70 : 0;
-    newEls.forEach(el=>{
-      el.style.transition = 'none';
-      el.style.transform = 'scale(0.92)';
-      el.style.opacity = '0';
-    });
+    newEls.forEach(el=>{ el.style.transition = 'none'; el.style.transform = 'scale(0.92)'; el.style.opacity = '0'; });
     if(newEls.length){
       void list.offsetHeight;
       setTimeout(()=>{
-        newEls.forEach(el=>{
-          el.style.transition = 'transform 0.15s ease, opacity 0.15s ease';
-          el.style.transform = 'scale(1)';
-          el.style.opacity = '1';
-        });
-        setTimeout(()=>{
-          newEls.forEach(el=>{
-            el.style.transition = '';
-            el.style.transform = '';
-            el.style.opacity = '';
-          });
-        }, 170);
+        newEls.forEach(el=>{ el.style.transition = 'transform 0.15s ease, opacity 0.15s ease'; el.style.transform = 'scale(1)'; el.style.opacity = '1'; });
+        setTimeout(()=>{ newEls.forEach(el=>{ el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }); }, 170);
       }, pushDelay);
     }
     pendingNewIds = [];
@@ -1329,62 +1194,40 @@ function renderActive(){
 }
 
 $('activeList').addEventListener('input', e=>{
-  const baseId = e.target.getAttribute('data-base');
-  const ordId = e.target.getAttribute('data-ordno');
+  const baseId = e.target.getAttribute('data-base'); const ordId = e.target.getAttribute('data-ordno');
   if(baseId){
     const o = active.find(a=>a.id===baseId);
     if(o){
       o.basePrice = parseFloat(e.target.value) || 0;
       if(o.linkRole === 'primary' && o.linkGroupId){
-        active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec=>{
-          sec.basePrice = o.basePrice;
-          updateFeeDisplay(sec);
-        });
+        active.filter(a => a.linkGroupId === o.linkGroupId && a.linkRole === 'secondary').forEach(sec=>{ sec.basePrice = o.basePrice; updateFeeDisplay(sec); });
       }
-      saveJSON(KEY_ACTIVE, active);
-      updateFeeDisplay(o);
-      syncActiveToAndroid();
+      saveJSON(KEY_ACTIVE, active); updateFeeDisplay(o); syncActiveToAndroid();
     }
   }
   if(ordId){
     const o = active.find(a=>a.id===ordId);
     if(o){
-      const upper = e.target.value.toUpperCase();
-      o.orderNo = upper;
-      if(e.target.value !== upper){
-        const cursorPos = e.target.selectionStart;
-        e.target.value = upper;
-        e.target.setSelectionRange(cursorPos, cursorPos);
-      }
-      saveJSON(KEY_ACTIVE, active);
-      syncActiveToAndroid(); 
+      const upper = e.target.value.toUpperCase(); o.orderNo = upper;
+      if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
+      saveJSON(KEY_ACTIVE, active); syncActiveToAndroid(); 
     }
   }
 });
 
 $('activeList').addEventListener('click', e=>{
   if(window.swipeDragging) return; 
-  
-  const ordInput = e.target.closest('.ordno-input');
-  if (ordInput) { openVk(ordInput, 'hex'); return; }
-  
-  const priceInput = e.target.closest('.price-input');
-  if (priceInput && !priceInput.classList.contains('locked-price')) { openVk(priceInput, 'hex'); return; }
+  const ordInput = e.target.closest('.ordno-input'); if (ordInput) { openVk(ordInput, 'hex'); return; }
+  const priceInput = e.target.closest('.price-input'); if (priceInput && !priceInput.classList.contains('locked-price')) { openVk(priceInput, 'hex'); return; }
 });
 
 function initCardSwipe(){
   document.querySelectorAll('.swipe-card-wrap').forEach(wrap=>{
-    const id = wrap.getAttribute('data-swipe-card');
-    const card = wrap.querySelector('.order-card');
-    let dragging = false;
-    let decided = false;
-    let cancelled = false;
-    let startX = 0, startY = 0;
-    let currentX = 0;
+    const id = wrap.getAttribute('data-swipe-card'); const card = wrap.querySelector('.order-card');
+    let dragging = false, decided = false, cancelled = false, startX = 0, startY = 0, currentX = 0;
 
     function onPointerDown(e){
-      dragging = true; decided = false; cancelled = false; currentX = 0;
-      startX = e.clientX; startY = e.clientY;
+      dragging = true; decided = false; cancelled = false; currentX = 0; startX = e.clientX; startY = e.clientY;
       card.style.transition = 'none'; wrap.style.backgroundColor = 'transparent'; 
     }
     function onPointerMove(e){
@@ -1399,48 +1242,32 @@ function initCardSwipe(){
         closeVk();
       }
       if(cancelled) return;
-      currentX = dx; 
-      card.style.transform = `translateX(${currentX}px)`;
-      if (currentX > 0) wrap.style.backgroundColor = 'var(--green)';
-      else if (currentX < 0) wrap.style.backgroundColor = 'var(--red)';
+      currentX = dx; card.style.transform = `translateX(${currentX}px)`;
+      if (currentX > 0) wrap.style.backgroundColor = 'var(--green)'; else if (currentX < 0) wrap.style.backgroundColor = 'var(--red)';
     }
     
     function onPointerUp(e){
       if(!dragging) return;
       dragging = false; if(cancelled) return;
-      const maxDist = wrap.clientWidth * 0.25; 
-      card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      
-      if(currentX >= maxDist){
-        card.style.transform = `translateX(${wrap.clientWidth}px)`; card.style.opacity = '0';
-        setTimeout(()=> completeOrder(id), 180);
-      } else if(currentX <= -maxDist){
-        card.style.transform = `translateX(-${wrap.clientWidth}px)`; card.style.opacity = '0';
-        setTimeout(()=> cancelOrder(id), 180);
-      } else {
-        card.style.transform = 'translateX(0)'; wrap.style.backgroundColor = 'transparent';
-      }
+      const maxDist = wrap.clientWidth * 0.25; card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      if(currentX >= maxDist){ card.style.transform = `translateX(${wrap.clientWidth}px)`; card.style.opacity = '0'; setTimeout(()=> completeOrder(id), 180); }
+      else if(currentX <= -maxDist){ card.style.transform = `translateX(-${wrap.clientWidth}px)`; card.style.opacity = '0'; setTimeout(()=> cancelOrder(id), 180); }
+      else { card.style.transform = 'translateX(0)'; wrap.style.backgroundColor = 'transparent'; }
       currentX = 0; setTimeout(()=>{ window.swipeDragging = false; }, 50); 
     }
-    
-    wrap.addEventListener('pointerdown', onPointerDown);
-    wrap.addEventListener('pointermove', onPointerMove);
-    wrap.addEventListener('pointerup', onPointerUp);
-    wrap.addEventListener('pointercancel', onPointerUp);
+    wrap.addEventListener('pointerdown', onPointerDown); wrap.addEventListener('pointermove', onPointerMove);
+    wrap.addEventListener('pointerup', onPointerUp); wrap.addEventListener('pointercancel', onPointerUp);
   });
 }
 
 function completeOrder(id){
-  const idx = active.findIndex(a=>a.id===id);
-  if(idx === -1) return;
-  const o = active[idx];
-  const endTs = Date.now();
+  const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
+  const o = active[idx]; const endTs = Date.now();
   let toComplete = o.linkGroupId ? active.filter(a => a.linkGroupId === o.linkGroupId) : [o];
 
   toComplete.forEach(item => {
     const { billedMin, extraMin, extraFee } = calcOrderSubsidy(item, endTs);
     const isSec = item.linkRole === 'secondary';
-    
     const record = {
       id: genId(), orderNo: item.orderNo || '', basePrice: item.basePrice || 0,
       excludeBaseFromTotal: isSec, startTs: item.startTs, endTs,
@@ -1448,37 +1275,23 @@ function completeOrder(id){
       total: (isSec ? 0 : (item.basePrice || 0)) + extraFee,
       linkGroupId: item.linkGroupId, linkRole: item.linkRole
     };
-    
     orders.unshift(record);
-    const rIdx = active.findIndex(a => a.id === item.id);
-    if(rIdx > -1) active.splice(rIdx,1);
+    const rIdx = active.findIndex(a => a.id === item.id); if(rIdx > -1) active.splice(rIdx,1);
   });
-
-  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders);
-  syncActiveToAndroid(); 
-  closeVk(); renderActive(); computeTodaySummary(); 
-  computeWeeklyData(); renderWeeklyTab(); // 🚀 同步更新週報
-  renderDetailTable();
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid(); 
+  closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable();
 }
 
 function cancelOrder(id){
-  const idx = active.findIndex(a=>a.id===id);
-  if(idx === -1) return;
-  const item = active[idx];
-  item.deletedAt = Date.now();
-  trashItems.unshift(item);
-  active.splice(idx,1);
-  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
-  syncActiveToAndroid(); 
+  const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
+  const item = active[idx]; item.deletedAt = Date.now(); trashItems.unshift(item); active.splice(idx,1);
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems); syncActiveToAndroid(); 
   closeVk(); renderActive(); renderTrash();
 }
 
 function renderTrash(){
   const el = $('trashList');$('clearTrashBtn').style.display = trashItems.length === 0 ? 'none' : 'block';
-  if(trashItems.length === 0){
-    el.innerHTML = '<div class="empty">垃圾桶是空的</div>';
-    return;
-  }
+  if(trashItems.length === 0){ el.innerHTML = '<div class="empty">垃圾桶是空的</div>'; return; }
   el.innerHTML = trashItems.map(item=>{
     const badge = item.linkRole === 'primary' ? '<span class="link-badge">疊單 A</span>' : item.linkRole === 'secondary' ? '<span class="link-badge">疊單 B</span>' : '';
     return `
@@ -1493,17 +1306,10 @@ function renderTrash(){
 }
 
 $('trashList').addEventListener('click', e=>{
-  const btn = e.target.closest('[data-trash-restore]');
-  if(!btn) return;
-  const id = btn.getAttribute('data-trash-restore');
-  const idx = trashItems.findIndex(t=>t.id===id);
-  if(idx === -1) return;
-  const item = trashItems[idx];
-  delete item.deletedAt;
-  active.unshift(item);
-  trashItems.splice(idx,1);
-  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems);
-  syncActiveToAndroid(); 
+  const btn = e.target.closest('[data-trash-restore]'); if(!btn) return;
+  const id = btn.getAttribute('data-trash-restore'); const idx = trashItems.findIndex(t=>t.id===id); if(idx === -1) return;
+  const item = trashItems[idx]; delete item.deletedAt; active.unshift(item); trashItems.splice(idx,1);
+  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems); syncActiveToAndroid(); 
   renderActive(); renderTrash();
 });
 
@@ -1514,17 +1320,14 @@ $('clearTrashBtn').addEventListener('click', ()=> showOverlay('confirmClearTrash
 $('confirmClearTrashCancel').addEventListener('click', ()=> hideOverlay('confirmClearTrashOverlay'));$('confirmClearTrashOk').addEventListener('click', ()=>{ trashItems = []; saveJSON(KEY_TRASH, trashItems); renderTrash(); hideOverlay('confirmClearTrashOverlay'); });
 
 function updateFeeDisplay(o){
-  const feeEl = document.querySelector(`[data-fee="${o.id}"]`);
-  if(!feeEl) return;
-  const status = getFeeStatus(o, Date.now());
-  feeEl.innerHTML = status.text; feeEl.classList.toggle('over', status.over);
+  const feeEl = document.querySelector(`[data-fee="${o.id}"]`); if(!feeEl) return;
+  const status = getFeeStatus(o, Date.now()); feeEl.innerHTML = status.text; feeEl.classList.toggle('over', status.over);
 }
 function tick(){
   if(active.length === 0) return;
   const now = Date.now();
   active.forEach(o=>{
-    const timerEl = document.querySelector(`[data-timer="${o.id}"]`);
-    if(timerEl) timerEl.textContent = fmtMMSS(now - o.startTs);
+    const timerEl = document.querySelector(`[data-timer="${o.id}"]`); if(timerEl) timerEl.textContent = fmtMMSS(now - o.startTs);
     updateFeeDisplay(o);
   });
 }
@@ -1540,18 +1343,17 @@ function computeTodaySummary(){
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
 $('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
 
-// 🚀 更新 Tab 邏輯，確保移除了獨立的垃圾桶 Tab
-const TAB_ID_MAP = { main: 'tabMain', weekly: 'tabWeekly', detail: 'tabDetail', settings: 'tabSettings' };
+// 🚀 Tab 順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定
+const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab');
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     if(tab === 'detail') renderDetailTable();
     if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
-    if(tab === 'settings') renderTrash(); // 點擊設定時一併更新內建的垃圾桶
+    if(tab === 'settings') renderTrash();
   });
 });
 
@@ -1561,19 +1363,46 @@ function applyTheme(theme){
   else{ document.documentElement.removeAttribute('data-theme'); }
   document.querySelectorAll('.theme-option').forEach(btn=>{ btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === theme); });
   const metaTheme = $('themeColorMeta');
-  if(metaTheme){
-    const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' };
-    metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark);
-  }
+  if(metaTheme){ const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' }; metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark); }
 }
 document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{ const theme = btn.getAttribute('data-theme-choice'); applyTheme(theme); saveJSON(KEY_THEME, theme); });
 });
 
 function dayStart(dateStr){ return new Date(dateStr + 'T00:00:00').getTime(); }
+
+// 🚀 日期格式化助手 (確保不被時區干擾)
+function formatDateInput(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// 🚀 單日模式切換控制
+function changeSingleDay(offset) {
+  const parts = $('singleDateInput').value.split('-');
+  if(parts.length !== 3) return;
+  const current = new Date(parts[0], parts[1]-1, parts[2]);
+  current.setDate(current.getDate() + offset);
+  $('singleDateInput').value = formatDateInput(current);
+  renderDetailTable();
+}
+$('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));
+$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));$('singleDateInput').addEventListener('change', renderDetailTable);
+
 function getExportOrders(){
   const range = $('exportRange').value; const chronological = [...orders].reverse();
-  if(range === 'today'){ const today = new Date().toDateString(); return chronological.filter(o => new Date(o.startTs).toDateString() === today); }
+  if(range === 'single'){ 
+    const dVal = $('singleDateInput').value;
+    if(!dVal) return [];
+    const targetD = new Date(dVal);
+    const targetY = targetD.getFullYear(); const targetM = targetD.getMonth(); const targetDt = targetD.getDate();
+    return chronological.filter(o => {
+      const od = new Date(o.startTs);
+      return od.getFullYear() === targetY && od.getMonth() === targetM && od.getDate() === targetDt;
+    });
+  }
   if(range === 'custom'){
     const startVal = $('rangeStart').value; const endVal =$('rangeEnd').value; if(!startVal || !endVal) return [];
     const startMs = dayStart(startVal); const endMs = dayStart(endVal) + 24*60*60*1000;
@@ -1581,20 +1410,19 @@ function getExportOrders(){
   }
   return chronological;
 }
-function fmtDateOnly(ts){
-  const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-}
-function fmtDateFull(ts){
-  const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-}
+
+$('exportRange').addEventListener('change', ()=>{ 
+  $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none'; 
+  $('singleDateRow').style.display =$('exportRange').value === 'single' ? 'flex' : 'none'; 
+  renderDetailTable(); 
+});
+
+function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
+function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
-  if (th) {
-    const col = th.getAttribute('data-sort');
-    if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
-    renderDetailTable();
-  }
+  if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
 
 function renderDetailTable(){
@@ -1613,9 +1441,7 @@ function renderDetailTable(){
       else if (sortCol === 'overtime') { valA = a._obj.extraMin; valB = b._obj.extraMin; }
       else if (sortCol === 'base') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.basePrice || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.basePrice || 0); }
       else if (sortCol === 'fee') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.extraFee || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.extraFee || 0); }
-      if (valA < valB) return sortAsc ? -1 : 1;
-      if (valA > valB) return sortAsc ? 1 : -1;
-      return 0;
+      if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
     });
   }
   
@@ -1710,13 +1536,11 @@ $('exportPreviewWrap').addEventListener('change', e=>{
   }
 });
 
-$('exportRange').addEventListener('change', ()=>{ $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none'; renderDetailTable(); });
 $('rangeStart').addEventListener('change', renderDetailTable);$('rangeEnd').addEventListener('change', renderDetailTable);
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = getExportOrders(); if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
-  // 🚀 新增隱藏的毫秒級系統時間戳，確保無損備份
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用','系統開始戳','系統結束戳'];
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
@@ -1764,15 +1588,11 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
         if(!yyyy || !mm || !dd) return;
         
         const [sh, sm] = r[3].split(':').map(n => parseInt(n)); const [eh, em] = r[4].split(':').map(n => parseInt(n));
-        
-        // 🚀 優先讀取毫秒級系統時間戳，確保完美還原，若無則降級為舊版時分計算
         let startTs, endTs;
         if(r.length >= 12 && r[10] && r[11] && !isNaN(Number(r[10])) && !isNaN(Number(r[11]))) {
-          startTs = Number(r[10]);
-          endTs = Number(r[11]);
+          startTs = Number(r[10]); endTs = Number(r[11]);
         } else {
-          startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime();
-          endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
+          startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime(); endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
           if(endTs <= startTs) endTs += 24*60*60*1000;
         }
 
