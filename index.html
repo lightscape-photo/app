@@ -27,6 +27,7 @@
     --on-green:#0C2A1E;
     --on-amber:#412402;
     --on-red:#3A0F0F;
+    --chart-blue:#3B82F6;
   }
   html[data-theme="light"]{
     --bg:#FFFFFF;
@@ -44,6 +45,7 @@
     --on-green:#fff;
     --on-amber:#fff;
     --on-red:#fff;
+    --chart-blue:#3B82F6;
   }
   html[data-theme="cyberpunk"]{
     --bg:#0A0E17;
@@ -61,6 +63,7 @@
     --on-green:#0A0E17;
     --on-amber:#0A0E17;
     --on-red:#0A0E17;
+    --chart-blue:#05D9E8;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   
@@ -100,7 +103,9 @@
     display:flex;align-items:flex-end;justify-content:space-between;
     border-bottom:1px solid var(--border);
     padding-bottom:14px;
+    overflow-x: auto;
   }
+  .tabs::-webkit-scrollbar { display: none; }
 
   .new-order-row{
     display:flex;gap:10px;
@@ -278,14 +283,14 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
-  .tab-group{display:flex;gap:22px;}
+  .tab-group{display:flex;gap:18px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
   .brand-eats{color:var(--green);}
   .tab-btn{
     background:none;border:none;border-bottom:2px solid transparent;
-    padding:9px 2px;color:var(--muted);font-weight:600;font-size:15px;
-    cursor:pointer;font-family:inherit;
+    padding:9px 2px;color:var(--muted);font-weight:600;font-size:14px;
+    cursor:pointer;font-family:inherit; white-space:nowrap;
   }
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
   .tab-panel{display:none;}
@@ -328,6 +333,56 @@
   .vk-key:active { background: var(--border); transform: scale(0.94); }
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
+
+  /* 🚀 質感升級：高階數據儀表板與雙色堆疊圖表 */
+  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
+  .week-title-wrap:active { background:var(--panel-2); }
+  .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
+  
+  .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:4px; transition: all 0.2s ease;}
+  .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:20px; }
+  .metric-lbl { font-size:12px; color:var(--muted); font-weight:500; }
+  .metric-val { font-size:18px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  .metric-card.main .metric-val { font-size:38px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
+  .metric-card.main .metric-lbl { font-size:14px; }
+
+  .chart-area { position:relative; width:100%; height:220px; display:flex; align-items:flex-end; padding-bottom:30px; border-bottom:1px dashed var(--border); margin-bottom:16px; }
+  .chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative; z-index:2; cursor:pointer; }
+  
+  /* 雙色堆疊柱體設計 */
+  .chart-stack { width:65%; display:flex; flex-direction:column; justify-content:flex-end; border-radius:6px 6px 0 0; overflow:hidden; transition: height 0.3s ease, opacity 0.2s ease; position:relative; background:var(--panel-2);}
+  .chart-bar-fee { width:100%; background:var(--amber); transition:height 0.3s ease;}
+  .chart-bar-base { width:100%; background:var(--chart-blue); transition:height 0.3s ease;}
+  
+  .chart-area.has-selection .chart-col:not(.active) .chart-stack { opacity: 0.3; }
+  
+  .chart-label-group { position:absolute; bottom:-24px; text-align:center; width:100%; }
+  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; }
+  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; }
+  
+  .insight-bar { display:flex; align-items:center; justify-content:center; gap:8px; background:var(--green-dim); color:var(--green); padding:12px 16px; border-radius:12px; font-size:13px; font-weight:600; margin-bottom:20px; animation: fadeIn 0.3s ease;}
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+
+  /* 歷史週數選取清單 */
+  .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
+  .week-select-top h2 { margin:0; font-size:22px; font-weight:700; }
+  .week-select-close { background:none; border:none; color:var(--text); font-size:28px; cursor:pointer; line-height:1; }
+  .week-select-legend { display:flex; justify-content:space-between; padding:12px 20px; background:var(--panel-2); font-size:13px; font-weight:600; color:var(--text); }
+  .week-select-legend .stars { letter-spacing:8px; color:var(--muted); font-weight:400; font-size:12px; }
+  .week-list { overflow-y:auto; flex:1; padding:0 20px; }
+  .week-item { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+  .week-item:active { opacity: 0.7; }
+  .week-item-info { display:flex; flex-direction:column; gap:6px; }
+  .week-item-date { font-size:14px; color:var(--text); font-weight:600; font-family:system-ui,sans-serif; }
+  .week-item-amt { font-size:18px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  
+  .mini-chart { display:flex; align-items:flex-end; gap:3px; height:32px; }
+  .mini-col { display:flex; flex-direction:column; align-items:center; width:14px; }
+  .mini-bar { width:100%; background:var(--chart-blue); border-radius:2px 2px 0 0; }
+  .mini-day { font-size:9px; color:var(--text); margin-top:4px; font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -337,8 +392,8 @@
     <div class="tabs">
       <div class="tab-group">
         <button class="tab-btn active" data-tab="main">主頁</button>
+        <button class="tab-btn" data-tab="weekly">週報</button>
         <button class="tab-btn" data-tab="detail">明細</button>
-        <button class="tab-btn" data-tab="trash">垃圾桶</button>
         <button class="tab-btn" data-tab="settings">設定</button>
       </div>
       <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
@@ -373,6 +428,49 @@
     </div>
   </div>
 
+  <!-- 🚀 全新高質感數據儀表板週報 -->
+  <div id="tabWeekly" class="tab-panel">
+    <div class="week-header">
+      <button class="icon-btn" id="prevWeekBtn">&lt;</button>
+      <div class="week-title-wrap" id="weekTitleWrap">
+        <span class="week-title-str" id="weekTitleStr">--</span>
+        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </div>
+      <button class="icon-btn" id="nextWeekBtn">&gt;</button>
+    </div>
+    
+    <div class="metrics-grid">
+      <div class="metric-card main">
+        <span class="metric-lbl" id="mTitle">本週總收入</span>
+        <span class="metric-val" id="mTotal">$0.00</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-lbl">完成趟數</span>
+        <span class="metric-val" id="mCount">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-lbl">均單價</span>
+        <span class="metric-val" id="mAvg">$0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-lbl">接單時長</span>
+        <span class="metric-val" id="mTime">0.0h</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-lbl">換算時薪</span>
+        <span class="metric-val" id="mRate">$0/h</span>
+      </div>
+    </div>
+    
+    <div class="chart-area" id="mainChartWrap">
+      <!-- 柱狀圖由 JS 注入 -->
+    </div>
+
+    <div class="insight-bar" id="weekInsight" style="display:none;">
+      <!-- 亮點由 JS 注入 -->
+    </div>
+  </div>
+
   <div id="tabDetail" class="tab-panel">
     <div class="settings-row" style="flex-wrap:wrap;margin-bottom:12px;">
       <label>範圍</label>
@@ -399,16 +497,7 @@
     <p id="importStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
   </div>
 
-  <div id="tabTrash" class="tab-panel">
-    <div class="active-header">
-      <h2>垃圾桶</h2>
-    </div>
-    <div id="trashList"><div class="empty">垃圾桶是空的</div></div>
-    <div class="history-actions" style="justify-content:flex-end;">
-      <button class="clear-all" id="clearTrashBtn" style="display:none;">清空垃圾桶</button>
-    </div>
-  </div>
-
+  <!-- 🚀 垃圾桶整合至設定面板 -->
   <div id="tabSettings" class="tab-panel">
     <div class="active-header">
       <h2>主題色</h2>
@@ -426,6 +515,15 @@
         <span class="theme-swatch theme-swatch-cyberpunk"></span>
         <span class="theme-option-label">賽博龐克</span>
       </button>
+    </div>
+
+    <div style="height:32px;"></div>
+    <div class="active-header">
+      <h2>垃圾桶</h2>
+    </div>
+    <div id="trashList"><div class="empty">垃圾桶是空的</div></div>
+    <div class="history-actions" style="justify-content:flex-end;">
+      <button class="clear-all" id="clearTrashBtn" style="display:none;">清空垃圾桶</button>
     </div>
   </div>
 </div>
@@ -459,6 +557,23 @@
     <div class="settings-actions">
       <button class="cancel" id="confirmDeleteRowCancel">取消</button>
       <button class="confirm" id="confirmDeleteRowOk" style="background:var(--red);color:var(--on-red);">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🚀 歷史週數選取清單覆蓋層 -->
+<div class="overlay" id="weekSelectOverlay">
+  <div class="settings-panel" style="max-width:400px; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+    <div class="week-select-top">
+      <h2>選取週數</h2>
+      <button class="week-select-close" id="closeWeekSelectBtn">×</button>
+    </div>
+    <div class="week-select-legend">
+      <span>每週明細</span>
+      <span class="stars">一二三四五六日</span>
+    </div>
+    <div class="week-list" id="weekSelectList">
+      <!-- JS 注入週數清單 -->
     </div>
   </div>
 </div>
@@ -524,9 +639,13 @@ let trashItems = [];
 let sortCol = null;
 let sortAsc = true;
 
+// 🚀 週報全局變數
+let weeklyDataCache = [];
+let currentViewingWeekIndex = 0;
+let selectedDayIndex = null;
+
 const $ = id => document.getElementById(id);
 
-// 🚀 核心升級：將完整的訂單核心參數傳給 Android 讓懸浮窗能即時心跳
 function syncActiveToAndroid() {
   if (window.AndroidDownloader && window.AndroidDownloader.syncActiveOrders) {
     const list = active.map(o => {
@@ -546,14 +665,8 @@ function syncActiveToAndroid() {
   }
 }
 
-window.completeOrderById = function(id) {
-  completeOrder(id);
-};
-
-// 🚀 支援從懸浮窗直接把單刷進垃圾桶
-window.cancelOrderById = function(id) {
-  cancelOrder(id);
-};
+window.completeOrderById = function(id) { completeOrder(id); };
+window.cancelOrderById = function(id) { cancelOrder(id); };
 
 window.reorderActiveOrders = function(jsonStr) {
   try {
@@ -561,10 +674,7 @@ window.reorderActiveOrders = function(jsonStr) {
     const newActive = [];
     idList.forEach(id => {
       const idx = active.findIndex(a => a.id === id);
-      if (idx > -1) {
-        newActive.push(active[idx]);
-        active.splice(idx, 1);
-      }
+      if (idx > -1) { newActive.push(active[idx]); active.splice(idx, 1); }
     });
     newActive.push(...active);
     active = newActive;
@@ -582,105 +692,85 @@ function reportUiState() {
 }
 
 function loadJSON(key, fallback){
-  try{
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : fallback;
-  }catch(e){ return fallback; }
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
 }
 function saveJSON(key, value){
   try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
 }
-function genId(){
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
-}
+function genId(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); }
 
 function fmtHHMM(ts){
-  const d = new Date(ts);
-  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 function parseTimeInput(str){
-  str = (str || '').trim();
-  if(!str) return null;
+  str = (str || '').trim(); if(!str) return null;
   let h, m;
   if(str.includes(':')){
-    const parts = str.split(':');
-    if(parts.length !== 2) return null;
-    h = parseInt(parts[0], 10);
-    m = parseInt(parts[1], 10);
+    const parts = str.split(':'); if(parts.length !== 2) return null;
+    h = parseInt(parts[0], 10); m = parseInt(parts[1], 10);
   }else{
     const digits = str.replace(/\D/g, '');
-    if(digits.length === 3){
-      h = parseInt(digits.slice(0,1), 10);
-      m = parseInt(digits.slice(1), 10);
-    }else if(digits.length === 4){
-      h = parseInt(digits.slice(0,2), 10);
-      m = parseInt(digits.slice(2), 10);
-    }else{
-      return null;
-    }
+    if(digits.length === 3){ h = parseInt(digits.slice(0,1), 10); m = parseInt(digits.slice(1), 10); }
+    else if(digits.length === 4){ h = parseInt(digits.slice(0,2), 10); m = parseInt(digits.slice(2), 10); }
+    else return null;
   }
   if(isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
   return { h, m };
 }
 function fmtMMSS(ms){
   const totalSec = Math.max(0, Math.floor(ms/1000));
-  const m = Math.floor(totalSec/60);
-  const s = totalSec%60;
+  const m = Math.floor(totalSec/60); const s = totalSec%60;
   return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
-function money(n){
-  const r = Math.round(n*10)/10;
-  return 'NT$' + (Number.isInteger(r) ? r : r.toFixed(1));
-}
+function money(n){ return 'NT$' + (Math.round(n*10)/10).toLocaleString('en-US'); }
 function plainNum(n){
-  const r = Math.round(n*10)/10;
-  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+  const r = Math.round(n*10)/10; return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+// 🚀 格式化工具：大寫美金顯示、小時、時薪、均單
+function fmtDisplayMoney(n){
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
+}
+function formatHrs(ms) {
+  const hrs = ms / 3600000; return hrs.toFixed(1) + 'h';
+}
+function formatHrRate(total, ms) {
+  const hrs = ms / 3600000; if(hrs <= 0) return '$0/h';
+  return '$' + Math.round(total / hrs).toLocaleString() + '/h';
+}
+function formatAvg(total, count) {
+  if(count <= 0) return '$0';
+  return '$' + Math.round(total / count).toLocaleString();
 }
 
 function getBilledMinutes(startTs, endTs) {
   const totalSec = Math.max(0, Math.floor((endTs - startTs) / 1000));
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
+  const m = Math.floor(totalSec / 60); const s = totalSec % 60;
   return s >= 30 ? m + 1 : m;
 }
 
 function getLegalMinPrice(mins) {
-  const val = mins * (245 / 60);
-  const rounded = Math.ceil(val * 10) / 10;
-  return Math.max(45, rounded);
+  const val = mins * (245 / 60); return Math.max(45, Math.ceil(val * 10) / 10);
 }
 
 function getCoveredMin(basePrice, isLinked) {
-  const bp = basePrice || 0;
-  let m = 0;
-  while(m <= 120) {
-    let leg = getLegalMinPrice(m + 1);
-    if (isLinked) leg *= 2;
-    if (leg > bp) break;
-    m++;
-  }
+  const bp = basePrice || 0; let m = 0;
+  while(m <= 120) { let leg = getLegalMinPrice(m + 1); if (isLinked) leg *= 2; if (leg > bp) break; m++; }
   return m;
 }
 
 function calcOrderSubsidy(o, endTs) {
   const billedMin = getBilledMinutes(o.startTs, endTs);
   const legalMin = getLegalMinPrice(billedMin);
-  
-  const isLinked = !!o.linkGroupId;
-  const bp = o.basePrice || 0;
-  
+  const isLinked = !!o.linkGroupId; const bp = o.basePrice || 0;
   const covered = getCoveredMin(bp, isLinked);
   const actualExtraMin = Math.max(0, billedMin - covered);
 
   if (isLinked) {
-    if (o.linkRole === 'secondary') {
-      return { billedMin, extraMin: 0, legalTotal: legalMin, extraFee: 0 };
-    }
-    const totalLegal = legalMin * 2;
-    const extraFee = Math.max(0, totalLegal - bp);
+    if (o.linkRole === 'secondary') return { billedMin, extraMin: 0, legalTotal: legalMin, extraFee: 0 };
+    const totalLegal = legalMin * 2; const extraFee = Math.max(0, totalLegal - bp);
     return { billedMin, extraMin: actualExtraMin, legalTotal: totalLegal, extraFee: Math.round(extraFee * 10) / 10 };
   }
-
   const extraFee = Math.max(0, legalMin - bp);
   return { billedMin, extraMin: actualExtraMin, legalTotal: legalMin, extraFee: Math.round(extraFee * 10) / 10 };
 }
@@ -688,61 +778,242 @@ function calcOrderSubsidy(o, endTs) {
 function getExactTimes(o) {
   const ms = Math.max(0, o.endTs - o.startTs);
   const elapsed = fmtMMSS(ms);
-  
   if (o.excludeBaseFromTotal) return { elapsed, over: '-' };
 
   let thresholdMin = 0;
-  while (thresholdMin <= 120) {
-    let legal = getLegalMinPrice(thresholdMin);
-    if (o.linkGroupId) legal *= 2; 
-    if (legal > (o.basePrice || 0)) break;
-    thresholdMin++;
-  }
-  let targetSec = thresholdMin * 60 - 30;
-  if (thresholdMin === 0) targetSec = 0;
-  
+  while (thresholdMin <= 120) { let legal = getLegalMinPrice(thresholdMin); if (o.linkGroupId) legal *= 2; if (legal > (o.basePrice || 0)) break; thresholdMin++; }
+  let targetSec = thresholdMin * 60 - 30; if (thresholdMin === 0) targetSec = 0;
   const targetTs = o.startTs + targetSec * 1000;
   const overMs = Math.max(0, o.endTs - targetTs);
-  
-  const over = overMs > 0 ? fmtMMSS(overMs) : '-';
-  return { elapsed, over };
+  return { elapsed, over: overMs > 0 ? fmtMMSS(overMs) : '-' };
 }
 
 function getFeeStatus(o, now) {
-  if(!o.basePrice || o.basePrice <= 0){
-    return { text: '請先輸入單價', over: false };
-  }
-  if(o.linkRole === 'secondary'){
-    return { text: '差額併入 A 單', over: false };
-  }
+  if(!o.basePrice || o.basePrice <= 0) return { text: '請先輸入單價', over: false };
+  if(o.linkRole === 'secondary') return { text: '差額併入 A 單', over: false };
 
   const { extraFee } = calcOrderSubsidy(o, now);
-
   let thresholdMin = 0;
-  while (thresholdMin <= 120) {
-    let legal = getLegalMinPrice(thresholdMin);
-    if (o.linkGroupId) legal *= 2; 
-    if (legal > (o.basePrice || 0)) break;
-    thresholdMin++;
-  }
+  while (thresholdMin <= 120) { let legal = getLegalMinPrice(thresholdMin); if (o.linkGroupId) legal *= 2; if (legal > (o.basePrice || 0)) break; thresholdMin++; }
 
-  let targetSec = thresholdMin * 60 - 30;
-  if (thresholdMin === 0) targetSec = 0;
+  let targetSec = thresholdMin * 60 - 30; if (thresholdMin === 0) targetSec = 0;
   const targetTs = o.startTs + targetSec * 1000;
 
   if(extraFee > 0){
-    const elapsedOverMs = now - targetTs;
-    const overTimeStr = fmtMMSS(Math.max(0, elapsedOverMs));
+    const overTimeStr = fmtMMSS(Math.max(0, now - targetTs));
     return { text: `已超時 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${overTimeStr}</span>，+${money(extraFee)}`, over: true };
   }
-
-  if (targetTs > now) {
-    const remainStr = fmtMMSS(targetTs - now);
-    return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${remainStr}</span> 開始補差額`, over: false };
-  }
-
+  if (targetTs > now) return { text: `還有 <span style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,monospace;font-variant-numeric:tabular-nums;">${fmtMMSS(targetTs - now)}</span> 開始補差額`, over: false };
   return { text: '尚未達標', over: false };
 }
+
+// ================= 🚀 全新高階週報核心演算法 =================
+
+function getMondayTs(ts) {
+  const d = new Date(ts);
+  const day = d.getDay() || 7; 
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (day - 1));
+  return d.getTime();
+}
+
+function fmtMd(ts) {
+  const d = new Date(ts);
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+function computeWeeklyData() {
+  if (orders.length === 0) { weeklyDataCache = []; return; }
+  
+  let minTs = Date.now(); let maxTs = Date.now();
+  orders.forEach(o => { if (o.startTs < minTs) minTs = o.startTs; if (o.startTs > maxTs) maxTs = o.startTs; });
+
+  const startWeekTs = getMondayTs(minTs);
+  const endWeekTs = getMondayTs(maxTs);
+  const weeksMap = {};
+
+  let curr = startWeekTs;
+  while (curr <= endWeekTs) {
+    const endTs = curr + 6 * 86400000; 
+    weeksMap[curr] = {
+      mondayTs: curr,
+      dateRangeStr: `${fmtMd(curr)} - ${fmtMd(endTs)}`,
+      total: 0, activeMs: 0,
+      maxDayTotal: 0,
+      days: Array.from({length: 7}, (_, i) => ({
+        ts: curr + i * 86400000,
+        dayNum: new Date(curr + i * 86400000).getDate(),
+        dayName: ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],
+        total: 0, count: 0, baseSum: 0, feeSum: 0, activeMs: 0
+      }))
+    };
+    curr += 7 * 86400000;
+  }
+
+  orders.forEach(o => {
+    const mTs = getMondayTs(o.startTs);
+    const w = weeksMap[mTs];
+    if (w) {
+      const dayIdx = (new Date(o.startTs).getDay() || 7) - 1;
+      const d = w.days[dayIdx];
+      
+      const bPrice = o.excludeBaseFromTotal ? 0 : (o.basePrice || 0);
+      const eFee = o.extraFee || 0;
+      const oTotal = o.total || (bPrice + eFee);
+      
+      w.total += oTotal; d.total += oTotal; 
+      d.count += 1;
+      d.baseSum += bPrice;
+      d.feeSum += eFee;
+
+      // 時長計算：排除 B 單以避免重複加總
+      if (!o.excludeBaseFromTotal) {
+        const elMs = Math.max(0, o.endTs - o.startTs);
+        w.activeMs += elMs;
+        d.activeMs += elMs;
+      }
+    }
+  });
+
+  Object.values(weeksMap).forEach(w => {
+    let max = 0; w.days.forEach(d => { if(d.total > max) max = d.total; });
+    w.maxDayTotal = max || 1; 
+  });
+
+  weeklyDataCache = Object.values(weeksMap).sort((a, b) => b.mondayTs - a.mondayTs);
+}
+
+function renderWeeklyTab() {
+  if(weeklyDataCache.length === 0) {
+    $('weekTitleStr').textContent = '--';
+    $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0.00';
+    $('mCount').textContent = '0'; $('mAvg').textContent = '$0';
+    $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
+    $('mainChartWrap').innerHTML = '<div style="width:100%;text-align:center;color:var(--muted);font-size:14px;align-self:center;">尚無訂單紀錄</div>';
+    $('weekInsight').style.display = 'none';
+    return;
+  }
+
+  if(currentViewingWeekIndex >= weeklyDataCache.length) currentViewingWeekIndex = 0;
+  if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
+  
+  const wData = weeklyDataCache[currentViewingWeekIndex];
+  
+  $('weekTitleStr').textContent = wData.dateRangeStr;
+  $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
+  $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
+
+  // 🚀 動態切換：頂部數據看板
+  if(selectedDayIndex !== null) {
+    const d = wData.days[selectedDayIndex];
+    $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
+    $('mTotal').textContent = fmtDisplayMoney(d.total);
+    $('mCount').textContent = d.count;
+    $('mAvg').textContent = formatAvg(d.total, d.count);
+    $('mTime').textContent = formatHrs(d.activeMs);
+    $('mRate').textContent = formatHrRate(d.total, d.activeMs);
+  } else {
+    const totalCount = wData.days.reduce((s,d)=>s+d.count, 0);
+    $('mTitle').textContent = `本週總收入`;
+    $('mTotal').textContent = fmtDisplayMoney(wData.total);
+    $('mCount').textContent = totalCount;
+    $('mAvg').textContent = formatAvg(wData.total, totalCount);
+    $('mTime').textContent = formatHrs(wData.activeMs);
+    $('mRate').textContent = formatHrRate(wData.total, wData.activeMs);
+  }
+
+  // 🚀 動態渲染：雙色堆疊長條圖
+  const chartHtml = wData.days.map((d, idx) => {
+    const isSelected = selectedDayIndex === idx;
+    const heightPct = Math.max(2, (d.total / wData.maxDayTotal) * 100); 
+    const feePct = d.total > 0 ? (d.feeSum / d.total) * 100 : 0;
+    const basePct = d.total > 0 ? (d.baseSum / d.total) * 100 : 0;
+    return `
+      <div class="chart-col ${isSelected ? 'active' : ''}" data-day-idx="${idx}">
+        <div class="chart-stack" style="height:${heightPct}%;">
+          <div class="chart-bar-fee" style="height:${feePct}%;"></div>
+          <div class="chart-bar-base" style="height:${basePct}%;"></div>
+        </div>
+        <div class="chart-label-group">
+          <div class="chart-date">${d.dayNum}</div>
+          <div class="chart-day">${d.dayName}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  const chartWrap = $('mainChartWrap');
+  chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
+  chartWrap.innerHTML = chartHtml;
+
+  // 🚀 智慧亮點：最佳收益日
+  let bestDay = null; let maxD = 0;
+  wData.days.forEach(d => { if(d.total > maxD) { maxD = d.total; bestDay = d; } });
+  const insightEl = $('weekInsight');
+  if(bestDay && bestDay.total > 0) {
+      insightEl.style.display = 'flex';
+      insightEl.innerHTML = `👑 最佳收益日：${bestDay.dayName} (${fmtDisplayMoney(bestDay.total)})`;
+  } else {
+      insightEl.style.display = 'none';
+  }
+}
+
+$('mainChartWrap').addEventListener('click', e => {
+  if (weeklyDataCache.length === 0) return;
+  const col = e.target.closest('.chart-col');
+  if (col) {
+    const idx = parseInt(col.getAttribute('data-day-idx'));
+    selectedDayIndex = (selectedDayIndex === idx) ? null : idx; 
+  } else {
+    selectedDayIndex = null; 
+  }
+  renderWeeklyTab();
+});
+
+$('prevWeekBtn').addEventListener('click', () => {
+  if (currentViewingWeekIndex < weeklyDataCache.length - 1) {
+    currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab();
+  }
+});
+$('nextWeekBtn').addEventListener('click', () => {
+  if (currentViewingWeekIndex > 0) {
+    currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab();
+  }
+});
+
+$('weekTitleWrap').addEventListener('click', () => {
+  if(weeklyDataCache.length === 0) return;
+  const listWrap = $('weekSelectList');
+  listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
+    const miniChartHtml = w.days.map(d => {
+      const h = Math.max(5, (d.total / (w.maxDayTotal || 1)) * 100);
+      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
+    }).join('');
+    
+    return `
+      <div class="week-item" data-week-idx="${idx}">
+        <div class="week-item-info">
+          <span class="week-item-date">${w.dateRangeStr}</span>
+          <span class="week-item-amt">${fmtDisplayMoney(w.total)}</span>
+        </div>
+        <div class="mini-chart">${miniChartHtml}</div>
+      </div>
+    `;
+  }).join('');
+  showOverlay('weekSelectOverlay');
+});
+
+$('weekSelectList').addEventListener('click', e => {
+  const item = e.target.closest('.week-item');
+  if(item) {
+    currentViewingWeekIndex = parseInt(item.getAttribute('data-week-idx'));
+    selectedDayIndex = null;
+    hideOverlay('weekSelectOverlay');
+    renderWeeklyTab();
+  }
+});
+$('closeWeekSelectBtn').addEventListener('click', () => hideOverlay('weekSelectOverlay'));
+
 
 function init(){
   active = loadJSON(KEY_ACTIVE, []);
@@ -763,6 +1034,8 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   renderActive();
   computeTodaySummary();
+  computeWeeklyData(); // 🚀 初始化週報
+  renderWeeklyTab();
   renderDetailTable();
   renderTrash();
   setInterval(tick, 1000);
@@ -1183,7 +1456,9 @@ function completeOrder(id){
 
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders);
   syncActiveToAndroid(); 
-  closeVk(); renderActive(); computeTodaySummary(); renderDetailTable();
+  closeVk(); renderActive(); computeTodaySummary(); 
+  computeWeeklyData(); renderWeeklyTab(); // 🚀 同步更新週報
+  renderDetailTable();
 }
 
 function cancelOrder(id){
@@ -1263,9 +1538,10 @@ function computeTodaySummary(){
 }
 
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
-$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
+$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
 
-const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', trash: 'tabTrash', settings: 'tabSettings' };
+// 🚀 更新 Tab 邏輯，確保移除了獨立的垃圾桶 Tab
+const TAB_ID_MAP = { main: 'tabMain', weekly: 'tabWeekly', detail: 'tabDetail', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -1274,7 +1550,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     if(tab === 'detail') renderDetailTable();
-    if(tab === 'trash') renderTrash();
+    if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
+    if(tab === 'settings') renderTrash(); // 點擊設定時一併更新內建的垃圾桶
   });
 });
 
@@ -1383,7 +1660,7 @@ function openDeleteRowConfirm(id, displayIdx){
   pendingDeleteRowId = id; $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`; showOverlay('confirmDeleteRowOverlay');
 }
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
-  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); }
+  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); }
   pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
 
@@ -1400,7 +1677,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     if(order){
       order.basePrice = parseFloat(e.target.value) || 0; const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
       order.extraMin = extraMin; order.extraFee = extraFee; order.total = order.basePrice + order.extraFee;
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
     }
     return;
   }
@@ -1429,7 +1706,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
       go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
     });
-    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
+    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
   }
 });
 
@@ -1506,7 +1783,7 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
       orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
     }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
   };
