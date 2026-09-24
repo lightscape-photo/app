@@ -350,7 +350,7 @@
   .metric-card.main .metric-val { font-size:38px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:14px; }
 
-  /* 🚀 圖表防重疊分離排版 */
+  /* 🚀 圖表防重疊分離排版 (純色) */
   .chart-area { position:relative; width:100%; height:220px; display:flex; margin-bottom:16px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
@@ -387,7 +387,6 @@
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
-        <!-- 🚀 更新分頁順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定 -->
         <button class="tab-btn active" data-tab="main">主頁</button>
         <button class="tab-btn" data-tab="detail">明細</button>
         <button class="tab-btn" data-tab="weekly">週報</button>
@@ -425,28 +424,21 @@
     </div>
   </div>
 
+  <!-- 🚀 明細分頁 (已還原為乾淨下拉選單) -->
   <div id="tabDetail" class="tab-panel">
     <div class="settings-row" style="flex-wrap:wrap;margin-bottom:12px;">
       <label>範圍</label>
       <select id="exportRange" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;font-size:14px;">
-        <option value="single">單日模式</option>
+        <option value="today">今天</option>
         <option value="all">全部歷史</option>
         <option value="custom">自訂日期範圍</option>
       </select>
     </div>
-    <!-- 🚀 單日模式前後切換列 -->
-    <div class="settings-row" id="singleDateRow" style="justify-content:center; gap:16px; margin-bottom:12px;">
-      <button class="icon-btn" id="prevDayBtn" style="width:32px;height:32px;">&lt;</button>
-      <input type="date" id="singleDateInput" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
-      <button class="icon-btn" id="nextDayBtn" style="width:32px;height:32px;">&gt;</button>
-    </div>
-    
     <div class="settings-row" id="customDateRow" style="display:none;margin-bottom:12px;">
       <input type="date" id="rangeStart" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
       <span style="color:var(--muted);">至</span>
       <input type="date" id="rangeEnd" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px;font-family:inherit;">
     </div>
-    
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
       <div style="display:flex;gap:8px;align-items:center;">
@@ -803,8 +795,6 @@ function getFeeStatus(o, now) {
   return { text: '尚未達標', over: false };
 }
 
-// ================= 週報核心演算法 =================
-
 function getMondayTs(ts) {
   const d = new Date(ts);
   const day = d.getDay() || 7; 
@@ -915,7 +905,6 @@ function renderWeeklyTab() {
     $('mRate').textContent = formatHrRate(wData.total, wData.activeMs);
   }
 
-  // 🚀 防重疊純色長條圖渲染
   const chartHtml = wData.days.map((d, idx) => {
     const isSelected = selectedDayIndex === idx;
     const heightPct = Math.max(2, (d.total / wData.maxDayTotal) * 100); 
@@ -1012,9 +1001,6 @@ function init(){
   if(migrated) saveJSON(KEY_ORDERS, orders);
   applyTheme(loadJSON(KEY_THEME, 'light'));
   
-  // 初始化明細單日模式的日期
-  $('singleDateInput').value = formatDateInput(new Date());
-
   renderActive();
   computeTodaySummary();
   computeWeeklyData();
@@ -1245,7 +1231,6 @@ function initCardSwipe(){
       currentX = dx; card.style.transform = `translateX(${currentX}px)`;
       if (currentX > 0) wrap.style.backgroundColor = 'var(--green)'; else if (currentX < 0) wrap.style.backgroundColor = 'var(--red)';
     }
-    
     function onPointerUp(e){
       if(!dragging) return;
       dragging = false; if(cancelled) return;
@@ -1341,9 +1326,12 @@ function computeTodaySummary(){
 }
 
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
-$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
+$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ 
+  orders = []; saveJSON(KEY_ORDERS, orders); 
+  computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); 
+  hideOverlay('confirmClearOverlay'); 
+});
 
-// 🚀 Tab 順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定
 const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1359,11 +1347,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 const KEY_THEME = 'meter_theme';
 function applyTheme(theme){
-  if(theme === 'light' || theme === 'cyberpunk'){ document.documentElement.setAttribute('data-theme', theme); }
-  else{ document.documentElement.removeAttribute('data-theme'); }
+  if(theme === 'light' || theme === 'cyberpunk') document.documentElement.setAttribute('data-theme', theme);
+  else document.documentElement.removeAttribute('data-theme');
   document.querySelectorAll('.theme-option').forEach(btn=>{ btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === theme); });
   const metaTheme = $('themeColorMeta');
-  if(metaTheme){ const colorMap = { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' }; metaTheme.setAttribute('content', colorMap[theme] || colorMap.dark); }
+  if(metaTheme) metaTheme.setAttribute('content', { light: '#FFFFFF', cyberpunk: '#0A0E17', dark: '#1B1F24' }[theme] || '#1B1F24');
 }
 document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{ const theme = btn.getAttribute('data-theme-choice'); applyTheme(theme); saveJSON(KEY_THEME, theme); });
@@ -1371,38 +1359,9 @@ document.querySelectorAll('.theme-option').forEach(btn=>{
 
 function dayStart(dateStr){ return new Date(dateStr + 'T00:00:00').getTime(); }
 
-// 🚀 日期格式化助手 (確保不被時區干擾)
-function formatDateInput(d) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-// 🚀 單日模式切換控制
-function changeSingleDay(offset) {
-  const parts = $('singleDateInput').value.split('-');
-  if(parts.length !== 3) return;
-  const current = new Date(parts[0], parts[1]-1, parts[2]);
-  current.setDate(current.getDate() + offset);
-  $('singleDateInput').value = formatDateInput(current);
-  renderDetailTable();
-}
-$('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));
-$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));$('singleDateInput').addEventListener('change', renderDetailTable);
-
 function getExportOrders(){
   const range = $('exportRange').value; const chronological = [...orders].reverse();
-  if(range === 'single'){ 
-    const dVal = $('singleDateInput').value;
-    if(!dVal) return [];
-    const targetD = new Date(dVal);
-    const targetY = targetD.getFullYear(); const targetM = targetD.getMonth(); const targetDt = targetD.getDate();
-    return chronological.filter(o => {
-      const od = new Date(o.startTs);
-      return od.getFullYear() === targetY && od.getMonth() === targetM && od.getDate() === targetDt;
-    });
-  }
+  if(range === 'today'){ const today = new Date().toDateString(); return chronological.filter(o => new Date(o.startTs).toDateString() === today); }
   if(range === 'custom'){
     const startVal = $('rangeStart').value; const endVal =$('rangeEnd').value; if(!startVal || !endVal) return [];
     const startMs = dayStart(startVal); const endMs = dayStart(endVal) + 24*60*60*1000;
@@ -1413,7 +1372,6 @@ function getExportOrders(){
 
 $('exportRange').addEventListener('change', ()=>{ 
   $('customDateRow').style.display =$('exportRange').value === 'custom' ? 'flex' : 'none'; 
-  $('singleDateRow').style.display =$('exportRange').value === 'single' ? 'flex' : 'none'; 
   renderDetailTable(); 
 });
 
@@ -1486,7 +1444,10 @@ function openDeleteRowConfirm(id, displayIdx){
   pendingDeleteRowId = id; $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`; showOverlay('confirmDeleteRowOverlay');
 }
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
-  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); }
+  if(pendingDeleteRowId){ 
+    orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); 
+    computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); 
+  }
   pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
 
@@ -1603,7 +1564,8 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
       orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); 
+      showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
     }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
   };
