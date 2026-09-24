@@ -27,7 +27,6 @@
     --on-green:#0C2A1E;
     --on-amber:#412402;
     --on-red:#3A0F0F;
-    --chart-blue:#3B82F6;
   }
   html[data-theme="light"]{
     --bg:#FFFFFF;
@@ -45,7 +44,6 @@
     --on-green:#fff;
     --on-amber:#fff;
     --on-red:#fff;
-    --chart-blue:#3B82F6;
   }
   html[data-theme="cyberpunk"]{
     --bg:#0A0E17;
@@ -63,7 +61,6 @@
     --on-green:#0A0E17;
     --on-amber:#0A0E17;
     --on-red:#0A0E17;
-    --chart-blue:#05D9E8;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   
@@ -103,9 +100,7 @@
     display:flex;align-items:flex-end;justify-content:space-between;
     border-bottom:1px solid var(--border);
     padding-bottom:14px;
-    overflow-x: auto;
   }
-  .tabs::-webkit-scrollbar { display: none; }
 
   .new-order-row{
     display:flex;gap:10px;
@@ -283,14 +278,14 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
-  .tab-group{display:flex;gap:18px;}
+  .tab-group{display:flex;gap:22px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
   .brand-eats{color:var(--green);}
   .tab-btn{
     background:none;border:none;border-bottom:2px solid transparent;
-    padding:9px 2px;color:var(--muted);font-weight:600;font-size:14px;
-    cursor:pointer;font-family:inherit; white-space:nowrap;
+    padding:9px 2px;color:var(--muted);font-weight:600;font-size:15px;
+    cursor:pointer;font-family:inherit;
   }
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
   .tab-panel{display:none;}
@@ -333,50 +328,6 @@
   .vk-key:active { background: var(--border); transform: scale(0.94); }
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
-
-  /* 🚀 週報圖表專屬樣式 */
-  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
-  .week-title-wrap:active { background:var(--panel-2); }
-  .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
-  .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
-  
-  .week-total-display { font-size:42px; font-weight:700; text-align:center; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-variant-numeric:tabular-nums; margin: 10px 0 20px; color:var(--text); letter-spacing:-1px;}
-  
-  .chart-area { position:relative; width:100%; height:200px; display:flex; align-items:flex-end; padding-bottom:30px; border-bottom:1px dashed var(--border); margin-bottom:16px; }
-  .chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative; z-index:2; cursor:pointer; }
-  .chart-bar { width:65%; background:var(--chart-blue); border-radius:4px 4px 0 0; transition: height 0.3s ease, opacity 0.2s ease; position:relative; }
-  .chart-area.has-selection .chart-col:not(.active) .chart-bar { opacity: 0.3; }
-  
-  .chart-label-group { position:absolute; bottom:-24px; text-align:center; width:100%; }
-  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; }
-  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; }
-  
-  .daily-detail-box { display:none; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:20px; animation: fadeIn 0.2s ease; }
-  .daily-detail-box.show { display:block; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
-  .daily-stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
-  .daily-stat-item { display:flex; flex-direction:column; }
-  .daily-stat-lbl { font-size:12px; color:var(--muted); margin-bottom:4px; }
-  .daily-stat-val { font-size:16px; font-weight:600; font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; color:var(--text); }
-  
-  /* 歷史週數選取清單 */
-  .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
-  .week-select-top h2 { margin:0; font-size:22px; font-weight:700; }
-  .week-select-close { background:none; border:none; color:var(--text); font-size:28px; cursor:pointer; line-height:1; }
-  .week-select-legend { display:flex; justify-content:space-between; padding:12px 20px; background:var(--panel-2); font-size:13px; font-weight:600; color:var(--text); }
-  .week-select-legend .stars { letter-spacing:8px; color:var(--muted); font-weight:400; font-size:12px; }
-  .week-list { overflow-y:auto; flex:1; padding:0 20px; }
-  .week-item { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border); cursor:pointer; }
-  .week-item:active { opacity: 0.7; }
-  .week-item-info { display:flex; flex-direction:column; gap:6px; }
-  .week-item-date { font-size:14px; color:var(--text); font-weight:600; font-family:system-ui,sans-serif; }
-  .week-item-amt { font-size:18px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; }
-  
-  .mini-chart { display:flex; align-items:flex-end; gap:3px; height:32px; }
-  .mini-col { display:flex; flex-direction:column; align-items:center; width:14px; }
-  .mini-bar { width:100%; background:var(--chart-blue); border-radius:2px 2px 0 0; }
-  .mini-day { font-size:9px; color:var(--text); margin-top:4px; font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -386,7 +337,6 @@
     <div class="tabs">
       <div class="tab-group">
         <button class="tab-btn active" data-tab="main">主頁</button>
-        <button class="tab-btn" data-tab="weekly">週報</button>
         <button class="tab-btn" data-tab="detail">明細</button>
         <button class="tab-btn" data-tab="trash">垃圾桶</button>
         <button class="tab-btn" data-tab="settings">設定</button>
@@ -419,34 +369,6 @@
       <div class="card">
         <div class="label">差額費</div>
         <div class="value" id="todayFeeSum">NT$0</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🚀 互動式週總表 -->
-  <div id="tabWeekly" class="tab-panel">
-    <div class="week-header">
-      <button class="icon-btn" id="prevWeekBtn">&lt;</button>
-      <div class="week-title-wrap" id="weekTitleWrap">
-        <span class="week-title-str" id="weekTitleStr">--</span>
-        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-      </div>
-      <button class="icon-btn" id="nextWeekBtn">&gt;</button>
-    </div>
-    
-    <div class="week-total-display" id="weekTotalAmt">$0.00</div>
-    
-    <div class="chart-area" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 注入 -->
-    </div>
-    
-    <div class="daily-detail-box" id="dailyDetailBox">
-      <div class="active-header" style="margin-bottom:14px;"><h2 id="dailyDetailTitle">單日數據</h2></div>
-      <div class="daily-stat-grid">
-        <div class="daily-stat-item"><span class="daily-stat-lbl">完成趟數</span><span class="daily-stat-val" id="dailyCount">0</span></div>
-        <div class="daily-stat-item"><span class="daily-stat-lbl">總收入</span><span class="daily-stat-val" id="dailyTotal">$0.00</span></div>
-        <div class="daily-stat-item"><span class="daily-stat-lbl">淨收入 (本金)</span><span class="daily-stat-val" id="dailyBase">$0.00</span></div>
-        <div class="daily-stat-item"><span class="daily-stat-lbl">差額補貼</span><span class="daily-stat-val" id="dailyFee" style="color:var(--amber);">$0.00</span></div>
       </div>
     </div>
   </div>
@@ -541,23 +463,6 @@
   </div>
 </div>
 
-<!-- 🚀 歷史週數選取清單覆蓋層 -->
-<div class="overlay" id="weekSelectOverlay">
-  <div class="settings-panel" style="max-width:400px; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
-    <div class="week-select-top">
-      <h2>選取週數</h2>
-      <button class="week-select-close" id="closeWeekSelectBtn">×</button>
-    </div>
-    <div class="week-select-legend">
-      <span>每週明細</span>
-      <span class="stars">一二三四五六日</span>
-    </div>
-    <div class="week-list" id="weekSelectList">
-      <!-- JS 注入週數清單 -->
-    </div>
-  </div>
-</div>
-
 <div id="vkContainer" class="vk-container">
   <div id="vkNumpad" class="vk-layout" style="display:none;">
     <div class="vk-row">
@@ -619,13 +524,9 @@ let trashItems = [];
 let sortCol = null;
 let sortAsc = true;
 
-// 🚀 週報全局變數
-let weeklyDataCache = [];
-let currentViewingWeekIndex = 0;
-let selectedDayIndex = null;
-
 const $ = id => document.getElementById(id);
 
+// 🚀 核心升級：將完整的訂單核心參數傳給 Android 讓懸浮窗能即時心跳
 function syncActiveToAndroid() {
   if (window.AndroidDownloader && window.AndroidDownloader.syncActiveOrders) {
     const list = active.map(o => {
@@ -649,6 +550,7 @@ window.completeOrderById = function(id) {
   completeOrder(id);
 };
 
+// 🚀 支援從懸浮窗直接把單刷進垃圾桶
 window.cancelOrderById = function(id) {
   cancelOrder(id);
 };
@@ -733,11 +635,6 @@ function money(n){
 function plainNum(n){
   const r = Math.round(n*10)/10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
-}
-
-// 🚀 格式化大寫美金顯示法 (如 $6,388.00)
-function fmtDisplayMoney(n){
-  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
 function getBilledMinutes(startTs, endTs) {
@@ -847,178 +744,6 @@ function getFeeStatus(o, now) {
   return { text: '尚未達標', over: false };
 }
 
-// ================= 週報核心演算法 =================
-
-function getMondayTs(ts) {
-  const d = new Date(ts);
-  const day = d.getDay() || 7; 
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - (day - 1));
-  return d.getTime();
-}
-
-function fmtMd(ts) {
-  const d = new Date(ts);
-  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
-}
-
-function computeWeeklyData() {
-  if (orders.length === 0) { weeklyDataCache = []; return; }
-  
-  let minTs = Date.now(); let maxTs = Date.now();
-  orders.forEach(o => { if (o.startTs < minTs) minTs = o.startTs; if (o.startTs > maxTs) maxTs = o.startTs; });
-
-  const startWeekTs = getMondayTs(minTs);
-  const endWeekTs = getMondayTs(maxTs);
-  const weeksMap = {};
-
-  let curr = startWeekTs;
-  while (curr <= endWeekTs) {
-    const endTs = curr + 6 * 86400000; 
-    weeksMap[curr] = {
-      mondayTs: curr,
-      dateRangeStr: `${fmtMd(curr)} - ${fmtMd(endTs)}`,
-      total: 0,
-      maxDayTotal: 0,
-      days: Array.from({length: 7}, (_, i) => ({
-        ts: curr + i * 86400000,
-        dayNum: new Date(curr + i * 86400000).getDate(),
-        dayName: ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],
-        total: 0, count: 0, baseSum: 0, feeSum: 0
-      }))
-    };
-    curr += 7 * 86400000;
-  }
-
-  orders.forEach(o => {
-    const mTs = getMondayTs(o.startTs);
-    const w = weeksMap[mTs];
-    if (w) {
-      const dayIdx = (new Date(o.startTs).getDay() || 7) - 1;
-      const d = w.days[dayIdx];
-      const oTotal = o.total || ((o.excludeBaseFromTotal ? 0 : (o.basePrice || 0)) + (o.extraFee || 0));
-      w.total += oTotal; d.total += oTotal; d.count += 1;
-      d.baseSum += (o.excludeBaseFromTotal ? 0 : (o.basePrice || 0));
-      d.feeSum += (o.extraFee || 0);
-    }
-  });
-
-  Object.values(weeksMap).forEach(w => {
-    let max = 0; w.days.forEach(d => { if(d.total > max) max = d.total; });
-    w.maxDayTotal = max || 1; 
-  });
-
-  weeklyDataCache = Object.values(weeksMap).sort((a, b) => b.mondayTs - a.mondayTs);
-}
-
-function renderWeeklyTab() {
-  if(weeklyDataCache.length === 0) {
-    $('weekTitleStr').textContent = '--';
-    $('weekTotalAmt').textContent = '$0.00';
-    $('mainChartWrap').innerHTML = '<div style="width:100%;text-align:center;color:var(--muted);font-size:14px;align-self:center;">尚無訂單紀錄</div>';
-    $('dailyDetailBox').classList.remove('show');
-    return;
-  }
-
-  if(currentViewingWeekIndex >= weeklyDataCache.length) currentViewingWeekIndex = 0;
-  if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
-  
-  const wData = weeklyDataCache[currentViewingWeekIndex];
-  
-  $('weekTitleStr').textContent = wData.dateRangeStr;
-  $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
-  $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
-
-  if(selectedDayIndex !== null) {
-    const dData = wData.days[selectedDayIndex];
-    $('weekTotalAmt').textContent = fmtDisplayMoney(dData.total);
-    $('dailyDetailTitle').textContent = `${dData.dayName} 數據`;
-    $('dailyCount').textContent = dData.count;
-    $('dailyTotal').textContent = fmtDisplayMoney(dData.total);
-    $('dailyBase').textContent = fmtDisplayMoney(dData.baseSum);
-    $('dailyFee').textContent = fmtDisplayMoney(dData.feeSum);
-    $('dailyDetailBox').classList.add('show');
-  } else {
-    $('weekTotalAmt').textContent = fmtDisplayMoney(wData.total);
-    $('dailyDetailBox').classList.remove('show');
-  }
-
-  const chartHtml = wData.days.map((d, idx) => {
-    const isSelected = selectedDayIndex === idx;
-    const heightPct = Math.max(2, (d.total / wData.maxDayTotal) * 100); 
-    return `
-      <div class="chart-col ${isSelected ? 'active' : ''}" data-day-idx="${idx}">
-        <div class="chart-bar" style="height:${heightPct}%;"></div>
-        <div class="chart-label-group">
-          <div class="chart-date">${d.dayNum}</div>
-          <div class="chart-day">${d.dayName}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  const chartWrap = $('mainChartWrap');
-  chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
-  chartWrap.innerHTML = chartHtml;
-}
-
-$('mainChartWrap').addEventListener('click', e => {
-  if (weeklyDataCache.length === 0) return;
-  const col = e.target.closest('.chart-col');
-  if (col) {
-    const idx = parseInt(col.getAttribute('data-day-idx'));
-    selectedDayIndex = (selectedDayIndex === idx) ? null : idx; 
-  } else {
-    selectedDayIndex = null; 
-  }
-  renderWeeklyTab();
-});
-
-$('prevWeekBtn').addEventListener('click', () => {
-  if (currentViewingWeekIndex < weeklyDataCache.length - 1) {
-    currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab();
-  }
-});
-$('nextWeekBtn').addEventListener('click', () => {
-  if (currentViewingWeekIndex > 0) {
-    currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab();
-  }
-});
-
-$('weekTitleWrap').addEventListener('click', () => {
-  if(weeklyDataCache.length === 0) return;
-  const listWrap = $('weekSelectList');
-  listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
-    const miniChartHtml = w.days.map(d => {
-      const h = Math.max(5, (d.total / (w.maxDayTotal || 1)) * 100);
-      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
-    }).join('');
-    
-    return `
-      <div class="week-item" data-week-idx="${idx}">
-        <div class="week-item-info">
-          <span class="week-item-date">${w.dateRangeStr}</span>
-          <span class="week-item-amt">${fmtDisplayMoney(w.total)}</span>
-        </div>
-        <div class="mini-chart">${miniChartHtml}</div>
-      </div>
-    `;
-  }).join('');
-  showOverlay('weekSelectOverlay');
-});
-
-$('weekSelectList').addEventListener('click', e => {
-  const item = e.target.closest('.week-item');
-  if(item) {
-    currentViewingWeekIndex = parseInt(item.getAttribute('data-week-idx'));
-    selectedDayIndex = null;
-    hideOverlay('weekSelectOverlay');
-    renderWeeklyTab();
-  }
-});
-$('closeWeekSelectBtn').addEventListener('click', () => hideOverlay('weekSelectOverlay'));
-
-
 function init(){
   active = loadJSON(KEY_ACTIVE, []);
   orders = loadJSON(KEY_ORDERS, []);
@@ -1038,8 +763,6 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   renderActive();
   computeTodaySummary();
-  computeWeeklyData(); // 🚀 初始化週報
-  renderWeeklyTab();
   renderDetailTable();
   renderTrash();
   setInterval(tick, 1000);
@@ -1460,9 +1183,7 @@ function completeOrder(id){
 
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders);
   syncActiveToAndroid(); 
-  closeVk(); renderActive(); computeTodaySummary(); 
-  computeWeeklyData(); renderWeeklyTab(); // 🚀 同步週報
-  renderDetailTable();
+  closeVk(); renderActive(); computeTodaySummary(); renderDetailTable();
 }
 
 function cancelOrder(id){
@@ -1542,13 +1263,9 @@ function computeTodaySummary(){
 }
 
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
-$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ 
-  orders = []; saveJSON(KEY_ORDERS, orders); 
-  computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); 
-  hideOverlay('confirmClearOverlay'); 
-});
+$('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ orders = []; saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); hideOverlay('confirmClearOverlay'); });
 
-const TAB_ID_MAP = { main: 'tabMain', weekly: 'tabWeekly', detail: 'tabDetail', trash: 'tabTrash', settings: 'tabSettings' };
+const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', trash: 'tabTrash', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -1557,7 +1274,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     if(tab === 'detail') renderDetailTable();
-    if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
     if(tab === 'trash') renderTrash();
   });
 });
@@ -1667,10 +1383,7 @@ function openDeleteRowConfirm(id, displayIdx){
   pendingDeleteRowId = id; $('deleteRowInfo').textContent = `確定要刪除第 ${displayIdx} 筆紀錄嗎？`; showOverlay('confirmDeleteRowOverlay');
 }
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
-  if(pendingDeleteRowId){ 
-    orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); 
-    computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); 
-  }
+  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); }
   pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
 
@@ -1687,7 +1400,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     if(order){
       order.basePrice = parseFloat(e.target.value) || 0; const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
       order.extraMin = extraMin; order.extraFee = extraFee; order.total = order.basePrice + order.extraFee;
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
     }
     return;
   }
@@ -1716,7 +1429,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
       go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee;
     });
-    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
+    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable();
   }
 });
 
@@ -1726,6 +1439,7 @@ $('rangeStart').addEventListener('change', renderDetailTable);$('rangeEnd').addE
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = getExportOrders(); if(list.length === 0){ alert('這個範圍內沒有紀錄可以匯出'); return; }
+  // 🚀 新增隱藏的毫秒級系統時間戳，確保無損備份
   const header = ['編號','單號','日期','開始','結束','用時','超時','單價','差額','疊單共用','系統開始戳','系統結束戳'];
   const rows = list.map((o,i) => {
     const t = getExactTimes(o);
@@ -1773,11 +1487,15 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
         if(!yyyy || !mm || !dd) return;
         
         const [sh, sm] = r[3].split(':').map(n => parseInt(n)); const [eh, em] = r[4].split(':').map(n => parseInt(n));
+        
+        // 🚀 優先讀取毫秒級系統時間戳，確保完美還原，若無則降級為舊版時分計算
         let startTs, endTs;
         if(r.length >= 12 && r[10] && r[11] && !isNaN(Number(r[10])) && !isNaN(Number(r[11]))) {
-          startTs = Number(r[10]); endTs = Number(r[11]);
+          startTs = Number(r[10]);
+          endTs = Number(r[11]);
         } else {
-          startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime(); endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
+          startTs = new Date(yyyy, mm - 1, dd, sh || 0, sm || 0, 0).getTime();
+          endTs = new Date(yyyy, mm - 1, dd, eh || 0, em || 0, 0).getTime();
           if(endTs <= startTs) endTs += 24*60*60*1000;
         }
 
@@ -1788,8 +1506,7 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
       orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); 
-      showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); renderDetailTable(); showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
     }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
   };
