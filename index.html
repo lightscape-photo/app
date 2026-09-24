@@ -335,7 +335,7 @@
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
-  /* 週報高階數據看板 */
+  /* 週報與明細共用之高階頂部排版 */
   .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
@@ -362,7 +362,7 @@
   .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
   .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; line-height:1.2; }
 
-  /* 歷史週數選取清單 (修正對齊與長條圖) */
+  /* 歷史週數選取清單 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
   .week-select-top h2 { margin:0; font-size:22px; font-weight:700; }
   .week-select-close { background:none; border:none; color:var(--text); font-size:28px; cursor:pointer; line-height:1; }
@@ -400,6 +400,7 @@
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
+        <!-- 確保分頁順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定 -->
         <button class="tab-btn active" data-tab="main">主頁</button>
         <button class="tab-btn" data-tab="detail">明細</button>
         <button class="tab-btn" data-tab="weekly">週報</button>
@@ -438,13 +439,14 @@
   </div>
 
   <div id="tabDetail" class="tab-panel">
-    <!-- 🚀 縮小版：極簡無框標題日期 -->
-    <div class="settings-row" id="singleDateRow" style="justify-content:center; gap:12px; margin-bottom:14px;">
-      <button id="prevDayBtn" style="background:transparent; border:none; color:var(--muted); font-size:16px; font-weight:600; cursor:pointer; padding:4px 10px; display:flex; align-items:center;">&lt;</button>
-      <div style="position:relative; display:flex; align-items:center;">
-        <input type="date" id="singleDateInput" class="date-no-icon" style="background:transparent; color:var(--text); border:none; outline:none; font-family:system-ui, sans-serif; font-size:14px; font-weight:600; text-align:center; padding:0; cursor:pointer;">
+    <!-- 🚀 明細切換列：完全比照週報風格 (icon-btn 按鈕 + week-header 排版) -->
+    <div class="week-header" id="singleDateRow">
+      <button class="icon-btn" id="prevDayBtn">&lt;</button>
+      <div class="week-title-wrap" style="position:relative; min-width:140px; justify-content:center;">
+        <span id="singleDateDisplay" class="week-title-str" style="pointer-events:none; letter-spacing:0.5px;"></span>
+        <input type="date" id="singleDateInput" class="date-no-icon" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0; padding:0; box-sizing:border-box;">
       </div>
-      <button id="nextDayBtn" style="background:transparent; border:none; color:var(--muted); font-size:16px; font-weight:600; cursor:pointer; padding:4px 10px; display:flex; align-items:center;">&gt;</button>
+      <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
     <div id="exportPreviewWrap"></div>
@@ -566,7 +568,6 @@
       <h2>選取週數</h2>
       <button class="week-select-close" id="closeWeekSelectBtn">×</button>
     </div>
-    <!-- 🚀 修正對齊的星期標題網格 -->
     <div class="week-select-legend">
       <span>每週明細</span>
       <div class="legend-days">
@@ -964,7 +965,6 @@ $('weekTitleWrap').addEventListener('click', () => {
   if(weeklyDataCache.length === 0) return;
   const listWrap = $('weekSelectList');
   listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
-    // 🚀 生成完美對齊的修復版迷你長條圖
     const miniChartHtml = w.days.map(d => {
       const h = Math.max(5, (d.total / (w.maxDayTotal || 1)) * 100);
       return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
@@ -1014,6 +1014,7 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   
   $('singleDateInput').value = formatDateInput(new Date());
+  updateDateDisplay();
 
   renderActive();
   computeTodaySummary();
@@ -1371,8 +1372,6 @@ document.querySelectorAll('.theme-option').forEach(btn=>{
   btn.addEventListener('click', ()=>{ const theme = btn.getAttribute('data-theme-choice'); applyTheme(theme); saveJSON(KEY_THEME, theme); });
 });
 
-function dayStart(dateStr){ return new Date(dateStr + 'T00:00:00').getTime(); }
-
 function formatDateInput(d) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -1380,22 +1379,40 @@ function formatDateInput(d) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// 🚀 同步更新純文字層
+function updateDateDisplay() {
+  const val = $('singleDateInput').value;
+  if(val) $('singleDateDisplay').textContent = val.replace(/-/g, '/');
+}
+
+// 🚀 單日模式切換控制
 function changeSingleDay(offset) {
   const parts = $('singleDateInput').value.split('-');
   if(parts.length !== 3) return;
   const current = new Date(parts[0], parts[1]-1, parts[2]);
   current.setDate(current.getDate() + offset);
   $('singleDateInput').value = formatDateInput(current);
+  updateDateDisplay();
   renderDetailTable();
 }
-$('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));
-$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));$('singleDateInput').addEventListener('change', renderDetailTable);
+$('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));
 
+$('singleDateInput').addEventListener('change', () => {
+  if (!$('singleDateInput').value)$('singleDateInput').value = formatDateInput(new Date());
+  updateDateDisplay();
+  renderDetailTable();
+});
+
+// 🚀 解析顯示用的單日資料 (避開時區 Bug)
 function getDisplayOrders(){
   const dVal = $('singleDateInput').value;
   if(!dVal) return [];
-  const targetD = new Date(dVal);
-  const targetY = targetD.getFullYear(); const targetM = targetD.getMonth(); const targetDt = targetD.getDate();
+  const parts = dVal.split('-');
+  if(parts.length !== 3) return [];
+  const targetY = parseInt(parts[0], 10);
+  const targetM = parseInt(parts[1], 10) - 1;
+  const targetDt = parseInt(parts[2], 10);
+  
   return [...orders].reverse().filter(o => {
     const od = new Date(o.startTs);
     return od.getFullYear() === targetY && od.getMonth() === targetM && od.getDate() === targetDt;
@@ -1525,6 +1542,8 @@ $('exportPreviewWrap').addEventListener('change', e=>{
 });
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
+
+// 🚀 全局無損備份：無視畫面日期，永遠打包所有歷史訂單
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = [...orders].reverse();
   if(list.length === 0){ alert('目前沒有任何紀錄可以匯出'); return; }
