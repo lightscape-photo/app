@@ -378,12 +378,13 @@
   .week-item-date { font-size:14px; color:var(--text); font-weight:600; font-family:system-ui,sans-serif; }
   .week-item-amt { font-size:18px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; }
   
-  .mini-chart { display:flex; align-items:flex-end; gap:4px; height:34px; width:122px; }
+  /* 🚀 拉高天花板，釋放長條圖空間，並微調日期位置 */
+  .mini-chart { display:flex; align-items:flex-end; gap:4px; height:50px; width:122px; }
   .mini-col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; width:14px; height:100%; }
   .mini-bar { width:100%; background:var(--chart-blue); border-radius:2px 2px 0 0; }
-  .mini-day { font-size:9px; color:var(--text); margin-top:4px; font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; width:100%; text-align:center;}
+  .mini-day { font-size:9px; color:var(--text); margin-top:5px; padding-bottom:2px; font-family:system-ui,sans-serif; font-variant-numeric:tabular-nums; width:100%; text-align:center;}
 
-  /* 🚀 隱藏原生日曆圖示 */
+  /* 隱藏原生日曆圖示 */
   .date-no-icon::-webkit-calendar-picker-indicator {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -400,7 +401,6 @@
   <div class="top-sticky-zone">
     <div class="tabs">
       <div class="tab-group">
-        <!-- 確保分頁順序：主頁 ➔ 明細 ➔ 週報 ➔ 設定 -->
         <button class="tab-btn active" data-tab="main">主頁</button>
         <button class="tab-btn" data-tab="detail">明細</button>
         <button class="tab-btn" data-tab="weekly">週報</button>
@@ -439,7 +439,6 @@
   </div>
 
   <div id="tabDetail" class="tab-panel">
-    <!-- 🚀 明細切換列：完全比照週報風格 (icon-btn 按鈕 + week-header 排版) -->
     <div class="week-header" id="singleDateRow">
       <button class="icon-btn" id="prevDayBtn">&lt;</button>
       <div class="week-title-wrap" style="position:relative; min-width:140px; justify-content:center;">
