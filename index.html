@@ -40,6 +40,17 @@
   }
   .app{width:100%;max-width:480px;padding:0 16px 60px; display:flex; flex-direction:column;}
   
+  /* 🚀 動態物理級鎖定：專為週報分頁設計，徹底消滅捲軸且絕對不影響其他分頁 */
+  body.weekly-mode {
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  body.weekly-mode .app {
+    height: 100dvh !important;
+    overflow: hidden !important;
+    padding-bottom: 10px !important;
+  }
+
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;flex-shrink:0;
@@ -224,7 +235,6 @@
   .tab-panel{display:none; flex:1;}
   .tab-panel.active{display:flex; flex-direction:column;}
 
-  /* 🚀 僅將週報分頁（#tabWeekly）物理級鎖死、絕對不出現捲軸[cite: 5, 6] */
   #tabWeekly.active {
     overflow: hidden !important;
   }
@@ -271,7 +281,6 @@
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
-  /* 🚀 週報經典 2 欄網格[cite: 5, 6] */
   .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
   .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
   .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
@@ -280,7 +289,7 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 圖表區塊[cite: 5, 6] */
+  /* 圖表區塊 */
   .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:20px; margin-bottom:10px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
@@ -370,7 +379,6 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 動態隱藏欄位面板[cite: 5, 6] -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -395,7 +403,6 @@
       <button class="icon-btn" id="nextWeekBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 經典 2 欄並排網格[cite: 5, 6] -->
     <div class="metrics-grid">
       <div class="metric-card main">
         <span class="metric-lbl" id="mTitle">本週總收入</span>
@@ -413,7 +420,7 @@
     </div>
     
     <div class="chart-area" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 初始化並平滑更新[cite: 5, 6] -->
+      <!-- 柱狀圖由 JS 初始化並平滑更新 -->
     </div>
   </div>
 
@@ -493,7 +500,7 @@
       </div>
     </div>
     <div class="week-list" id="weekSelectList">
-      <!-- JS 注入週數清單[cite: 5, 6] -->
+      <!-- JS 注入週數清單 -->
     </div>
   </div>
 </div>
@@ -515,7 +522,7 @@
 </div>
 
 <script>
-// 全域常數[cite: 5, 6]
+// 全域常數
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
@@ -651,7 +658,6 @@ function getFeeStatus(o, now) {
 function getMondayTs(ts) { const d = new Date(ts); const day = d.getDay() || 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (day - 1)); return d.getTime(); }
 function fmtMd(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
 
-// 🚀 時間區間重疊合併演算法：精準計算實際接單時長，不重複計算重疊時間
 function calculateMergedActiveMs(orderList) {
   const intervals = [];
   orderList.forEach(o => {
@@ -728,7 +734,6 @@ function computeWeeklyData() {
   } catch (e) { console.error("Weekly computing err:", e); }
 }
 
-// 🚀 圖表結構初始化 (確保 DOM 更新與平滑動畫)
 function initChartDOM() {
   const wrap = $('mainChartWrap');
   if (!wrap || !wrap.querySelector('.chart-col')) {
@@ -792,7 +797,6 @@ function renderWeeklyTab() {
         const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
         if(col) {
           col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
-          // 🚀 關鍵修正：若該日營收為 0，高度直接設為 0%，絕不出現突兀的小藍條
           const barHeight = (d.total > 0 && wData.maxDayTotal > 0) ? (d.total / wData.maxDayTotal) * 100 : 0;
           col.querySelector('.chart-bar').style.height = `${barHeight}%`;
           col.querySelector('.chart-date').textContent = d.dayNum;
@@ -810,7 +814,6 @@ $('mainChartWrap').addEventListener('click', e => {
   if (col) { 
     const idx = parseInt(col.getAttribute('data-day-idx')); 
     const wData = weeklyDataCache[currentViewingWeekIndex];
-    // 🚀 防呆機制：若點擊到該日營收為 0 的長條圖，直接忽略，不切換、不顯示空資訊塊
     if (wData && wData.days && wData.days[idx] && wData.days[idx].total > 0) {
       selectedDayIndex = (selectedDayIndex === idx) ? null : idx; 
       renderWeeklyTab();
@@ -847,10 +850,8 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  // 🚀 預設隱藏加成與小費，維持最舒適的 9 欄視覺
   hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
   
-  // 🚀 資料庫無痛升級相容 (避免計算報錯)
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -1144,9 +1145,21 @@ $('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClear
 const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', settings: 'tabSettings' };
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    
+    // 🚀 新增：切換分頁時先關閉數字鍵盤，避免版面異常
+    closeVk(); 
+
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
+    
+    // 🚀 動態套用捲軸鎖死模式：只有在 weekly 頁面才加上 weekly-mode，其他頁面自動移除
+    if(tab === 'weekly') {
+      document.body.classList.add('weekly-mode');
+    } else {
+      document.body.classList.remove('weekly-mode');
+    }
+
     if(tab === 'detail') renderDetailTable();
     if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
     if(tab === 'settings') renderTrash();
@@ -1177,7 +1190,7 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
-// 🚀 動態欄位隱藏面板
+// 動態欄位隱藏面板
 const togglableCols = [
   { id: 'date', label: '日期' }, { id: 'elapsed', label: '用時' }, 
   { id: 'over', label: '超時' }, { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
@@ -1192,7 +1205,7 @@ $('colToggles')?.addEventListener('click', e => {
   if (hiddenCols.includes(col)) {
     hiddenCols = hiddenCols.filter(c => c !== col);
   } else {
-    // 🚀 防呆鎖死：物理限制最多只能隱藏 2 個
+    // 防呆鎖死：物理限制最多只能隱藏 2 個
     if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\n請先點擊顯示其他欄位。'); return; }
     hiddenCols.push(col);
   }
@@ -1204,7 +1217,7 @@ $('exportPreviewWrap').addEventListener('click', e => {
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
 
-// 🚀 黃金 11 欄位表格 (動態顯示)
+// 黃金 11 欄位表格 (動態顯示)
 function renderDetailTable(){
   try {
     const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
@@ -1352,7 +1365,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 
-// 🚀 全局無損備份：新增額外收入、釋放記憶體
+// 全局無損備份：新增額外收入、釋放記憶體
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = [...orders].reverse();
   if(list.length === 0){ alert('目前沒有任何紀錄可以匯出'); return; }
