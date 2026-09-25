@@ -38,7 +38,7 @@
     min-height:100vh; display:flex; justify-content:center; overflow-x:hidden;
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
-  .app{width:100%;max-width:480px;padding:0 16px 60px;}
+  .app{width:100%;max-width:480px;padding:0 16px 60px; display:flex; flex-direction:column;}
   
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
@@ -102,7 +102,9 @@
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
   .ordno-input, .price-input { cursor: text; caret-color: var(--amber); }
-  .ordno-input.vk-active, .price-input-wrap.vk-active { border-color: var(--amber) !important; box-shadow: 0 0 0 1px var(--amber); }
+  .ordno-input.vk-active, .price-input-wrap.vk-active {
+    border-color: var(--amber) !important; box-shadow: 0 0 0 1px var(--amber);
+  }
 
   .ordno-input{
     flex:1.8;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
@@ -174,13 +176,13 @@
   }
   .export-btn:active{transform:scale(0.97);}
   
-  /* 🚀 欄位切換按鈕區塊 */
-  .col-toggles-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  /* 🚀 欄位隱藏開關面板 */
+  .col-toggles-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
   .toggle-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+    font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
   }
-  .toggle-btn.active { background: var(--panel-2); border-color: var(--text); color: var(--text); }
+  .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
   .hide-col { display: none !important; }
 
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
@@ -200,12 +202,12 @@
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
     color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:12px;
-    text-align:center;padding:0;min-width:0;box-sizing:border-box;
+    text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
   
-  .base-edit-input{-moz-appearance:textfield;appearance:textfield;}
-  .base-edit-input::-webkit-outer-spin-button,.base-edit-input::-webkit-inner-spin-button{ -webkit-appearance:none;margin:0; }
+  .num-edit-input{-moz-appearance:textfield;appearance:textfield;}
+  .num-edit-input::-webkit-outer-spin-button,.num-edit-input::-webkit-inner-spin-button{ -webkit-appearance:none;margin:0; }
   .ordno-edit-input{font-weight:600;}
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
@@ -219,8 +221,8 @@
     padding:9px 2px;color:var(--muted);font-weight:600;font-size:14px; cursor:pointer;font-family:inherit; white-space:nowrap;
   }
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
-  .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
+  .tab-panel{display:none; flex:1;}
+  .tab-panel.active{display:flex; flex-direction:column;}
 
   .theme-option-row{display:flex;gap:12px;flex-wrap:wrap;}
   .theme-option{
@@ -257,23 +259,23 @@
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
-  /* 🚀 週報高密度網格卡片：4x2 排版，完美群組化且字體適中 */
-  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  /* 🚀 週報經典 2 欄網格 (內距微縮防捲軸) */
+  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
-  .metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:16px; }
-  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; transition: all 0.2s ease;}
-  .metric-card.main { grid-column: span 4; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
-  .metric-lbl { font-size:10px; color:var(--muted); font-weight:500; white-space:nowrap;}
-  .metric-val { font-size:14px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
+  .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
+  .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
+  .metric-lbl { font-size:12px; color:var(--muted); font-weight:500; }
+  .metric-val { font-size:16px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 長條圖物理壓縮，保證不捲動 */
-  .chart-area { position:relative; width:100%; height:160px; display:flex; margin-bottom:16px; }
+  /* 🚀 圖表防重疊分離排版 (高度壓縮至 160px，保證不捲動) */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-bottom:10px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
@@ -362,7 +364,7 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 隱藏欄位開關面板 -->
+    <!-- 🚀 動態隱藏欄位面板 -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -387,7 +389,7 @@
       <button class="icon-btn" id="nextWeekBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 高密度 4x2 網格卡片區 (字體適中) -->
+    <!-- 🚀 經典 2 欄並排網格：完美還原順序與字體 -->
     <div class="metrics-grid">
       <div class="metric-card main">
         <span class="metric-lbl" id="mTitle">本週總收入</span>
@@ -397,6 +399,7 @@
       <div class="metric-card"><span class="metric-lbl">差額補償</span><span class="metric-val" id="mFee">$0</span></div>
       <div class="metric-card"><span class="metric-lbl">加成</span><span class="metric-val" id="mBonus">$0</span></div>
       <div class="metric-card"><span class="metric-lbl">小費</span><span class="metric-val" id="mTip">$0</span></div>
+      
       <div class="metric-card"><span class="metric-lbl">完成趟數</span><span class="metric-val" id="mCount">0</span></div>
       <div class="metric-card"><span class="metric-lbl">均單價</span><span class="metric-val" id="mAvg">$0</span></div>
       <div class="metric-card"><span class="metric-lbl">接單時長</span><span class="metric-val" id="mTime">0.0h</span></div>
@@ -404,7 +407,7 @@
     </div>
     
     <div class="chart-area" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 平滑注入 -->
+      <!-- 柱狀圖由 JS 初始化並平滑更新 -->
     </div>
   </div>
 
@@ -506,15 +509,17 @@
 </div>
 
 <script>
+// 🚀 全域常數提至最前，徹底根絕 ReferenceError 當機 Bug
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
+const KEY_THEME = 'meter_theme';
 const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 
 let active = [];
 let orders = [];
 let trashItems = [];
-let hiddenCols = [];
+let hiddenCols = []; // 儲存被隱藏的欄位
 
 let sortCol = null;
 let sortAsc = true;
@@ -525,9 +530,11 @@ let selectedDayIndex = null;
 
 const $ = id => document.getElementById(id);
 
-// 🚀 全域 XSS 防護
+// 🚀 全域 XSS 防護罩
 function escapeHTML(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str || '').replace(/[&<>"'`=\/]/g, function(s){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;','/':'&#x2F;','=':'&#x3D;'}[s];
+  });
 }
 
 function syncActiveToAndroid() {
@@ -677,11 +684,11 @@ function computeWeeklyData() {
   } catch (e) { console.error("Weekly computing err:", e); }
 }
 
-// 🚀 圖表結構初始化 (確保平滑動畫)
+// 🚀 圖表結構初始化 (確保 DOM 更新與平滑動畫)
 function initChartDOM() {
   const wrap = $('mainChartWrap');
   if (!wrap || !wrap.querySelector('.chart-col')) {
-    wrap.innerHTML = Array.from({length: 7}, (_, i) => `
+    if(wrap) wrap.innerHTML = Array.from({length: 7}, (_, i) => `
       <div class="chart-col" data-day-idx="${i}">
         <div class="chart-bar-zone"><div class="chart-bar" style="height: 2%;"></div></div>
         <div class="chart-label-group"><div class="chart-date">-</div><div class="chart-day">-</div></div>
@@ -730,17 +737,19 @@ function renderWeeklyTab() {
     $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
 
     initChartDOM(); const chartWrap = $('mainChartWrap');
-    wData.days.forEach((d, idx) => {
-      const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
-      if(col) {
-        col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
-        col.querySelector('.chart-bar').style.height = `${Math.max(2, (d.total / wData.maxDayTotal) * 100)}%`;
-        col.querySelector('.chart-date').textContent = d.dayNum;
-        col.querySelector('.chart-day').textContent = d.dayName;
-      }
-    });
-    chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
-  } catch(e) { console.error("Render weekly err", e); }
+    if(chartWrap) {
+      wData.days.forEach((d, idx) => {
+        const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
+        if(col) {
+          col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
+          col.querySelector('.chart-bar').style.height = `${Math.max(2, (d.total / wData.maxDayTotal) * 100)}%`;
+          col.querySelector('.chart-date').textContent = d.dayNum;
+          col.querySelector('.chart-day').textContent = d.dayName;
+        }
+      });
+      chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
+    }
+  } catch(e) { console.error('Weekly render err:', e); }
 }
 
 $('mainChartWrap').addEventListener('click', e => {
@@ -770,7 +779,8 @@ function init(){
   active = loadJSON(KEY_ACTIVE, []);
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
-  // 🚀 預設隱藏加成與小費
+  
+  // 🚀 預設隱藏加成與小費，維持最舒適的 9 欄視覺
   hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
   
   // 🚀 資料庫無痛升級相容 (避免計算報錯)
@@ -923,7 +933,7 @@ function renderActive(){
       }
       pendingNewIds = [];
     }
-  } catch(e) { console.error("Render Active err", e); }
+  } catch(e) { console.error('Active List Render Err:', e); }
 }
 
 $('activeList').addEventListener('input', e=>{
@@ -1002,7 +1012,7 @@ function completeOrder(id){
     });
     saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid(); 
     closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable();
-  } catch(e) { console.error("Complete Order err", e); }
+  } catch(e) { console.error('Complete Order Err:', e); }
 }
 
 function cancelOrder(id){
@@ -1048,7 +1058,7 @@ function tick(){
   try {
     if(active.length === 0) return; const now = Date.now();
     active.forEach(o=>{ const timerEl = document.querySelector(`[data-timer="${o.id}"]`); if(timerEl) timerEl.textContent = fmtMMSS(now - o.startTs); updateFeeDisplay(o); });
-  } catch(e) { console.error("Tick err", e); }
+  } catch(e) { console.error('Tick Err:', e); }
 }
 
 function computeTodaySummary(){
@@ -1198,7 +1208,7 @@ function renderDetailTable(){
         </table>
       </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
     `;
-  } catch(e) { console.error("Render Detail err", e); }
+  } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
@@ -1270,7 +1280,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       });
       saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
     }
-  } catch(e) { console.error("Export Preview change err", e); }
+  } catch(e) { console.error('Export Preview change err:', e); }
 });
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
