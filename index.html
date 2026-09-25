@@ -38,7 +38,7 @@
     min-height:100vh; display:flex; justify-content:center; overflow-x:hidden;
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
-  .app{width:100%;max-width:480px;padding:0 16px 60px; display:flex; flex-direction:column;}
+  .app{width:100%;max-width:480px;padding:0 16px 60px;}
   
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
@@ -102,9 +102,7 @@
   .ordno-price-row{display:flex;gap:8px;margin-bottom:10px;}
   
   .ordno-input, .price-input { cursor: text; caret-color: var(--amber); }
-  .ordno-input.vk-active, .price-input-wrap.vk-active {
-    border-color: var(--amber) !important; box-shadow: 0 0 0 1px var(--amber);
-  }
+  .ordno-input.vk-active, .price-input-wrap.vk-active { border-color: var(--amber) !important; box-shadow: 0 0 0 1px var(--amber); }
 
   .ordno-input{
     flex:1.8;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
@@ -135,10 +133,7 @@
   .order-start b{color:var(--text);font-family:system-ui,sans-serif;}
 
   .order-status-row{ display:flex;align-items:baseline;justify-content:space-between;gap:10px; }
-  .order-timer{
-    font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;
-    letter-spacing:0.5px;flex-shrink:0;
-  }
+  .order-timer{ font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600; letter-spacing:0.5px;flex-shrink:0; }
   .order-fee{font-size:11px;color:var(--muted);text-align:right;font-family:system-ui,monospace;font-variant-numeric:tabular-nums;}
   .order-fee.over{color:var(--amber);}
 
@@ -167,9 +162,7 @@
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;text-align:right;
   }
   .settings-actions{display:flex;gap:10px;margin-top:6px;}
-  .settings-actions button{
-    flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
-  }
+  .settings-actions button{ flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit; }
   .settings-actions .cancel{background:transparent;border:1px solid var(--border);color:var(--muted);}
   .settings-actions .confirm{background:var(--amber);border:none;color:var(--on-amber);}
 
@@ -181,16 +174,16 @@
   }
   .export-btn:active{transform:scale(0.97);}
   
-  /* 🚀 欄位開關列 */
+  /* 🚀 欄位切換按鈕區塊 */
   .col-toggles-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
   .toggle-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+    font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
   }
-  .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
+  .toggle-btn.active { background: var(--panel-2); border-color: var(--text); color: var(--text); }
   .hide-col { display: none !important; }
 
-  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;}
+  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 1px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
@@ -207,12 +200,12 @@
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
     color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:12px;
-    text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
+    text-align:center;padding:0;min-width:0;box-sizing:border-box;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
   
-  .num-edit-input{-moz-appearance:textfield;appearance:textfield;}
-  .num-edit-input::-webkit-outer-spin-button,.num-edit-input::-webkit-inner-spin-button{ -webkit-appearance:none;margin:0; }
+  .base-edit-input{-moz-appearance:textfield;appearance:textfield;}
+  .base-edit-input::-webkit-outer-spin-button,.base-edit-input::-webkit-inner-spin-button{ -webkit-appearance:none;margin:0; }
   .ordno-edit-input{font-weight:600;}
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
@@ -226,8 +219,8 @@
     padding:9px 2px;color:var(--muted);font-weight:600;font-size:14px; cursor:pointer;font-family:inherit; white-space:nowrap;
   }
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
-  .tab-panel{display:none; flex:1;}
-  .tab-panel.active{display:flex; flex-direction:column;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
 
   .theme-option-row{display:flex;gap:12px;flex-wrap:wrap;}
   .theme-option{
@@ -264,29 +257,23 @@
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
-  /* 高階頂部排版 */
-  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  /* 🚀 週報高密度網格卡片：4x2 排版，完美群組化且字體適中 */
+  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
-  /* 🚀 重構：高密度三層微型儀表板 */
-  .compact-dash {
-    display: flex; flex-direction: column; gap: 8px; background: var(--panel);
-    border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px;
-  }
-  .dash-t1 { text-align: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .dash-t1-lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
-  .dash-t1-val { font-size: 30px; font-weight: 700; color: var(--amber); font-family: system-ui, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.1; margin-top: 2px; }
-  
-  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
-  .dash-grid + .dash-grid { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--border); }
-  .dash-item-lbl { font-size: 10px; color: var(--muted); white-space: nowrap; transform: scale(0.95); }
-  .dash-item-val { font-size: 13px; font-weight: 600; color: var(--text); font-family: system-ui, monospace; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:16px; }
+  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; transition: all 0.2s ease;}
+  .metric-card.main { grid-column: span 4; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
+  .metric-lbl { font-size:10px; color:var(--muted); font-weight:500; white-space:nowrap;}
+  .metric-val { font-size:14px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
+  .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
+  .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 圖表防重疊分離排版 (純色 + 保證空間) */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 180px; display:flex; margin-bottom:10px; }
+  /* 🚀 長條圖物理壓縮，保證不捲動 */
+  .chart-area { position:relative; width:100%; height:160px; display:flex; margin-bottom:16px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
@@ -318,6 +305,7 @@
   .mini-bar { width:100%; background:var(--chart-blue); border-radius:2px 2px 0 0; }
   .mini-day { font-size:9px; color:var(--text); margin-top:5px; padding-bottom:3px; font-family:system-ui,monospace; font-variant-numeric:tabular-nums; width:100%; text-align:center;}
 
+  /* 隱藏原生日曆圖示 */
   .date-no-icon::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; background: transparent; }
 </style>
 </head>
@@ -374,10 +362,8 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 動態欄位隱藏面板 -->
-    <div class="col-toggles-row" id="colToggles">
-      <!-- JS 動態產生開關 -->
-    </div>
+    <!-- 🚀 隱藏欄位開關面板 -->
+    <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
@@ -401,28 +387,24 @@
       <button class="icon-btn" id="nextWeekBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 高密度儀表板 (三層架構) -->
-    <div class="compact-dash">
-      <div class="dash-t1">
-        <div class="dash-t1-lbl" id="mTitle">本週總收入</div>
-        <div class="dash-t1-val" id="mTotal">$0</div>
+    <!-- 🚀 高密度 4x2 網格卡片區 (字體適中) -->
+    <div class="metrics-grid">
+      <div class="metric-card main">
+        <span class="metric-lbl" id="mTitle">本週總收入</span>
+        <span class="metric-val" id="mTotal">$0.00</span>
       </div>
-      <div class="dash-grid">
-        <div><div class="dash-item-lbl">基本報酬</div><div class="dash-item-val" id="mBase">$0</div></div>
-        <div><div class="dash-item-lbl">差額</div><div class="dash-item-val" id="mFee">$0</div></div>
-        <div><div class="dash-item-lbl">加成</div><div class="dash-item-val" id="mBonus">$0</div></div>
-        <div><div class="dash-item-lbl">小費</div><div class="dash-item-val" id="mTip">$0</div></div>
-      </div>
-      <div class="dash-grid">
-        <div><div class="dash-item-lbl">完成趟數</div><div class="dash-item-val" id="mCount">0</div></div>
-        <div><div class="dash-item-lbl">均單價</div><div class="dash-item-val" id="mAvg">$0</div></div>
-        <div><div class="dash-item-lbl">接單時長</div><div class="dash-item-val" id="mTime">0.0h</div></div>
-        <div><div class="dash-item-lbl">換算時薪</div><div class="dash-item-val" id="mRate">$0/h</div></div>
-      </div>
+      <div class="metric-card"><span class="metric-lbl">基本報酬</span><span class="metric-val" id="mBase">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">差額補償</span><span class="metric-val" id="mFee">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">加成</span><span class="metric-val" id="mBonus">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">小費</span><span class="metric-val" id="mTip">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">完成趟數</span><span class="metric-val" id="mCount">0</span></div>
+      <div class="metric-card"><span class="metric-lbl">均單價</span><span class="metric-val" id="mAvg">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">接單時長</span><span class="metric-val" id="mTime">0.0h</span></div>
+      <div class="metric-card"><span class="metric-lbl">換算時薪</span><span class="metric-val" id="mRate">$0/h</span></div>
     </div>
     
     <div class="chart-area" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 初始化並平滑更新 -->
+      <!-- 柱狀圖由 JS 平滑注入 -->
     </div>
   </div>
 
@@ -532,7 +514,7 @@ const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 let active = [];
 let orders = [];
 let trashItems = [];
-let hiddenCols = []; // 儲存被隱藏的欄位，最多兩個
+let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -543,7 +525,7 @@ let selectedDayIndex = null;
 
 const $ = id => document.getElementById(id);
 
-// 🚀 安全防護：XSS 過濾器
+// 🚀 全域 XSS 防護
 function escapeHTML(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -658,45 +640,47 @@ function getMondayTs(ts) { const d = new Date(ts); const day = d.getDay() || 7; 
 function fmtMd(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
 
 function computeWeeklyData() {
-  if (orders.length === 0) { weeklyDataCache = []; return; }
-  let minTs = Date.now(); let maxTs = Date.now();
-  orders.forEach(o => { if (o.startTs < minTs) minTs = o.startTs; if (o.startTs > maxTs) maxTs = o.startTs; });
-  const startWeekTs = getMondayTs(minTs); const endWeekTs = getMondayTs(maxTs);
-  const weeksMap = {}; let curr = startWeekTs;
-  while (curr <= endWeekTs) {
-    const endTs = curr + 6 * 86400000; 
-    weeksMap[curr] = {
-      mondayTs: curr, dateRangeStr: `${fmtMd(curr)} - ${fmtMd(endTs)}`,
-      total: 0, activeMs: 0, maxDayTotal: 0,
-      days: Array.from({length: 7}, (_, i) => ({
-        ts: curr + i * 86400000, dayNum: new Date(curr + i * 86400000).getDate(),
-        dayName: ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],
-        total: 0, count: 0, baseSum: 0, feeSum: 0, bonusSum: 0, tipSum: 0, activeMs: 0
-      }))
-    };
-    curr += 7 * 86400000;
-  }
-  orders.forEach(o => {
-    const mTs = getMondayTs(o.startTs); const w = weeksMap[mTs];
-    if (w) {
-      const dayIdx = (new Date(o.startTs).getDay() || 7) - 1; const d = w.days[dayIdx];
-      const bPrice = o.excludeBaseFromTotal ? 0 : (o.basePrice || 0);
-      const eFee = o.extraFee || 0; const bonus = o.bonus || 0; const tip = o.tip || 0;
-      const oTotal = o.total || (bPrice + eFee + bonus + tip);
-      
-      w.total += oTotal; d.total += oTotal; d.count += 1;
-      d.baseSum += bPrice; d.feeSum += eFee; d.bonusSum += bonus; d.tipSum += tip;
-      if (!o.excludeBaseFromTotal) { const elMs = Math.max(0, o.endTs - o.startTs); w.activeMs += elMs; d.activeMs += elMs; }
+  try {
+    if (orders.length === 0) { weeklyDataCache = []; return; }
+    let minTs = Date.now(); let maxTs = Date.now();
+    orders.forEach(o => { if (o.startTs < minTs) minTs = o.startTs; if (o.startTs > maxTs) maxTs = o.startTs; });
+    const startWeekTs = getMondayTs(minTs); const endWeekTs = getMondayTs(maxTs);
+    const weeksMap = {}; let curr = startWeekTs;
+    while (curr <= endWeekTs) {
+      const endTs = curr + 6 * 86400000; 
+      weeksMap[curr] = {
+        mondayTs: curr, dateRangeStr: `${fmtMd(curr)} - ${fmtMd(endTs)}`,
+        total: 0, activeMs: 0, maxDayTotal: 0,
+        days: Array.from({length: 7}, (_, i) => ({
+          ts: curr + i * 86400000, dayNum: new Date(curr + i * 86400000).getDate(),
+          dayName: ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],
+          total: 0, count: 0, baseSum: 0, feeSum: 0, bonusSum: 0, tipSum: 0, activeMs: 0
+        }))
+      };
+      curr += 7 * 86400000;
     }
-  });
-  Object.values(weeksMap).forEach(w => { let max = 0; w.days.forEach(d => { if(d.total > max) max = d.total; }); w.maxDayTotal = max || 1; });
-  weeklyDataCache = Object.values(weeksMap).sort((a, b) => b.mondayTs - a.mondayTs);
+    orders.forEach(o => {
+      const mTs = getMondayTs(o.startTs); const w = weeksMap[mTs];
+      if (w) {
+        const dayIdx = (new Date(o.startTs).getDay() || 7) - 1; const d = w.days[dayIdx];
+        const bPrice = o.excludeBaseFromTotal ? 0 : (o.basePrice || 0);
+        const eFee = o.extraFee || 0; const bonus = o.bonus || 0; const tip = o.tip || 0;
+        const oTotal = o.total || (bPrice + eFee + bonus + tip);
+        
+        w.total += oTotal; d.total += oTotal; d.count += 1;
+        d.baseSum += bPrice; d.feeSum += eFee; d.bonusSum += bonus; d.tipSum += tip;
+        if (!o.excludeBaseFromTotal) { const elMs = Math.max(0, o.endTs - o.startTs); w.activeMs += elMs; d.activeMs += elMs; }
+      }
+    });
+    Object.values(weeksMap).forEach(w => { let max = 0; w.days.forEach(d => { if(d.total > max) max = d.total; }); w.maxDayTotal = max || 1; });
+    weeklyDataCache = Object.values(weeksMap).sort((a, b) => b.mondayTs - a.mondayTs);
+  } catch (e) { console.error("Weekly computing err:", e); }
 }
 
 // 🚀 圖表結構初始化 (確保平滑動畫)
 function initChartDOM() {
   const wrap = $('mainChartWrap');
-  if (!wrap.querySelector('.chart-col')) {
+  if (!wrap || !wrap.querySelector('.chart-col')) {
     wrap.innerHTML = Array.from({length: 7}, (_, i) => `
       <div class="chart-col" data-day-idx="${i}">
         <div class="chart-bar-zone"><div class="chart-bar" style="height: 2%;"></div></div>
@@ -707,54 +691,56 @@ function initChartDOM() {
 }
 
 function renderWeeklyTab() {
-  if(weeklyDataCache.length === 0) {
-    $('weekTitleStr').textContent = '--';
-    $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
-    $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
-    $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
-    $('mainChartWrap').innerHTML = '<div style="width:100%;text-align:center;color:var(--muted);font-size:14px;align-self:center;">尚無訂單紀錄</div>';
-    return;
-  }
-  if(currentViewingWeekIndex >= weeklyDataCache.length) currentViewingWeekIndex = 0;
-  if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
-  const wData = weeklyDataCache[currentViewingWeekIndex];
-  $('weekTitleStr').textContent = wData.dateRangeStr;
-  $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
-  $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
-
-  let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
-  if(selectedDayIndex !== null) {
-    const d = wData.days[selectedDayIndex];
-    $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
-    dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
-    dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
-  } else {
-    $('mTitle').textContent = `本週總收入`;
-    dTotal = wData.total; dActiveMs = wData.activeMs;
-    dCount = wData.days.reduce((s,d)=>s+d.count, 0);
-    dBase = wData.days.reduce((s,d)=>s+d.baseSum, 0);
-    dFee = wData.days.reduce((s,d)=>s+d.feeSum, 0);
-    dBonus = wData.days.reduce((s,d)=>s+d.bonusSum, 0);
-    dTip = wData.days.reduce((s,d)=>s+d.tipSum, 0);
-  }
-
-  $('mTotal').textContent = fmtDisplayMoney(dTotal);
-  $('mBase').textContent = `$${plainNum(dBase)}`; $('mFee').textContent = `$${plainNum(dFee)}`;
-  $('mBonus').textContent = `$${plainNum(dBonus)}`; $('mTip').textContent = `$${plainNum(dTip)}`;
-  $('mCount').textContent = dCount; $('mAvg').textContent = formatAvg(dTotal, dCount);
-  $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
-
-  initChartDOM(); const chartWrap = $('mainChartWrap');
-  wData.days.forEach((d, idx) => {
-    const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
-    if(col) {
-      col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
-      col.querySelector('.chart-bar').style.height = `${Math.max(2, (d.total / wData.maxDayTotal) * 100)}%`;
-      col.querySelector('.chart-date').textContent = d.dayNum;
-      col.querySelector('.chart-day').textContent = d.dayName;
+  try {
+    if(weeklyDataCache.length === 0) {
+      $('weekTitleStr').textContent = '--';
+      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
+      $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
+      $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
+      $('mainChartWrap').innerHTML = '<div style="width:100%;text-align:center;color:var(--muted);font-size:14px;align-self:center;">尚無訂單紀錄</div>';
+      return;
     }
-  });
-  chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
+    if(currentViewingWeekIndex >= weeklyDataCache.length) currentViewingWeekIndex = 0;
+    if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
+    const wData = weeklyDataCache[currentViewingWeekIndex];
+    $('weekTitleStr').textContent = wData.dateRangeStr;
+    $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
+    $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
+
+    let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
+    if(selectedDayIndex !== null) {
+      const d = wData.days[selectedDayIndex];
+      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
+      dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
+      dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
+    } else {
+      $('mTitle').textContent = `本週總收入`;
+      dTotal = wData.total; dActiveMs = wData.activeMs;
+      dCount = wData.days.reduce((s,d)=>s+d.count, 0);
+      dBase = wData.days.reduce((s,d)=>s+d.baseSum, 0);
+      dFee = wData.days.reduce((s,d)=>s+d.feeSum, 0);
+      dBonus = wData.days.reduce((s,d)=>s+d.bonusSum, 0);
+      dTip = wData.days.reduce((s,d)=>s+d.tipSum, 0);
+    }
+
+    $('mTotal').textContent = fmtDisplayMoney(dTotal);
+    $('mBase').textContent = `$${plainNum(dBase)}`; $('mFee').textContent = `$${plainNum(dFee)}`;
+    $('mBonus').textContent = `$${plainNum(dBonus)}`; $('mTip').textContent = `$${plainNum(dTip)}`;
+    $('mCount').textContent = dCount; $('mAvg').textContent = formatAvg(dTotal, dCount);
+    $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
+
+    initChartDOM(); const chartWrap = $('mainChartWrap');
+    wData.days.forEach((d, idx) => {
+      const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
+      if(col) {
+        col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
+        col.querySelector('.chart-bar').style.height = `${Math.max(2, (d.total / wData.maxDayTotal) * 100)}%`;
+        col.querySelector('.chart-date').textContent = d.dayNum;
+        col.querySelector('.chart-day').textContent = d.dayName;
+      }
+    });
+    chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
+  } catch(e) { console.error("Render weekly err", e); }
 }
 
 $('mainChartWrap').addEventListener('click', e => {
@@ -762,7 +748,6 @@ $('mainChartWrap').addEventListener('click', e => {
   if (col) { const idx = parseInt(col.getAttribute('data-day-idx')); selectedDayIndex = (selectedDayIndex === idx) ? null : idx; } else { selectedDayIndex = null; }
   renderWeeklyTab();
 });
-
 $('prevWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex < weeklyDataCache.length - 1) { currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab(); }});
 $('nextWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex > 0) { currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab(); }});
 
@@ -785,9 +770,10 @@ function init(){
   active = loadJSON(KEY_ACTIVE, []);
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
-  // 🚀 預設隱藏加成與小費，維持最舒適的 9 欄視覺
+  // 🚀 預設隱藏加成與小費
   hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
   
+  // 🚀 資料庫無痛升級相容 (避免計算報錯)
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -882,61 +868,64 @@ $('newLinkedBtn').addEventListener('click', ()=>{
 });
 
 function renderActive(){
-  const list = $('activeList');$('activeCount').textContent = active.length + ' 單';
-  const prevRects = {}; list.querySelectorAll('.swipe-card-wrap').forEach(el=>{ prevRects[el.getAttribute('data-swipe-card')] = el.getBoundingClientRect(); });
+  try {
+    const list = $('activeList');$('activeCount').textContent = active.length + ' 單';
+    const prevRects = {}; list.querySelectorAll('.swipe-card-wrap').forEach(el=>{ prevRects[el.getAttribute('data-swipe-card')] = el.getBoundingClientRect(); });
 
-  if(active.length === 0){ list.innerHTML = '<div class="empty">目前沒有進行中的訂單</div>'; return; }
-  const now0 = Date.now();
-  list.innerHTML = active.map(o => {
-    const isPrimary = o.linkRole === 'primary'; const isSecondary = o.linkRole === 'secondary';
-    const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
-    const priceField = isSecondary
-      ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
-      : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
-    const feeStatus = getFeeStatus(o, now0);
-    return `
-    <div class="swipe-card-wrap" data-swipe-card="${o.id}">
-      <div class="order-card" data-order-id="${o.id}">
-        <div class="ordno-price-row">
-          <input type="text" class="ordno-input" data-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="單號" inputmode="none">
-          ${priceField}
+    if(active.length === 0){ list.innerHTML = '<div class="empty">目前沒有進行中的訂單</div>'; return; }
+    const now0 = Date.now();
+    list.innerHTML = active.map(o => {
+      const isPrimary = o.linkRole === 'primary'; const isSecondary = o.linkRole === 'secondary';
+      const badge = isPrimary ? '<span class="link-badge">疊單 A</span>' : isSecondary ? '<span class="link-badge">疊單 B</span>' : '';
+      const priceField = isSecondary
+        ? `<div class="price-input-wrap locked-price"><span>NT$</span><input type="text" class="price-input" value="-" readonly tabindex="-1"></div>`
+        : `<div class="price-input-wrap"><span>NT$</span><input type="text" class="price-input" data-base="${o.id}" value="${o.basePrice || ''}" placeholder="單價" inputmode="none"></div>`;
+      const feeStatus = getFeeStatus(o, now0);
+      return `
+      <div class="swipe-card-wrap" data-swipe-card="${o.id}">
+        <div class="order-card" data-order-id="${o.id}">
+          <div class="ordno-price-row">
+            <input type="text" class="ordno-input" data-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="單號" inputmode="none">
+            ${priceField}
+          </div>
+          <div class="order-head"><span class="order-start">開始 <b>${fmtHHMM(o.startTs)}</b>${badge}</span></div>
+          <div class="order-status-row">
+            <span class="order-timer" data-timer="${o.id}">00:00</span>
+            <span class="order-fee${feeStatus.over ? ' over' : ''}" data-fee="${o.id}">${feeStatus.text}</span>
+          </div>
         </div>
-        <div class="order-head"><span class="order-start">開始 <b>${fmtHHMM(o.startTs)}</b>${badge}</span></div>
-        <div class="order-status-row">
-          <span class="order-timer" data-timer="${o.id}">00:00</span>
-          <span class="order-fee${feeStatus.over ? ' over' : ''}" data-fee="${o.id}">${feeStatus.text}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  initCardSwipe();
-  const wraps = Array.from(list.querySelectorAll('.swipe-card-wrap')); const animating = [];
-  wraps.forEach((el, idx)=>{
-    const id = el.getAttribute('data-swipe-card'); const prev = prevRects[id]; el.style.zIndex = String(wraps.length - idx);
-    if(!prev) return; const next = el.getBoundingClientRect(); const dy = prev.top - next.top; if(Math.abs(dy) < 1) return; animating.push({ el, dy });
-  });
-  animating.forEach(({el, dy})=>{ el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)`; });
-  if(animating.length){
-    void list.offsetHeight;
-    requestAnimationFrame(()=>{
-      animating.forEach(({el})=>{ el.style.transition = 'transform 0.15s ease'; el.style.transform = 'translateY(0)'; });
-      setTimeout(()=>{ animating.forEach(({el})=>{ el.style.transition = ''; el.style.transform = ''; el.style.zIndex = ''; }); }, 170);
+      </div>`;
+    }).join('');
+    initCardSwipe();
+    const wraps = Array.from(list.querySelectorAll('.swipe-card-wrap')); const animating = [];
+    wraps.forEach((el, idx)=>{
+      const id = el.getAttribute('data-swipe-card'); const prev = prevRects[id]; el.style.zIndex = String(wraps.length - idx);
+      if(!prev) return; const next = el.getBoundingClientRect(); const dy = prev.top - next.top; if(Math.abs(dy) < 1) return; animating.push({ el, dy });
     });
-  }
-  if(pendingNewIds.length){
-    const newEls = pendingNewIds.map(id => list.querySelector(`.swipe-card-wrap[data-swipe-card="${id}"]`)).filter(Boolean);
-    const pushDelay = animating.length ? 70 : 0;
-    newEls.forEach(el=>{ el.style.transition = 'none'; el.style.transform = 'scale(0.92)'; el.style.opacity = '0'; });
-    if(newEls.length){
+    animating.forEach(({el, dy})=>{ el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)`; });
+    if(animating.length){
       void list.offsetHeight;
-      setTimeout(()=>{
-        newEls.forEach(el=>{ el.style.transition = 'transform 0.15s ease, opacity 0.15s ease'; el.style.transform = 'scale(1)'; el.style.opacity = '1'; });
-        setTimeout(()=>{ newEls.forEach(el=>{ el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }); }, 170);
-      }, pushDelay);
+      requestAnimationFrame(()=>{
+        animating.forEach(({el})=>{ el.style.transition = 'transform 0.15s ease'; el.style.transform = 'translateY(0)'; });
+        setTimeout(()=>{ animating.forEach(({el})=>{ el.style.transition = ''; el.style.transform = ''; el.style.zIndex = ''; }); }, 170);
+      });
     }
-    pendingNewIds = [];
-  }
+    if(pendingNewIds.length){
+      const newEls = pendingNewIds.map(id => list.querySelector(`.swipe-card-wrap[data-swipe-card="${id}"]`)).filter(Boolean);
+      const pushDelay = animating.length ? 70 : 0;
+      newEls.forEach(el=>{ el.style.transition = 'none'; el.style.transform = 'scale(0.92)'; el.style.opacity = '0'; });
+      if(newEls.length){
+        void list.offsetHeight;
+        setTimeout(()=>{
+          newEls.forEach(el=>{ el.style.transition = 'transform 0.15s ease, opacity 0.15s ease'; el.style.transform = 'scale(1)'; el.style.opacity = '1'; });
+          setTimeout(()=>{ newEls.forEach(el=>{ el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }); }, 170);
+        }, pushDelay);
+      }
+      pendingNewIds = [];
+    }
+  } catch(e) { console.error("Render Active err", e); }
 }
+
 $('activeList').addEventListener('input', e=>{
   const baseId = e.target.getAttribute('data-base'); const ordId = e.target.getAttribute('data-ordno');
   if(baseId){
@@ -958,11 +947,13 @@ $('activeList').addEventListener('input', e=>{
     }
   }
 });
+
 $('activeList').addEventListener('click', e=>{
   if(window.swipeDragging) return; 
   const ordInput = e.target.closest('.ordno-input'); if (ordInput) { openVk(ordInput, 'hex'); return; }
   const priceInput = e.target.closest('.price-input'); if (priceInput && !priceInput.classList.contains('locked-price')) { openVk(priceInput, 'hex'); return; }
 });
+
 function initCardSwipe(){
   document.querySelectorAll('.swipe-card-wrap').forEach(wrap=>{
     const id = wrap.getAttribute('data-swipe-card'); const card = wrap.querySelector('.order-card');
@@ -992,30 +983,37 @@ function initCardSwipe(){
     wrap.addEventListener('pointerdown', onPointerDown); wrap.addEventListener('pointermove', onPointerMove); wrap.addEventListener('pointerup', onPointerUp); wrap.addEventListener('pointercancel', onPointerUp);
   });
 }
+
 function completeOrder(id){
-  const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
-  const o = active[idx]; const endTs = Date.now();
-  let toComplete = o.linkGroupId ? active.filter(a => a.linkGroupId === o.linkGroupId) : [o];
-  toComplete.forEach(item => {
-    const { billedMin, extraMin, extraFee } = calcOrderSubsidy(item, endTs);
-    const isSec = item.linkRole === 'secondary';
-    const record = {
-      id: genId(), orderNo: item.orderNo || '', basePrice: item.basePrice || 0,
-      excludeBaseFromTotal: isSec, startTs: item.startTs, endTs,
-      elapsedMinCeil: billedMin, extraMin: extraMin, extraFee: extraFee, bonus: 0, tip: 0,
-      total: (isSec ? 0 : (item.basePrice || 0)) + extraFee, linkGroupId: item.linkGroupId, linkRole: item.linkRole
-    };
-    orders.unshift(record); const rIdx = active.findIndex(a => a.id === item.id); if(rIdx > -1) active.splice(rIdx,1);
-  });
-  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid(); 
-  closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable();
+  try {
+    const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
+    const o = active[idx]; const endTs = Date.now();
+    let toComplete = o.linkGroupId ? active.filter(a => a.linkGroupId === o.linkGroupId) : [o];
+    toComplete.forEach(item => {
+      const { billedMin, extraMin, extraFee } = calcOrderSubsidy(item, endTs);
+      const isSec = item.linkRole === 'secondary';
+      const record = {
+        id: genId(), orderNo: item.orderNo || '', basePrice: item.basePrice || 0,
+        excludeBaseFromTotal: isSec, startTs: item.startTs, endTs,
+        elapsedMinCeil: billedMin, extraMin: extraMin, extraFee: extraFee, bonus: 0, tip: 0,
+        total: (isSec ? 0 : (item.basePrice || 0)) + extraFee, linkGroupId: item.linkGroupId, linkRole: item.linkRole
+      };
+      orders.unshift(record); const rIdx = active.findIndex(a => a.id === item.id); if(rIdx > -1) active.splice(rIdx,1);
+    });
+    saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid(); 
+    closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable();
+  } catch(e) { console.error("Complete Order err", e); }
 }
+
 function cancelOrder(id){
-  const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
-  const item = active[idx]; item.deletedAt = Date.now(); trashItems.unshift(item); active.splice(idx,1);
-  saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems); syncActiveToAndroid(); 
-  closeVk(); renderActive(); renderTrash();
+  try {
+    const idx = active.findIndex(a=>a.id===id); if(idx === -1) return;
+    const item = active[idx]; item.deletedAt = Date.now(); trashItems.unshift(item); active.splice(idx,1);
+    saveJSON(KEY_ACTIVE, active); saveJSON(KEY_TRASH, trashItems); syncActiveToAndroid(); 
+    closeVk(); renderActive(); renderTrash();
+  } catch(e) { console.error(e); }
 }
+
 function renderTrash(){
   const el = $('trashList');$('clearTrashBtn').style.display = trashItems.length === 0 ? 'none' : 'block';
   if(trashItems.length === 0){ el.innerHTML = '<div class="empty">垃圾桶是空的</div>'; return; }
@@ -1030,6 +1028,7 @@ function renderTrash(){
     </div>`;
   }).join('');
 }
+
 $('trashList').addEventListener('click', e=>{
   const btn = e.target.closest('[data-trash-restore]'); if(!btn) return;
   const id = btn.getAttribute('data-trash-restore'); const idx = trashItems.findIndex(t=>t.id===id); if(idx === -1) return;
@@ -1040,14 +1039,18 @@ $('trashList').addEventListener('click', e=>{
 function showOverlay(id) { $(id).classList.add('show'); reportUiState(); }
 function hideOverlay(id) { $(id).classList.remove('show'); reportUiState(); }$('clearTrashBtn').addEventListener('click', ()=> showOverlay('confirmClearTrashOverlay'));
 $('confirmClearTrashCancel').addEventListener('click', ()=> hideOverlay('confirmClearTrashOverlay'));$('confirmClearTrashOk').addEventListener('click', ()=>{ trashItems = []; saveJSON(KEY_TRASH, trashItems); renderTrash(); hideOverlay('confirmClearTrashOverlay'); });
+
 function updateFeeDisplay(o){
   const feeEl = document.querySelector(`[data-fee="${o.id}"]`); if(!feeEl) return;
   const status = getFeeStatus(o, Date.now()); feeEl.innerHTML = status.text; feeEl.classList.toggle('over', status.over);
 }
 function tick(){
-  if(active.length === 0) return; const now = Date.now();
-  active.forEach(o=>{ const timerEl = document.querySelector(`[data-timer="${o.id}"]`); if(timerEl) timerEl.textContent = fmtMMSS(now - o.startTs); updateFeeDisplay(o); });
+  try {
+    if(active.length === 0) return; const now = Date.now();
+    active.forEach(o=>{ const timerEl = document.querySelector(`[data-timer="${o.id}"]`); if(timerEl) timerEl.textContent = fmtMMSS(now - o.startTs); updateFeeDisplay(o); });
+  } catch(e) { console.error("Tick err", e); }
 }
+
 function computeTodaySummary(){
   const today = new Date().toDateString(); const todayOrders = orders.filter(o => new Date(o.startTs).toDateString() === today);
   $('todayCount').textContent = todayOrders.length;
@@ -1103,17 +1106,18 @@ const togglableCols = [
   { id: 'over', label: '超時' }, { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
 ];
 function renderColToggles() {
-  const wrap = $('colToggles');
+  const wrap = $('colToggles'); if(!wrap) return;
   wrap.innerHTML = togglableCols.map(c => `<button class="toggle-btn ${!hiddenCols.includes(c.id) ? 'active' : ''}" data-col="${c.id}">${c.label}</button>`).join('');
 }
-$('colToggles').addEventListener('click', e => {
+$('colToggles')?.addEventListener('click', e => {
   const btn = e.target.closest('.toggle-btn'); if(!btn) return;
   const col = btn.getAttribute('data-col');
   if (hiddenCols.includes(col)) {
-    hiddenCols = hiddenCols.filter(c => c !== col); // unhide
+    hiddenCols = hiddenCols.filter(c => c !== col);
   } else {
-    if (hiddenCols.length >= 2) { alert('手機螢幕空間有限，最多只能隱藏 2 個欄位喔！\n請先顯示其他欄位。'); return; }
-    hiddenCols.push(col); // hide
+    // 🚀 防呆鎖死：物理限制最多只能隱藏 2 個
+    if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\\n請先點擊顯示其他欄位。'); return; }
+    hiddenCols.push(col);
   }
   saveJSON(KEY_HIDDEN_COLS, hiddenCols); renderColToggles(); renderDetailTable();
 });
@@ -1123,76 +1127,78 @@ $('exportPreviewWrap').addEventListener('click', e => {
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
 
-// 🚀 還原並強化 11 欄位緊湊表格
+// 🚀 黃金 11 欄位表格 (動態顯示)
 function renderDetailTable(){
-  const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
-  if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這天沒有任何紀錄</div>'; return; }
-  
-  const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
-  const feeSum = list.reduce((s,o)=> s + o.extraFee, 0);
-  const bonusSum = list.reduce((s,o)=> s + (o.bonus||0), 0);
-  const tipSum = list.reduce((s,o)=> s + (o.tip||0), 0);
-  
-  let displayList = list.map((o, i) => { return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs }; });
-  if (sortCol) {
-    displayList.sort((a, b) => {
-      let valA, valB;
-      if (sortCol === 'id') { valA = a.origIndex; valB = b.origIndex; }
-      else if (sortCol === 'elapsed') { valA = a.elapsedMs; valB = b.elapsedMs; }
-      else if (sortCol === 'overtime') { valA = a._obj.extraMin; valB = b._obj.extraMin; }
-      else if (sortCol === 'base') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.basePrice || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.basePrice || 0); }
-      else if (sortCol === 'fee') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.extraFee || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.extraFee || 0); }
-      if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
-    });
-  }
-  
-  const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
-  
-  wrap.innerHTML = `
-    <div class="export-table-scroll">
-      <table class="export-table">
-        <thead><tr>
-          <th data-sort="id" class="sortable" style="width:26px;">編號</th>
-          <th>單號</th>
-          <th class="${h('date')}">日期</th>
-          <th>開始</th><th>結束</th>
-          <th data-sort="elapsed" class="sortable ${h('elapsed')}">用時</th>
-          <th data-sort="overtime" class="sortable ${h('over')}">超時</th>
-          <th data-sort="base" class="sortable">單價</th>
-          <th class="${h('bonus')}">加成</th>
-          <th class="${h('tip')}">小費</th>
-          <th data-sort="fee" class="sortable">差額</th>
-        </tr></thead>
-        <tbody>
-          ${displayList.map(item => {
-            const o = item._obj; const t = getExactTimes(o);
-            const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
-            return `
-            <tr>
-              <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
-              <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false"></td>
-              <td class="${h('date')}">${fmtDateOnly(o.startTs)}</td>
-              <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
-              <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
-              <td class="${h('elapsed')}">${t.elapsed}</td><td class="${h('over')}">${t.over}</td>
-              <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
-              <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus||0}" min="0">`}</td>
-              <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip||0}" min="0">`}</td>
-              <td>${displayFee}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-        <tfoot><tr>
-          <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
-          <td class="${h('elapsed')}"></td><td class="${h('over')}"></td>
-          <td>${plainNum(baseSum)}</td>
-          <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
-          <td class="${h('tip')}">${plainNum(tipSum)}</td>
-          <td>${plainNum(feeSum)}</td>
-        </tr></tfoot>
-      </table>
-    </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
-  `;
+  try {
+    const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
+    if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這天沒有任何紀錄</div>'; return; }
+    
+    const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
+    const feeSum = list.reduce((s,o)=> s + o.extraFee, 0);
+    const bonusSum = list.reduce((s,o)=> s + (o.bonus||0), 0);
+    const tipSum = list.reduce((s,o)=> s + (o.tip||0), 0);
+    
+    let displayList = list.map((o, i) => { return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs }; });
+    if (sortCol) {
+      displayList.sort((a, b) => {
+        let valA, valB;
+        if (sortCol === 'id') { valA = a.origIndex; valB = b.origIndex; }
+        else if (sortCol === 'elapsed') { valA = a.elapsedMs; valB = b.elapsedMs; }
+        else if (sortCol === 'overtime') { valA = a._obj.extraMin; valB = b._obj.extraMin; }
+        else if (sortCol === 'base') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.basePrice || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.basePrice || 0); }
+        else if (sortCol === 'fee') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.extraFee || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.extraFee || 0); }
+        if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
+      });
+    }
+    
+    const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
+    
+    wrap.innerHTML = `
+      <div class="export-table-scroll">
+        <table class="export-table">
+          <thead><tr>
+            <th data-sort="id" class="sortable" style="width:26px;">編號</th>
+            <th>單號</th>
+            <th class="${h('date')}">日期</th>
+            <th>開始</th><th>結束</th>
+            <th data-sort="elapsed" class="sortable ${h('elapsed')}">用時</th>
+            <th data-sort="overtime" class="sortable ${h('over')}">超時</th>
+            <th data-sort="base" class="sortable">單價</th>
+            <th class="${h('bonus')}">加成</th>
+            <th class="${h('tip')}">小費</th>
+            <th data-sort="fee" class="sortable">差額</th>
+          </tr></thead>
+          <tbody>
+            ${displayList.map(item => {
+              const o = item._obj; const t = getExactTimes(o);
+              const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
+              return `
+              <tr>
+                <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
+                <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false"></td>
+                <td class="${h('date')}">${fmtDateOnly(o.startTs)}</td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
+                <td class="${h('elapsed')}">${t.elapsed}</td><td class="${h('over')}">${t.over}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
+                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus||0}" min="0">`}</td>
+                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip||0}" min="0">`}</td>
+                <td>${displayFee}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+          <tfoot><tr>
+            <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
+            <td class="${h('elapsed')}"></td><td class="${h('over')}"></td>
+            <td>${plainNum(baseSum)}</td>
+            <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
+            <td class="${h('tip')}">${plainNum(tipSum)}</td>
+            <td>${plainNum(feeSum)}</td>
+          </tr></tfoot>
+        </table>
+      </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
+    `;
+  } catch(e) { console.error("Render Detail err", e); }
 }
 
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
@@ -1218,51 +1224,53 @@ $('exportPreviewWrap').addEventListener('input', e=>{
 });
 
 $('exportPreviewWrap').addEventListener('change', e=>{
-  const baseId = e.target.getAttribute('data-edit-base'); const ordnoId = e.target.getAttribute('data-edit-ordno');
-  const startId = e.target.getAttribute('data-edit-start'); const endId = e.target.getAttribute('data-edit-end');
-  const bonusId = e.target.getAttribute('data-edit-bonus'); const tipId = e.target.getAttribute('data-edit-tip');
-  
-  if (baseId || bonusId || tipId) {
-    const id = baseId || bonusId || tipId; const order = orders.find(o => o.id === id);
-    if(order) {
-      if(baseId) order.basePrice = parseFloat(e.target.value) || 0;
-      if(bonusId) order.bonus = parseFloat(e.target.value) || 0;
-      if(tipId) order.tip = parseFloat(e.target.value) || 0;
-      
-      const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
-      order.extraMin = extraMin; order.extraFee = extraFee; 
-      order.total = (order.excludeBaseFromTotal ? 0 : (order.basePrice || 0)) + extraFee + (order.bonus || 0) + (order.tip || 0);
+  try {
+    const baseId = e.target.getAttribute('data-edit-base'); const ordnoId = e.target.getAttribute('data-edit-ordno');
+    const startId = e.target.getAttribute('data-edit-start'); const endId = e.target.getAttribute('data-edit-end');
+    const bonusId = e.target.getAttribute('data-edit-bonus'); const tipId = e.target.getAttribute('data-edit-tip');
+    
+    if (baseId || bonusId || tipId) {
+      const id = baseId || bonusId || tipId; const order = orders.find(o => o.id === id);
+      if(order) {
+        if(baseId) order.basePrice = parseFloat(e.target.value) || 0;
+        if(bonusId) order.bonus = parseFloat(e.target.value) || 0;
+        if(tipId) order.tip = parseFloat(e.target.value) || 0;
+        
+        const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
+        order.extraMin = extraMin; order.extraFee = extraFee; 
+        order.total = (order.excludeBaseFromTotal ? 0 : (order.basePrice || 0)) + extraFee + (order.bonus || 0) + (order.tip || 0);
+        saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
+      }
+      return;
+    }
+    if(ordnoId){
+      const order = orders.find(o => o.id === ordnoId);
+      if(order){ order.orderNo = e.target.value.toUpperCase(); saveJSON(KEY_ORDERS, orders); renderDetailTable(); }
+      return;
+    }
+    if(startId || endId){
+      const id = startId || endId; const order = orders.find(o => o.id === id); if(!order) return;
+      const parsed = parseTimeInput(e.target.value);
+      if(!parsed){
+        const err = $('editTimeError'); err.textContent = '時間格式錯誤，請輸入如 14:30，已還原';
+        err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
+      }
+      let newStartTs = order.startTs; let newEndTs = order.endTs;
+      if(startId){ const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime(); }
+      else{ const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime(); }
+      if(newEndTs <= newStartTs){
+        const err = $('editTimeError'); err.textContent = '完成時間必須晚於開始時間，已還原';
+        err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
+      }
+      let group = order.linkGroupId ? orders.filter(o => o.linkGroupId === order.linkGroupId) : [order];
+      group.forEach(go => {
+        go.startTs = newStartTs; go.endTs = newEndTs; const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
+        go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
+        go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee + (go.bonus || 0) + (go.tip || 0);
+      });
       saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
     }
-    return;
-  }
-  if(ordnoId){
-    const order = orders.find(o => o.id === ordnoId);
-    if(order){ order.orderNo = e.target.value.toUpperCase(); saveJSON(KEY_ORDERS, orders); renderDetailTable(); }
-    return;
-  }
-  if(startId || endId){
-    const id = startId || endId; const order = orders.find(o => o.id === id); if(!order) return;
-    const parsed = parseTimeInput(e.target.value);
-    if(!parsed){
-      const err = $('editTimeError'); err.textContent = '時間格式錯誤，請輸入如 14:30，已還原';
-      err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
-    }
-    let newStartTs = order.startTs; let newEndTs = order.endTs;
-    if(startId){ const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime(); }
-    else{ const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime(); }
-    if(newEndTs <= newStartTs){
-      const err = $('editTimeError'); err.textContent = '完成時間必須晚於開始時間，已還原';
-      err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
-    }
-    let group = order.linkGroupId ? orders.filter(o => o.linkGroupId === order.linkGroupId) : [order];
-    group.forEach(go => {
-      go.startTs = newStartTs; go.endTs = newEndTs; const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
-      go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
-      go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee + (go.bonus || 0) + (go.tip || 0);
-    });
-    saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
-  }
+  } catch(e) { console.error("Export Preview change err", e); }
 });
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
