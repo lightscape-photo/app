@@ -31,15 +31,14 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   
-  /* 🚀 物理級鎖死：改用 100dvh 並強制隱藏捲軸 */
-  html,body{ margin:0; padding:0; height:100dvh; overflow:hidden; overscroll-behavior-y:none; }
+  html,body{ margin:0;padding:0; height:100dvh; overflow-x:hidden; overscroll-behavior-y:none; }
   body{
     background:var(--bg); color:var(--text);
     font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif;
-    height:100dvh; display:flex; justify-content:center; overflow:hidden;
+    height:100dvh; display:flex; justify-content:center;
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
-  .app{width:100%; max-width:480px; height:100%; padding:0 16px 20px; display:flex; flex-direction:column; overflow:hidden;}
+  .app{width:100%;max-width:480px;height:100%;padding:0 16px 20px; display:flex; flex-direction:column; overflow:hidden;}
   
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
@@ -222,10 +221,13 @@
     padding:9px 2px;color:var(--muted);font-weight:600;font-size:14px; cursor:pointer;font-family:inherit; white-space:nowrap;
   }
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
-  
-  .tab-panel{display:none; flex:1; overflow:hidden;}
-  .tab-panel.active{display:flex; flex-direction:column; overflow:hidden;}
-  #tabWeekly.active { overflow: hidden !important; }
+  .tab-panel{display:none; flex:1; overflow-y:auto;}
+  .tab-panel.active{display:flex; flex-direction:column;}
+
+  /* 🚀 僅將週報分頁（#tabWeekly）物理級鎖死、絕對不出現捲軸 */
+  #tabWeekly.active {
+    overflow: hidden !important;
+  }
 
   .theme-option-row{display:flex;gap:12px;flex-wrap:wrap;}
   .theme-option{
@@ -368,7 +370,7 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 動態隱藏欄位面板 -->
+    <!-- 動態隱藏欄位面板 -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -393,7 +395,7 @@
       <button class="icon-btn" id="nextWeekBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 經典 2 欄並排網格 -->
+    <!-- 經典 2 欄並排網格 -->
     <div class="metrics-grid">
       <div class="metric-card main">
         <span class="metric-lbl" id="mTitle">本週總收入</span>
@@ -513,7 +515,7 @@
 </div>
 
 <script>
-// 🚀 全域常數提至最前，徹底根絕 ReferenceError 當機 Bug
+// 全域常數
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
@@ -523,7 +525,7 @@ const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 let active = [];
 let orders = [];
 let trashItems = [];
-let hiddenCols = []; // 儲存被隱藏的欄位
+let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -534,7 +536,6 @@ let selectedDayIndex = null;
 
 const $ = id => document.getElementById(id);
 
-// 🚀 全域 XSS 防護罩
 function escapeHTML(str) {
   return String(str || '').replace(/[&<>"'`=\/]/g, function(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;','/':'&#x2F;','=':'&#x3D;'}[s];
@@ -650,6 +651,35 @@ function getFeeStatus(o, now) {
 function getMondayTs(ts) { const d = new Date(ts); const day = d.getDay() || 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (day - 1)); return d.getTime(); }
 function fmtMd(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
 
+// 🚀 時間區間重疊合併演算法：精準計算實際在線接單時長，不重複計算重疊時間
+function calculateMergedActiveMs(orderList) {
+  const intervals = [];
+  orderList.forEach(o => {
+    if (!o.excludeBaseFromTotal && o.endTs > o.startTs) {
+      intervals.push([o.startTs, o.endTs]);
+    }
+  });
+  if (intervals.length === 0) return 0;
+  intervals.sort((a, b) => a[0] - b[0]);
+  
+  let merged = [intervals[0]];
+  for (let i = 1; i < intervals.length; i++) {
+    let prev = merged[merged.length - 1];
+    let curr = intervals[i];
+    if (curr[0] <= prev[1]) {
+      prev[1] = Math.max(prev[1], curr[1]);
+    } else {
+      merged.push(curr);
+    }
+  }
+  
+  let totalMs = 0;
+  merged.forEach(interval => {
+    totalMs += (interval[1] - interval[0]);
+  });
+  return totalMs;
+}
+
 function computeWeeklyData() {
   try {
     if (orders.length === 0) { weeklyDataCache = []; return; }
@@ -661,11 +691,11 @@ function computeWeeklyData() {
       const endTs = curr + 6 * 86400000; 
       weeksMap[curr] = {
         mondayTs: curr, dateRangeStr: `${fmtMd(curr)} - ${fmtMd(endTs)}`,
-        total: 0, activeMs: 0, maxDayTotal: 0,
+        total: 0, activeMs: 0, maxDayTotal: 0, allOrders: [],
         days: Array.from({length: 7}, (_, i) => ({
           ts: curr + i * 86400000, dayNum: new Date(curr + i * 86400000).getDate(),
           dayName: ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],
-          total: 0, count: 0, baseSum: 0, feeSum: 0, bonusSum: 0, tipSum: 0, activeMs: 0
+          total: 0, count: 0, baseSum: 0, feeSum: 0, bonusSum: 0, tipSum: 0, activeMs: 0, dayOrders: []
         }))
       };
       curr += 7 * 86400000;
@@ -680,10 +710,20 @@ function computeWeeklyData() {
         
         w.total += oTotal; d.total += oTotal; d.count += 1;
         d.baseSum += bPrice; d.feeSum += eFee; d.bonusSum += bonus; d.tipSum += tip;
-        if (!o.excludeBaseFromTotal) { const elMs = Math.max(0, o.endTs - o.startTs); w.activeMs += elMs; d.activeMs += elMs; }
+        
+        w.allOrders.push(o);
+        d.dayOrders.push(o);
       }
     });
-    Object.values(weeksMap).forEach(w => { let max = 0; w.days.forEach(d => { if(d.total > max) max = d.total; }); w.maxDayTotal = max || 1; });
+    Object.values(weeksMap).forEach(w => {
+      w.activeMs = calculateMergedActiveMs(w.allOrders);
+      let max = 0;
+      w.days.forEach(d => {
+        d.activeMs = calculateMergedActiveMs(d.dayOrders);
+        if(d.total > max) max = d.total;
+      });
+      w.maxDayTotal = max || 1;
+    });
     weeklyDataCache = Object.values(weeksMap).sort((a, b) => b.mondayTs - a.mondayTs);
   } catch (e) { console.error("Weekly computing err:", e); }
 }
@@ -741,8 +781,9 @@ function renderWeeklyTab() {
     $('mCount').textContent = dCount; $('mAvg').textContent = formatAvg(dTotal, dCount);
     $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
 
-    // 🚀 當本週沒有跑單紀錄 (總金額為 0) 時，完全隱藏直條圖區塊，避免出現一點點突兀的小藍條
-    if(wData.total === 0) {
+    // 🚀 當前檢視（無論當日或當週）營收為 0 時，完全隱藏直條圖區塊
+    const isZero = (selectedDayIndex !== null) ? (wData.days[selectedDayIndex].total === 0) : (wData.total === 0);
+    if(isZero) {
       if(chartWrap) chartWrap.style.display = 'none';
     } else {
       if(chartWrap) chartWrap.style.display = 'flex';
