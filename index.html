@@ -269,32 +269,32 @@
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
   /* 週報與明細共用之高階頂部排版 */
-  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
   /* 🚀 週報經典 2 欄網格[cite: 6] */
-  .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:10px; }
-  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
-  .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:14px; }
-  .metric-lbl { font-size:11px; color:var(--muted); font-weight:500; }
-  .metric-val { font-size:15px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
-  .metric-card.main .metric-val { font-size:30px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
-  .metric-card.main .metric-lbl { font-size:12px; }
+  .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+  .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
+  .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
+  .metric-lbl { font-size:12px; color:var(--muted); font-weight:500; }
+  .metric-val { font-size:16px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
+  .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
+  .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 圖表區塊[cite: 6] */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 140px; display:flex; margin-top:10px; margin-bottom:6px; }
+  /* 🚀 長條圖區塊：上方邊距調整為 28px[cite: 6] */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:28px; margin-bottom:10px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
   .chart-bar-zone { flex:1; display:flex; align-items:flex-end; justify-content:center; border-bottom:1px dashed var(--border); }
   .chart-bar { width:65%; background:var(--chart-blue); border-radius:4px 4px 0 0; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   
-  .chart-label-group { height:36px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:2px; }
-  .chart-date { font-size:12px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
-  .chart-day { font-size:10px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:1px; line-height:1.2; }
+  .chart-label-group { height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:4px; }
+  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
+  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; line-height:1.2; }
 
   /* 歷史週數選取清單 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
