@@ -223,7 +223,7 @@
   .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
   .tab-panel{display:none; flex:1;}
   
-  /* 🚀 徹底鎖死週報分頁面板：強制溢位隱藏，絕不出現任何捲軸[cite: 6] */
+  /* 🚀 徹底鎖死週報分頁面板：強制溢位隱藏，絕不出現任何捲軸[cite: 5, 6] */
   #tabWeekly.active {
     display: flex;
     flex-direction: column;
@@ -275,7 +275,7 @@
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
-  /* 🚀 週報經典 2 欄網格[cite: 6] */
+  /* 🚀 週報經典 2 欄網格[cite: 5, 6] */
   .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
   .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
   .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
@@ -284,8 +284,8 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 長條圖區塊：上方邊距調整為 28px[cite: 6] */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:28px; margin-bottom:10px; }
+  /* 🚀 圖表區塊保持原本的 20px 邊距[cite: 5, 6] */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:20px; margin-bottom:10px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
@@ -374,7 +374,7 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 動態隱藏欄位面板[cite: 6] -->
+    <!-- 動態隱藏欄位面板[cite: 5, 6] -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -399,7 +399,7 @@
       <button class="icon-btn" id="nextWeekBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 經典 2 欄並排網格：[基本報酬][差額補償], [加成][小費][cite: 6] -->
+    <!-- 經典 2 欄並排網格：[基本報酬][差額補償], [加成][小費][cite: 5, 6] -->
     <div class="metrics-grid">
       <div class="metric-card main">
         <span class="metric-lbl" id="mTitle">本週總收入</span>
@@ -417,7 +417,7 @@
     </div>
     
     <div class="chart-area" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 初始化並平滑更新[cite: 6] -->
+      <!-- 柱狀圖由 JS 初始化並平滑更新[cite: 5, 6] -->
     </div>
   </div>
 
@@ -497,7 +497,7 @@
       </div>
     </div>
     <div class="week-list" id="weekSelectList">
-      <!-- JS 注入週數清單[cite: 6] -->
+      <!-- JS 注入週數清單[cite: 5, 6] -->
     </div>
   </div>
 </div>
@@ -519,7 +519,7 @@
 </div>
 
 <script>
-// 🚀 全域常數提至最前，徹底根絕 ReferenceError 當機 Bug[cite: 6]
+// 全域常數[cite: 5, 6]
 const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
@@ -529,7 +529,7 @@ const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 let active = [];
 let orders = [];
 let trashItems = [];
-let hiddenCols = []; // 儲存被隱藏的欄位[cite: 6]
+let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -540,7 +540,6 @@ let selectedDayIndex = null;
 
 const $ = id => document.getElementById(id);
 
-// 🚀 全域 XSS 防護罩[cite: 6]
 function escapeHTML(str) {
   return String(str || '').replace(/[&<>"'`=\/]/g, function(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;','/':'&#x2F;','=':'&#x3D;'}[s];
@@ -694,7 +693,6 @@ function computeWeeklyData() {
   } catch (e) { console.error("Weekly computing err:", e); }
 }
 
-// 🚀 圖表結構初始化 (確保 DOM 更新與平滑動畫)[cite: 6]
 function initChartDOM() {
   const wrap = $('mainChartWrap');
   if (!wrap || !wrap.querySelector('.chart-col')) {
@@ -791,10 +789,8 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  // 🚀 預設隱藏加成與小費[cite: 6]
   hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
   
-  // 🚀 資料庫無痛升級相容[cite: 6]
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -812,7 +808,8 @@ function init(){
   setInterval(tick, 1000); reportUiState(); syncActiveToAndroid();
 }
 
-let activeVkInput = null; let activeVkWrapper = null;
+let activeVkInput = null;
+let activeVkWrapper = null;
 function openVk(inputEl, layout) {
   if (activeVkInput && activeVkInput !== inputEl) activeVkInput.blur();
   if (activeVkWrapper) activeVkWrapper.classList.remove('vk-active');
@@ -855,7 +852,8 @@ function handleVkKey(key) {
       if (activeVkInput.classList.contains('ordno-input') && val.length >= 10) return;
       if (activeVkInput.classList.contains('price-input') && val.length >= 6) return;
     }
-    val = val.slice(0, start) + key + val.slice(end); activeVkInput.value = val; activeVkInput.setSelectionRange(start + key.length, start + key.length);
+    val = val.slice(0, start) + key + val.slice(end);
+    activeVkInput.value = val; activeVkInput.setSelectionRange(start + key.length, start + key.length);
   }
   activeVkInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
@@ -1121,7 +1119,6 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
-// 🚀 動態欄位隱藏面板[cite: 6]
 const togglableCols = [
   { id: 'date', label: '日期' }, { id: 'elapsed', label: '用時' }, 
   { id: 'over', label: '超時' }, { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
@@ -1136,7 +1133,6 @@ $('colToggles')?.addEventListener('click', e => {
   if (hiddenCols.includes(col)) {
     hiddenCols = hiddenCols.filter(c => c !== col);
   } else {
-    // 🚀 防呆鎖死：物理限制最多只能隱藏 2 個[cite: 6]
     if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\n請先點擊顯示其他欄位。'); return; }
     hiddenCols.push(col);
   }
@@ -1148,7 +1144,6 @@ $('exportPreviewWrap').addEventListener('click', e => {
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
 
-// 🚀 黃金 11 欄位表格 (動態顯示)[cite: 6]
 function renderDetailTable(){
   try {
     const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
@@ -1296,7 +1291,6 @@ $('exportPreviewWrap').addEventListener('change', e=>{
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 
-// 🚀 全局無損備份：新增額外收入、釋放記憶體[cite: 6]
 $('exportCsvBtn').addEventListener('click', ()=>{
   const list = [...orders].reverse();
   if(list.length === 0){ alert('目前沒有任何紀錄可以匯出'); return; }
