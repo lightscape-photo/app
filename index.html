@@ -259,13 +259,14 @@
   .vk-key.action { font-size: 18px; }
   .vk-key.enter-key { background: var(--amber); color: var(--on-amber); border: none; }
 
-  /* 🚀 週報經典 2 欄網格 (內距微縮防捲軸) */
-  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  /* 週報與明細共用之高階頂部排版 */
+  .week-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .week-title-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 12px; border-radius:10px; transition: background 0.2s; }
   .week-title-wrap:active { background:var(--panel-2); }
   .week-title-str { font-size:15px; font-weight:600; font-family:system-ui,sans-serif; }
   .week-title-wrap svg { width:14px; height:14px; fill:currentColor; }
   
+  /* 🚀 週報經典 2 欄網格 (內距微縮防捲軸) */
   .metrics-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
   .metric-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; transition: all 0.2s ease;}
   .metric-card.main { grid-column: span 2; background: linear-gradient(135deg, var(--panel-2) 0%, var(--panel) 100%); align-items:center; padding:16px; }
@@ -274,8 +275,8 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 圖表防重疊分離排版 (高度壓縮至 160px，保證不捲動) */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-bottom:10px; }
+  /* 🚀 圖表防重疊分離排版 (高度壓縮至 160px，並增加 margin-top 加強呼吸空間) */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:20px; margin-bottom:10px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
@@ -757,6 +758,7 @@ $('mainChartWrap').addEventListener('click', e => {
   if (col) { const idx = parseInt(col.getAttribute('data-day-idx')); selectedDayIndex = (selectedDayIndex === idx) ? null : idx; } else { selectedDayIndex = null; }
   renderWeeklyTab();
 });
+
 $('prevWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex < weeklyDataCache.length - 1) { currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab(); }});
 $('nextWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex > 0) { currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab(); }});
 
