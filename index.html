@@ -409,7 +409,7 @@
     
     <div class="metrics-grid">
       <div class="metric-card main">
-        <span class="metric-lbl" id="mTitle">本週總收入</span>
+        <span class="metric-lbl" id="mTitle">本週</span>
         <span class="metric-val" id="mTotal">$0.00</span>
       </div>
       <div class="metric-card"><span class="metric-lbl">基本報酬</span><span class="metric-val" id="mBase">$0</span></div>
@@ -754,7 +754,8 @@ function renderWeeklyTab() {
   try {
     if(weeklyDataCache.length === 0) {
       $('weekTitleStr').textContent = '--';
-      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
+      $('mTitle').textContent = '本週';
+      $('mTotal').textContent = '$0';
       $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
       $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
       initChartDOM();
@@ -775,11 +776,11 @@ function renderWeeklyTab() {
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
     if(selectedDayIndex !== null) {
       const d = wData.days[selectedDayIndex];
-      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
+      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName})`;
       dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
       dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
     } else {
-      $('mTitle').textContent = `本週總收入`;
+      $('mTitle').textContent = `本週`;
       dTotal = wData.total; dActiveMs = wData.activeMs;
       dCount = wData.days.reduce((s,d)=>s+d.count, 0);
       dBase = wData.days.reduce((s,d)=>s+d.baseSum, 0);
@@ -1151,12 +1152,14 @@ const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     
+    // 🚀 觸發分頁切換時，先關閉數字鍵盤
     closeVk(); 
 
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     
+    // 🚀 動態套用捲軸鎖死模式
     if(tab === 'weekly') {
       document.body.classList.add('weekly-mode');
     } else {
