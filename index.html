@@ -187,8 +187,8 @@
   }
   .export-btn:active{transform:scale(0.97);}
 
-  /* 🚀 欄位隱藏開關面板（改為向右對齊） */
-  .col-toggles-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  /* 🚀 優化：縮減按鈕與表格的間距，讓表格上移但不過度擁擠 */
+  .col-toggles-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 4px; }
   .toggle-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
     font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
@@ -197,7 +197,7 @@
   .hide-col { display: none !important; }
 
   /* 明細表格排版優化：強迫統一 11px 字體與寬度均分 */
-  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
+  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:8px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 1px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
@@ -382,7 +382,7 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 動態隱藏欄位面板 (專屬非常態欄位) -->
+    <!-- 動態隱藏欄位面板 -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -775,7 +775,6 @@ function renderWeeklyTab() {
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
     if(selectedDayIndex !== null) {
       const d = wData.days[selectedDayIndex];
-      // 🚀 執行：週報點擊單日的標題精簡為「25日 (星期五)」
       $('mTitle').textContent = `${d.dayNum}日 (${d.dayName})`;
       dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
       dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
