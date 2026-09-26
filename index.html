@@ -39,7 +39,7 @@
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
   .app{width:100%;max-width:480px;padding:0 16px 60px; display:flex; flex-direction:column;}
-  
+
   /* 🚀 動態物理級鎖定：專為週報分頁設計，徹底消滅捲軸且絕對不影響其他分頁 */
   body.weekly-mode {
     height: 100dvh !important;
@@ -50,7 +50,7 @@
     overflow: hidden !important;
     padding-bottom: 10px !important;
   }
-
+  
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;flex-shrink:0;
@@ -196,10 +196,12 @@
   .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
   .hide-col { display: none !important; }
 
+  /* 🚀 明細表格：極限空間壓縮與字體統一 */
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
   .export-table th,.export-table td{
-    padding:6px 1px;text-align:center;border-bottom:1px solid var(--border);
+    padding:6px 0px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
+    letter-spacing:-0.3px;
   }
   .export-table th{color:var(--muted);font-weight:600;font-size:10px;text-align:center;}
   .export-table th.sortable{cursor:pointer;user-select:none;transition:color 0.2s;}
@@ -212,8 +214,9 @@
   
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
-    color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:12px;
+    color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:11px;
     text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
+    letter-spacing:-0.3px;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
   
@@ -1146,14 +1149,14 @@ const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     
-    // 🚀 新增：切換分頁時先關閉數字鍵盤，避免版面異常
+    // 🚀 觸發分頁切換時，先關閉數字鍵盤
     closeVk(); 
 
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     
-    // 🚀 動態套用捲軸鎖死模式：只有在 weekly 頁面才加上 weekly-mode，其他頁面自動移除
+    // 🚀 動態套用捲軸鎖死模式
     if(tab === 'weekly') {
       document.body.classList.add('weekly-mode');
     } else {
@@ -1205,7 +1208,6 @@ $('colToggles')?.addEventListener('click', e => {
   if (hiddenCols.includes(col)) {
     hiddenCols = hiddenCols.filter(c => c !== col);
   } else {
-    // 防呆鎖死：物理限制最多只能隱藏 2 個
     if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\n請先點擊顯示其他欄位。'); return; }
     hiddenCols.push(col);
   }
