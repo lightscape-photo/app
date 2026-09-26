@@ -39,7 +39,7 @@
     transition: padding-bottom 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
   .app{width:100%;max-width:480px;padding:0 16px 60px; display:flex; flex-direction:column;}
-
+  
   /* 🚀 動態物理級鎖定：專為週報分頁設計，徹底消滅捲軸且絕對不影響其他分頁 */
   body.weekly-mode {
     height: 100dvh !important;
@@ -186,22 +186,20 @@
     font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer; font-family:system-ui,sans-serif;
   }
   .export-btn:active{transform:scale(0.97);}
-
-  /* 🚀 專屬加成/小費 隱藏開關面板 */
-  .col-toggles-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  
+  /* 欄位隱藏開關面板 */
+  .col-toggles-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
   .toggle-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
   }
   .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
   .hide-col { display: none !important; }
 
-  /* 🚀 明細表格：所有欄位一視同仁，完全等分均分、並壓縮字距 */
-  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:4px;font-size:11px;}
+  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
   .export-table th,.export-table td{
-    padding:6px 0px;text-align:center;border-bottom:1px solid var(--border);
+    padding:6px 1px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
-    letter-spacing:-0.3px;
   }
   .export-table th{color:var(--muted);font-weight:600;font-size:10px;text-align:center;}
   .export-table th.sortable{cursor:pointer;user-select:none;transition:color 0.2s;}
@@ -214,9 +212,8 @@
   
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
-    color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:11px;
+    color:var(--text);font-family:system-ui,monospace;font-variant-numeric:tabular-nums;font-size:12px;
     text-align:center;padding:2px 0;min-width:0;box-sizing:border-box;
-    letter-spacing:-0.3px;
   }
   .detail-edit-input:focus{outline:none;border-bottom:1px solid var(--amber);}
   
@@ -382,7 +379,6 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 專屬小費與加成的控制區塊 -->
     <div class="col-toggles-row" id="colToggles"></div>
     
     <div id="exportPreviewWrap"></div>
@@ -409,12 +405,12 @@
     
     <div class="metrics-grid">
       <div class="metric-card main">
-        <span class="metric-lbl" id="mTitle">本週</span>
+        <span class="metric-lbl" id="mTitle">本週總收入</span>
         <span class="metric-val" id="mTotal">$0.00</span>
       </div>
       <div class="metric-card"><span class="metric-lbl">基本報酬</span><span class="metric-val" id="mBase">$0</span></div>
       <div class="metric-card"><span class="metric-lbl">差額補償</span><span class="metric-val" id="mFee">$0</span></div>
-      <div class="metric-card"><span class="metric-lbl">加成</span><span class="metric-val" id="mBonus">$0</span></div>
+      <div class="metric-card"><span class="metric-lbl">基本報酬加成</span><span class="metric-val" id="mBonus">$0</span></div>
       <div class="metric-card"><span class="metric-lbl">小費</span><span class="metric-val" id="mTip">$0</span></div>
       
       <div class="metric-card"><span class="metric-lbl">完成趟數</span><span class="metric-val" id="mCount">0</span></div>
@@ -754,8 +750,7 @@ function renderWeeklyTab() {
   try {
     if(weeklyDataCache.length === 0) {
       $('weekTitleStr').textContent = '--';
-      $('mTitle').textContent = '本週';
-      $('mTotal').textContent = '$0';
+      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
       $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
       $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
       initChartDOM();
@@ -776,11 +771,11 @@ function renderWeeklyTab() {
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
     if(selectedDayIndex !== null) {
       const d = wData.days[selectedDayIndex];
-      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName})`;
+      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
       dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
       dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
     } else {
-      $('mTitle').textContent = `本週`;
+      $('mTitle').textContent = `本週總收入`;
       dTotal = wData.total; dActiveMs = wData.activeMs;
       dCount = wData.days.reduce((s,d)=>s+d.count, 0);
       dBase = wData.days.reduce((s,d)=>s+d.baseSum, 0);
@@ -855,7 +850,6 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  // 🚀 預設隱藏加成與小費，維持最舒適的 9 欄視覺
   hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
   
   let migrated = false;
@@ -1152,14 +1146,14 @@ const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     
-    // 🚀 觸發分頁切換時，先關閉數字鍵盤
+    // 🚀 新增：切換分頁時先關閉數字鍵盤，避免版面異常
     closeVk(); 
 
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     
-    // 🚀 動態套用捲軸鎖死模式
+    // 🚀 動態套用捲軸鎖死模式：只有在 weekly 頁面才加上 weekly-mode，其他頁面自動移除
     if(tab === 'weekly') {
       document.body.classList.add('weekly-mode');
     } else {
@@ -1196,9 +1190,10 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
-// 🚀 專屬小費與加成欄位隱藏功能
+// 動態欄位隱藏面板
 const togglableCols = [
-  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
+  { id: 'date', label: '日期' }, { id: 'elapsed', label: '用時' }, 
+  { id: 'over', label: '超時' }, { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
 ];
 function renderColToggles() {
   const wrap = $('colToggles'); if(!wrap) return;
@@ -1208,9 +1203,11 @@ $('colToggles')?.addEventListener('click', e => {
   const btn = e.target.closest('.toggle-btn'); if(!btn) return;
   const col = btn.getAttribute('data-col');
   if (hiddenCols.includes(col)) {
-    hiddenCols = hiddenCols.filter(c => c !== col); // 開啟顯示
+    hiddenCols = hiddenCols.filter(c => c !== col);
   } else {
-    hiddenCols.push(col); // 隱藏
+    // 防呆鎖死：物理限制最多只能隱藏 2 個
+    if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\n請先點擊顯示其他欄位。'); return; }
+    hiddenCols.push(col);
   }
   saveJSON(KEY_HIDDEN_COLS, hiddenCols); renderColToggles(); renderDetailTable();
 });
@@ -1250,12 +1247,12 @@ function renderDetailTable(){
       <div class="export-table-scroll">
         <table class="export-table">
           <thead><tr>
-            <th data-sort="id" class="sortable">編號</th>
+            <th data-sort="id" class="sortable" style="width:26px;">編號</th>
             <th>單號</th>
-            <th>日期</th>
+            <th class="${h('date')}">日期</th>
             <th>開始</th><th>結束</th>
-            <th data-sort="elapsed" class="sortable">用時</th>
-            <th data-sort="overtime" class="sortable">超時</th>
+            <th data-sort="elapsed" class="sortable ${h('elapsed')}">用時</th>
+            <th data-sort="overtime" class="sortable ${h('over')}">超時</th>
             <th data-sort="base" class="sortable">單價</th>
             <th class="${h('bonus')}">加成</th>
             <th class="${h('tip')}">小費</th>
@@ -1269,20 +1266,20 @@ function renderDetailTable(){
               <tr>
                 <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
                 <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false"></td>
-                <td>${fmtDateOnly(o.startTs)}</td>
+                <td class="${h('date')}">${fmtDateOnly(o.startTs)}</td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
-                <td>${t.elapsed}</td><td>${t.over}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice || ''}" min="0" placeholder="-">`}</td>
-                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus || ''}" min="0" placeholder="-">`}</td>
-                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip || ''}" min="0" placeholder="-">`}</td>
+                <td class="${h('elapsed')}">${t.elapsed}</td><td class="${h('over')}">${t.over}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
+                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus||0}" min="0">`}</td>
+                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip||0}" min="0">`}</td>
                 <td>${displayFee}</td>
               </tr>`;
             }).join('')}
           </tbody>
           <tfoot><tr>
             <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
-            <td></td><td></td>
+            <td class="${h('elapsed')}"></td><td class="${h('over')}"></td>
             <td>${plainNum(baseSum)}</td>
             <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
             <td class="${h('tip')}">${plainNum(tipSum)}</td>
