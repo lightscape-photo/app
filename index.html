@@ -50,7 +50,7 @@
     overflow: hidden !important;
     padding-bottom: 10px !important;
   }
-  
+
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;flex-shrink:0;
@@ -186,18 +186,9 @@
     font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer; font-family:system-ui,sans-serif;
   }
   .export-btn:active{transform:scale(0.97);}
-  
-  /* 欄位隱藏開關面板 */
-  .col-toggles-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
-  .toggle-btn {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
-  }
-  .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
-  .hide-col { display: none !important; }
 
-  /* 🚀 明細表格：極限空間壓縮與字體統一 */
-  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
+  /* 🚀 明細表格：所有 11 個欄位一視同仁，完全等分均分、並壓縮字距 */
+  .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:4px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 0px;text-align:center;border-bottom:1px solid var(--border);
     font-family:system-ui,monospace;font-variant-numeric:tabular-nums;white-space:normal;word-break:break-word;overflow-wrap:break-word;
@@ -382,8 +373,7 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <div class="col-toggles-row" id="colToggles"></div>
-    
+    <!-- 🚀 隱藏面板已移除，空間更加俐落乾淨 -->
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
       <div style="display:flex;gap:8px;align-items:center;">
@@ -530,12 +520,10 @@ const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
 const KEY_THEME = 'meter_theme';
-const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 
 let active = [];
 let orders = [];
 let trashItems = [];
-let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -853,8 +841,6 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
-  
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -867,7 +853,6 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   $('singleDateInput').value = formatDateInput(new Date()); updateDateDisplay();
   
-  renderColToggles();
   renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderTrash();
   setInterval(tick, 1000); reportUiState(); syncActiveToAndroid();
 }
@@ -1193,27 +1178,6 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
-// 動態欄位隱藏面板
-const togglableCols = [
-  { id: 'date', label: '日期' }, { id: 'elapsed', label: '用時' }, 
-  { id: 'over', label: '超時' }, { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
-];
-function renderColToggles() {
-  const wrap = $('colToggles'); if(!wrap) return;
-  wrap.innerHTML = togglableCols.map(c => `<button class="toggle-btn ${!hiddenCols.includes(c.id) ? 'active' : ''}" data-col="${c.id}">${c.label}</button>`).join('');
-}
-$('colToggles')?.addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-btn'); if(!btn) return;
-  const col = btn.getAttribute('data-col');
-  if (hiddenCols.includes(col)) {
-    hiddenCols = hiddenCols.filter(c => c !== col);
-  } else {
-    if (hiddenCols.length >= 2) { alert('為保持版面不變形，最多只能隱藏 2 個欄位喔！\n請先點擊顯示其他欄位。'); return; }
-    hiddenCols.push(col);
-  }
-  saveJSON(KEY_HIDDEN_COLS, hiddenCols); renderColToggles(); renderDetailTable();
-});
-
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
@@ -1243,21 +1207,19 @@ function renderDetailTable(){
       });
     }
     
-    const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
-    
     wrap.innerHTML = `
       <div class="export-table-scroll">
         <table class="export-table">
           <thead><tr>
-            <th data-sort="id" class="sortable" style="width:26px;">編號</th>
+            <th data-sort="id" class="sortable">編號</th>
             <th>單號</th>
-            <th class="${h('date')}">日期</th>
+            <th>日期</th>
             <th>開始</th><th>結束</th>
-            <th data-sort="elapsed" class="sortable ${h('elapsed')}">用時</th>
-            <th data-sort="overtime" class="sortable ${h('over')}">超時</th>
+            <th data-sort="elapsed" class="sortable">用時</th>
+            <th data-sort="overtime" class="sortable">超時</th>
             <th data-sort="base" class="sortable">單價</th>
-            <th class="${h('bonus')}">加成</th>
-            <th class="${h('tip')}">小費</th>
+            <th>加成</th>
+            <th>小費</th>
             <th data-sort="fee" class="sortable">差額</th>
           </tr></thead>
           <tbody>
@@ -1268,23 +1230,23 @@ function renderDetailTable(){
               <tr>
                 <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
                 <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false"></td>
-                <td class="${h('date')}">${fmtDateOnly(o.startTs)}</td>
+                <td>${fmtDateOnly(o.startTs)}</td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
-                <td class="${h('elapsed')}">${t.elapsed}</td><td class="${h('over')}">${t.over}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
-                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus||0}" min="0">`}</td>
-                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip||0}" min="0">`}</td>
+                <td>${t.elapsed}</td><td>${t.over}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice || ''}" min="0" placeholder="-">`}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus || ''}" min="0" placeholder="-">`}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip || ''}" min="0" placeholder="-">`}</td>
                 <td>${displayFee}</td>
               </tr>`;
             }).join('')}
           </tbody>
           <tfoot><tr>
             <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
-            <td class="${h('elapsed')}"></td><td class="${h('over')}"></td>
+            <td></td><td></td>
             <td>${plainNum(baseSum)}</td>
-            <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
-            <td class="${h('tip')}">${plainNum(tipSum)}</td>
+            <td>${plainNum(bonusSum)}</td>
+            <td>${plainNum(tipSum)}</td>
             <td>${plainNum(feeSum)}</td>
           </tr></tfoot>
         </table>
