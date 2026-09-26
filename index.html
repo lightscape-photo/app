@@ -187,7 +187,16 @@
   }
   .export-btn:active{transform:scale(0.97);}
 
-  /* 🚀 明細表格排版優化：強迫統一 11px 字體與寬度均分 */
+  /* 🚀 欄位隱藏開關面板（改為向右對齊） */
+  .col-toggles-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  .toggle-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  }
+  .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
+  .hide-col { display: none !important; }
+
+  /* 明細表格排版優化：強迫統一 11px 字體與寬度均分 */
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:14px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 1px;text-align:center;border-bottom:1px solid var(--border);
@@ -201,7 +210,7 @@
   .export-table tbody tr:last-child td{border-bottom:none;}
   .row-id-cell{-webkit-user-select:none;user-select:none;cursor:pointer;}
   .export-table tfoot td{border-top:1px solid var(--border);border-bottom:none;color:var(--amber);font-weight:600;padding-top:10px;}
-  .export-table-scroll{overflow-x:hidden;} /* 若日後需橫向捲動可改為 auto */
+  .export-table-scroll{overflow-x:hidden;}
   
   .detail-edit-input{
     width:100%;background:transparent;border:none;border-bottom:1px solid transparent;
@@ -373,6 +382,9 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
+    <!-- 🚀 動態隱藏欄位面板 (專屬非常態欄位) -->
+    <div class="col-toggles-row" id="colToggles"></div>
+    
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
       <div style="display:flex;gap:8px;align-items:center;">
@@ -519,10 +531,12 @@ const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
 const KEY_THEME = 'meter_theme';
+const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 
 let active = [];
 let orders = [];
 let trashItems = [];
+let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -761,7 +775,8 @@ function renderWeeklyTab() {
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
     if(selectedDayIndex !== null) {
       const d = wData.days[selectedDayIndex];
-      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName}) 總收入`;
+      // 🚀 執行：週報點擊單日的標題精簡為「25日 (星期五)」
+      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName})`;
       dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
       dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
     } else {
@@ -840,6 +855,8 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
+  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
+  
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -852,6 +869,7 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   $('singleDateInput').value = formatDateInput(new Date()); updateDateDisplay();
   
+  renderColToggles();
   renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderTrash();
   setInterval(tick, 1000); reportUiState(); syncActiveToAndroid();
 }
@@ -1175,12 +1193,29 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
+const togglableCols = [
+  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
+];
+function renderColToggles() {
+  const wrap = $('colToggles'); if(!wrap) return;
+  wrap.innerHTML = togglableCols.map(c => `<button class="toggle-btn ${!hiddenCols.includes(c.id) ? 'active' : ''}" data-col="${c.id}">${c.label}</button>`).join('');
+}
+$('colToggles')?.addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn'); if(!btn) return;
+  const col = btn.getAttribute('data-col');
+  if (hiddenCols.includes(col)) {
+    hiddenCols = hiddenCols.filter(c => c !== col);
+  } else {
+    hiddenCols.push(col);
+  }
+  saveJSON(KEY_HIDDEN_COLS, hiddenCols); renderColToggles(); renderDetailTable();
+});
+
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
 
-// 🚀 黃金 11 欄位表格 (動態顯示)
 function renderDetailTable(){
   try {
     const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
@@ -1203,6 +1238,8 @@ function renderDetailTable(){
         if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
       });
     }
+
+    const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
     
     wrap.innerHTML = `
       <div class="export-table-scroll">
@@ -1215,8 +1252,8 @@ function renderDetailTable(){
             <th data-sort="elapsed" class="sortable">用時</th>
             <th data-sort="overtime" class="sortable">超時</th>
             <th data-sort="base" class="sortable">單價</th>
-            <th>加成</th>
-            <th>小費</th>
+            <th class="${h('bonus')}">加成</th>
+            <th class="${h('tip')}">小費</th>
             <th data-sort="fee" class="sortable">差額</th>
           </tr></thead>
           <tbody>
@@ -1232,8 +1269,8 @@ function renderDetailTable(){
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
                 <td>${t.elapsed}</td><td>${t.over}</td>
                 <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus||0}" min="0">`}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip||0}" min="0">`}</td>
+                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0">`}</td>
+                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0">`}</td>
                 <td>${displayFee}</td>
               </tr>`;
             }).join('')}
@@ -1242,8 +1279,8 @@ function renderDetailTable(){
             <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
             <td></td><td></td>
             <td>${plainNum(baseSum)}</td>
-            <td>${plainNum(bonusSum)}</td>
-            <td>${plainNum(tipSum)}</td>
+            <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
+            <td class="${h('tip')}">${plainNum(tipSum)}</td>
             <td>${plainNum(feeSum)}</td>
           </tr></tfoot>
         </table>
@@ -1409,7 +1446,7 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
       orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); 
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); 
       showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
     }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
