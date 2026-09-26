@@ -187,7 +187,16 @@
   }
   .export-btn:active{transform:scale(0.97);}
 
-  /* 🚀 明細表格：所有 11 個欄位一視同仁，完全等分均分、並壓縮字距 */
+  /* 🚀 專屬加成/小費 隱藏開關面板 */
+  .col-toggles-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  .toggle-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .toggle-btn.active { background: var(--panel-2); color: var(--text); border-color: var(--text); }
+  .hide-col { display: none !important; }
+
+  /* 🚀 明細表格：所有欄位一視同仁，完全等分均分、並壓縮字距 */
   .export-table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:4px;font-size:11px;}
   .export-table th,.export-table td{
     padding:6px 0px;text-align:center;border-bottom:1px solid var(--border);
@@ -373,7 +382,9 @@
       <button class="icon-btn" id="nextDayBtn">&gt;</button>
     </div>
     
-    <!-- 🚀 隱藏面板已移除，空間更加俐落乾淨 -->
+    <!-- 🚀 專屬小費與加成的控制區塊 -->
+    <div class="col-toggles-row" id="colToggles"></div>
+    
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
       <div style="display:flex;gap:8px;align-items:center;">
@@ -520,10 +531,12 @@ const KEY_ACTIVE = 'meter_active';
 const KEY_ORDERS = 'meter_orders';
 const KEY_TRASH = 'meter_trash';
 const KEY_THEME = 'meter_theme';
+const KEY_HIDDEN_COLS = 'meter_hidden_cols';
 
 let active = [];
 let orders = [];
 let trashItems = [];
+let hiddenCols = [];
 
 let sortCol = null;
 let sortAsc = true;
@@ -841,6 +854,9 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
+  // 🚀 預設隱藏加成與小費，維持最舒適的 9 欄視覺
+  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
+  
   let migrated = false;
   orders.forEach(o=>{
     if(o.bonus === undefined || o.tip === undefined) { o.bonus = 0; o.tip = 0; migrated = true; }
@@ -853,6 +869,7 @@ function init(){
   applyTheme(loadJSON(KEY_THEME, 'light'));
   $('singleDateInput').value = formatDateInput(new Date()); updateDateDisplay();
   
+  renderColToggles();
   renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderTrash();
   setInterval(tick, 1000); reportUiState(); syncActiveToAndroid();
 }
@@ -1134,14 +1151,12 @@ const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     
-    // 🚀 觸發分頁切換時，先關閉數字鍵盤
     closeVk(); 
 
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab = btn.getAttribute('data-tab'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
     $(TAB_ID_MAP[tab]).classList.add('active');$('stickyNewOrderRow').style.display = (tab === 'main') ? 'flex' : 'none';
     
-    // 🚀 動態套用捲軸鎖死模式
     if(tab === 'weekly') {
       document.body.classList.add('weekly-mode');
     } else {
@@ -1178,6 +1193,25 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
+// 🚀 專屬小費與加成欄位隱藏功能
+const togglableCols = [
+  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
+];
+function renderColToggles() {
+  const wrap = $('colToggles'); if(!wrap) return;
+  wrap.innerHTML = togglableCols.map(c => `<button class="toggle-btn ${!hiddenCols.includes(c.id) ? 'active' : ''}" data-col="${c.id}">${c.label}</button>`).join('');
+}
+$('colToggles')?.addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn'); if(!btn) return;
+  const col = btn.getAttribute('data-col');
+  if (hiddenCols.includes(col)) {
+    hiddenCols = hiddenCols.filter(c => c !== col); // 開啟顯示
+  } else {
+    hiddenCols.push(col); // 隱藏
+  }
+  saveJSON(KEY_HIDDEN_COLS, hiddenCols); renderColToggles(); renderDetailTable();
+});
+
 $('exportPreviewWrap').addEventListener('click', e => {
   const th = e.target.closest('th.sortable');
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
@@ -1207,6 +1241,8 @@ function renderDetailTable(){
       });
     }
     
+    const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
+    
     wrap.innerHTML = `
       <div class="export-table-scroll">
         <table class="export-table">
@@ -1218,8 +1254,8 @@ function renderDetailTable(){
             <th data-sort="elapsed" class="sortable">用時</th>
             <th data-sort="overtime" class="sortable">超時</th>
             <th data-sort="base" class="sortable">單價</th>
-            <th>加成</th>
-            <th>小費</th>
+            <th class="${h('bonus')}">加成</th>
+            <th class="${h('tip')}">小費</th>
             <th data-sort="fee" class="sortable">差額</th>
           </tr></thead>
           <tbody>
@@ -1235,8 +1271,8 @@ function renderDetailTable(){
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
                 <td>${t.elapsed}</td><td>${t.over}</td>
                 <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice || ''}" min="0" placeholder="-">`}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus || ''}" min="0" placeholder="-">`}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip || ''}" min="0" placeholder="-">`}</td>
+                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus || ''}" min="0" placeholder="-">`}</td>
+                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" inputmode="decimal" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip || ''}" min="0" placeholder="-">`}</td>
                 <td>${displayFee}</td>
               </tr>`;
             }).join('')}
@@ -1245,8 +1281,8 @@ function renderDetailTable(){
             <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
             <td></td><td></td>
             <td>${plainNum(baseSum)}</td>
-            <td>${plainNum(bonusSum)}</td>
-            <td>${plainNum(tipSum)}</td>
+            <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
+            <td class="${h('tip')}">${plainNum(tipSum)}</td>
             <td>${plainNum(feeSum)}</td>
           </tr></tfoot>
         </table>
