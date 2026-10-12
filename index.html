@@ -316,26 +316,19 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 圖表區塊 (動態支援週與月) */
+  /* 圖表區塊 */
   .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:20px; margin-bottom:10px; }
-  .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; min-width:0; }
+  .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
   .chart-bar-zone { flex:1; display:flex; align-items:flex-end; justify-content:center; border-bottom:1px dashed var(--border); }
-  .chart-bar { background:var(--chart-blue); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .chart-bar { width:65%; background:var(--chart-blue); border-radius:4px 4px 0 0; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   
   .chart-label-group { height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:4px; }
-  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; transition: all 0.2s; }
+  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
   .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; line-height:1.2; }
 
-  /* 月報專屬動態微調 */
-  .chart-area.week-mode .chart-bar { width: 65%; border-radius: 4px 4px 0 0; }
-  .chart-area.month-mode .chart-col { margin: 0 1px; }
-  .chart-area.month-mode .chart-bar { width: 90%; border-radius: 2px 2px 0 0; }
-  .chart-area.month-mode .chart-date { font-size: 10px; color: var(--muted); font-weight: normal; }
-  .chart-area.month-mode .chart-col.active .chart-date { font-size: 12px; color: var(--text); font-weight: bold; }
-
-  /* 歷史選取清單 (動態支援週與月) */
+  /* 歷史週數選取清單 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
   .week-select-top h2 { margin:0; font-size:22px; font-weight:700; }
   .week-select-close { background:none; border:none; color:var(--text); font-size:28px; cursor:pointer; line-height:1; }
@@ -351,9 +344,9 @@
   .week-item-date { font-size:14px; color:var(--text); font-weight:600; font-family:system-ui,sans-serif; }
   .week-item-amt { font-size:18px; font-weight:700; color:var(--text); font-family:system-ui,monospace; font-variant-numeric:tabular-nums; }
   
-  .mini-chart { display:flex; align-items:flex-end; gap:1px; height:65px; width:130px; justify-content:flex-end; }
-  .mini-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; min-width:0; }
-  .mini-bar { width:100%; background:var(--chart-blue); border-radius:1px 1px 0 0; }
+  .mini-chart { display:flex; align-items:flex-end; gap:4px; height:65px; width:122px; }
+  .mini-col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; width:14px; height:100%; }
+  .mini-bar { width:100%; background:var(--chart-blue); border-radius:2px 2px 0 0; }
   .mini-day { font-size:9px; color:var(--text); margin-top:5px; padding-bottom:3px; font-family:system-ui,monospace; font-variant-numeric:tabular-nums; width:100%; text-align:center;}
 
   /* 隱藏原生日曆圖示 */
@@ -368,8 +361,7 @@
       <div class="tab-group">
         <button class="tab-btn active" data-tab="main">主控</button>
         <button class="tab-btn" data-tab="detail">明細</button>
-        <!-- 🚀 名稱更替：週報 -> 報表 -->
-        <button class="tab-btn" data-tab="weekly">報表</button>
+        <button class="tab-btn" data-tab="weekly">週報</button>
         <button class="tab-btn" data-tab="settings">設定</button>
       </div>
       <span class="brand-label"><span class="brand-uber">Uber</span> <span class="brand-eats">Eats</span></span>
@@ -429,12 +421,6 @@
   </div>
 
   <div id="tabWeekly" class="tab-panel">
-    <!-- 🚀 新增：週報 / 月報 無縫切換器 -->
-    <div style="display:flex; background:var(--panel-2); border-radius:10px; padding:3px; margin-bottom:16px;">
-      <button id="modeWeekBtn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--panel); color:var(--text); font-weight:600; font-size:14px; box-shadow:0 1px 3px rgba(0,0,0,0.2); cursor:pointer;">週報表</button>
-      <button id="modeMonthBtn" style="flex:1; padding:7px; border-radius:8px; border:none; background:transparent; color:var(--muted); font-weight:600; font-size:14px; cursor:pointer;">月報表</button>
-    </div>
-
     <div class="week-header">
       <button class="icon-btn" id="prevWeekBtn">&lt;</button>
       <div class="week-title-wrap" id="weekTitleWrap">
@@ -460,8 +446,8 @@
       <div class="metric-card"><span class="metric-lbl">換算時薪</span><span class="metric-val" id="mRate">$0/h</span></div>
     </div>
     
-    <div class="chart-area week-mode" id="mainChartWrap">
-      <!-- 柱狀圖由 JS 初始化並平滑動態適配更新 -->
+    <div class="chart-area" id="mainChartWrap">
+      <!-- 柱狀圖由 JS 初始化並平滑更新 -->
     </div>
   </div>
 
@@ -517,6 +503,7 @@
   </div>
 </div>
 
+<!-- 🚀 新增：明細表的長按專屬操作選單 (支援無損還原與永久刪除，無 Emoji) -->
 <div class="overlay" id="rowActionMenuOverlay">
   <div class="settings-panel" style="max-width:340px;text-align:center;">
     <h3 style="margin-bottom:10px;">訂單操作</h3>
@@ -543,17 +530,17 @@
 <div class="overlay" id="weekSelectOverlay">
   <div class="settings-panel" style="max-width:400px; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
     <div class="week-select-top">
-      <h2 id="weekSelectTitle">選取週數</h2>
+      <h2>選取週數</h2>
       <button class="week-select-close" id="closeWeekSelectBtn">×</button>
     </div>
     <div class="week-select-legend">
-      <span id="weekSelectLegendStr">每週明細</span>
-      <div class="legend-days" id="legendDaysRow">
+      <span>每週明細</span>
+      <div class="legend-days">
         <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
       </div>
     </div>
     <div class="week-list" id="weekSelectList">
-      <!-- JS 注入週數 / 月數清單 -->
+      <!-- JS 注入週數清單 -->
     </div>
   </div>
 </div>
@@ -590,14 +577,9 @@ let hiddenCols = [];
 let sortCol = null;
 let sortAsc = true;
 
-// 🚀 新增報表全局模式變數 (週/月)
-let reportMode = 'week'; 
 let weeklyDataCache = [];
-let monthlyDataCache = [];
 let currentViewingWeekIndex = 0;
-let currentViewingMonthIndex = 0;
 let selectedDayIndex = null;
-let selectedMonthDayIndex = null;
 
 const $ = id => document.getElementById(id);
 
@@ -792,99 +774,48 @@ function computeWeeklyData() {
   } catch (e) { console.error("Weekly computing err:", e); }
 }
 
-// 🚀 新增：平行計算月報表邏輯，與週報表完全無損共存
-function computeMonthlyData() {
-  try {
-    if (orders.length === 0) { monthlyDataCache = []; return; }
-    let minTs = Date.now(); let maxTs = Date.now();
-    orders.forEach(o => { if (o.startTs < minTs) minTs = o.startTs; if (o.startTs > maxTs) maxTs = o.startTs; });
-    
-    const monthsMap = {}; 
-    const dMin = new Date(minTs); const dMax = new Date(maxTs);
-    let currY = dMin.getFullYear(); let currM = dMin.getMonth();
-    const endY = dMax.getFullYear(); const endM = dMax.getMonth();
-    
-    while (currY < endY || (currY === endY && currM <= endM)) {
-      const daysInM = new Date(currY, currM + 1, 0).getDate();
-      const key = `${currY}-${String(currM+1).padStart(2,'0')}`;
-      monthsMap[key] = {
-        key: key, label: `${currY}年${currM+1}月`, ts: new Date(currY, currM, 1).getTime(),
-        total: 0, activeMs: 0, maxDayTotal: 0, allOrders: [],
-        days: Array.from({length: daysInM}, (_, i) => ({
-          dateNum: i + 1, ts: new Date(currY, currM, i+1).getTime(),
-          total: 0, count: 0, baseSum: 0, feeSum: 0, bonusSum: 0, tipSum: 0, activeMs: 0, dayOrders: []
-        }))
-      };
-      currM++;
-      if (currM > 11) { currM = 0; currY++; }
-    }
-    
-    orders.forEach(o => {
-      const d = new Date(o.startTs);
-      const y = d.getFullYear(); const m = d.getMonth();
-      const key = `${y}-${String(m+1).padStart(2,'0')}`;
-      const w = monthsMap[key];
-      if (w) {
-        const dayIdx = d.getDate() - 1;
-        const dayObj = w.days[dayIdx];
-        const bPrice = o.excludeBaseFromTotal ? 0 : (o.basePrice || 0);
-        const eFee = o.extraFee || 0; const bonus = o.bonus || 0; const tip = o.tip || 0;
-        const oTotal = o.total || (bPrice + eFee + bonus + tip);
-        
-        w.total += oTotal; dayObj.total += oTotal; dayObj.count += 1;
-        dayObj.baseSum += bPrice; dayObj.feeSum += eFee; dayObj.bonusSum += bonus; dayObj.tipSum += tip;
-        w.allOrders.push(o); dayObj.dayOrders.push(o);
-      }
-    });
-    
-    Object.values(monthsMap).forEach(w => {
-      w.activeMs = calculateMergedActiveMs(w.allOrders);
-      let max = 0;
-      w.days.forEach(d => { d.activeMs = calculateMergedActiveMs(d.dayOrders); if(d.total > max) max = d.total; });
-      w.maxDayTotal = max || 1;
-    });
-    monthlyDataCache = Object.values(monthsMap).sort((a, b) => b.ts - a.ts);
-  } catch (e) { console.error("Monthly computing err:", e); }
+function initChartDOM() {
+  const wrap = $('mainChartWrap');
+  if (!wrap || !wrap.querySelector('.chart-col')) {
+    if(wrap) wrap.innerHTML = Array.from({length: 7}, (_, i) => `
+      <div class="chart-col" data-day-idx="${i}">
+        <div class="chart-bar-zone"><div class="chart-bar" style="height: 0%;"></div></div>
+        <div class="chart-label-group"><div class="chart-date">-</div><div class="chart-day">-</div></div>
+      </div>
+    `).join('');
+  }
 }
 
-// 🚀 核心升級：統一處理 週報 / 月報 切換渲染與圖表動態重組
 function renderWeeklyTab() {
   try {
-    const isWeek = reportMode === 'week';
-    const cache = isWeek ? weeklyDataCache : monthlyDataCache;
-    const currentIndex = isWeek ? currentViewingWeekIndex : currentViewingMonthIndex;
-    const selectedIdx = isWeek ? selectedDayIndex : selectedMonthDayIndex;
-
-    const chartWrap = $('mainChartWrap');
-
-    if(cache.length === 0) {
+    if(weeklyDataCache.length === 0) {
       $('weekTitleStr').textContent = '--';
-      $('mTitle').textContent = isWeek ? '本週總收入' : '本月總收入'; 
-      $('mTotal').textContent = '$0';
+      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
       $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
       $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
-      chartWrap.innerHTML = '';
+      initChartDOM();
+      const chartWrap = $('mainChartWrap');
+      if(chartWrap) {
+        chartWrap.querySelectorAll('.chart-bar').forEach(bar => bar.style.height = '0%');
+        chartWrap.className = 'chart-area';
+      }
       return;
     }
-    
-    let viewIdx = currentIndex;
-    if (viewIdx >= cache.length) viewIdx = 0;
-    if (viewIdx < 0) viewIdx = 0;
-    if (isWeek) currentViewingWeekIndex = viewIdx; else currentViewingMonthIndex = viewIdx;
-
-    const wData = cache[viewIdx];
-    $('weekTitleStr').textContent = isWeek ? wData.dateRangeStr : wData.label;
-    $('prevWeekBtn').style.opacity = viewIdx < cache.length - 1 ? '1' : '0.2';
-    $('nextWeekBtn').style.opacity = viewIdx > 0 ? '1' : '0.2';
+    if(currentViewingWeekIndex >= weeklyDataCache.length) currentViewingWeekIndex = 0;
+    if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
+    const wData = weeklyDataCache[currentViewingWeekIndex];
+    $('weekTitleStr').textContent = wData.dateRangeStr;
+    $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
+    $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
 
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
-    if(selectedIdx !== null) {
-      const d = wData.days[selectedIdx];
-      $('mTitle').textContent = isWeek ? `${d.dayNum}日 (${d.dayName})` : `${wData.label}${d.dateNum}日`;
+    if(selectedDayIndex !== null) {
+      const d = wData.days[selectedDayIndex];
+      $('mTitle').textContent = `${d.dayNum}日 (${d.dayName})`;
       dTotal = d.total; dCount = d.count; dActiveMs = d.activeMs;
       dBase = d.baseSum; dFee = d.feeSum; dBonus = d.bonusSum; dTip = d.tipSum;
     } else {
-      $('mTitle').textContent = isWeek ? `本週總收入` : `本月總收入`;
+      $('mTitle').textContent = `本週總收入`;
       dTotal = wData.total; dActiveMs = wData.activeMs;
       dCount = wData.days.reduce((s,d)=>s+d.count, 0);
       dBase = wData.days.reduce((s,d)=>s+d.baseSum, 0);
@@ -899,114 +830,58 @@ function renderWeeklyTab() {
     $('mCount').textContent = dCount; $('mAvg').textContent = formatAvg(dTotal, dCount);
     $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
 
-    // 🚀 動態切換容器樣式 (week-mode / month-mode)
-    chartWrap.className = `chart-area ${selectedIdx !== null ? 'has-selection' : ''} ${isWeek ? 'week-mode' : 'month-mode'}`;
-    
-    // 如果子元素數量與當前模式的天數不符 (7根 vs 28~31根)，瞬間重新長出對應數量的 DOM
-    if (chartWrap.children.length !== wData.days.length) {
-        chartWrap.innerHTML = wData.days.map((_, i) => `
-          <div class="chart-col" data-day-idx="${i}">
-            <div class="chart-bar-zone"><div class="chart-bar" style="height: 0%;"></div></div>
-            <div class="chart-label-group"><div class="chart-date">-</div><div class="chart-day" style="${isWeek ? '' : 'display:none;'}">-</div></div>
-          </div>
-        `).join('');
+    initChartDOM(); 
+    const chartWrap = $('mainChartWrap');
+    if(chartWrap) {
+      wData.days.forEach((d, idx) => {
+        const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
+        if(col) {
+          col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
+          const barHeight = (d.total > 0 && wData.maxDayTotal > 0) ? (d.total / wData.maxDayTotal) * 100 : 0;
+          col.querySelector('.chart-bar').style.height = `${barHeight}%`;
+          col.querySelector('.chart-date').textContent = d.dayNum;
+          col.querySelector('.chart-day').textContent = d.dayName;
+        }
+      });
+      chartWrap.className = `chart-area ${selectedDayIndex !== null ? 'has-selection' : ''}`;
     }
-
-    // 更新圖表高度與數值
-    wData.days.forEach((d, idx) => {
-      const col = chartWrap.children[idx];
-      if(col) {
-        col.className = `chart-col ${selectedIdx === idx ? 'active' : ''}`;
-        const barHeight = (d.total > 0 && wData.maxDayTotal > 0) ? (d.total / wData.maxDayTotal) * 100 : 0;
-        col.querySelector('.chart-bar').style.height = `${barHeight}%`;
-        col.querySelector('.chart-date').textContent = isWeek ? d.dayNum : d.dateNum;
-        if (isWeek) col.querySelector('.chart-day').textContent = d.dayName;
-      }
-    });
-  } catch(e) { console.error('Report render err:', e); }
+  } catch(e) { console.error('Weekly render err:', e); }
 }
 
 $('mainChartWrap').addEventListener('click', e => {
-  const isWeek = reportMode === 'week';
-  const cache = isWeek ? weeklyDataCache : monthlyDataCache;
-  if (cache.length === 0) return; 
-
+  if (weeklyDataCache.length === 0) return; 
   const col = e.target.closest('.chart-col');
   if (col) { 
     const idx = parseInt(col.getAttribute('data-day-idx')); 
-    const currentIndex = isWeek ? currentViewingWeekIndex : currentViewingMonthIndex;
-    const wData = cache[currentIndex];
+    const wData = weeklyDataCache[currentViewingWeekIndex];
     if (wData && wData.days && wData.days[idx] && wData.days[idx].total > 0) {
-      if (isWeek) selectedDayIndex = (selectedDayIndex === idx) ? null : idx; 
-      else selectedMonthDayIndex = (selectedMonthDayIndex === idx) ? null : idx;
+      selectedDayIndex = (selectedDayIndex === idx) ? null : idx; 
       renderWeeklyTab();
     }
   } else { 
-    if (isWeek) selectedDayIndex = null; else selectedMonthDayIndex = null; 
+    selectedDayIndex = null; 
     renderWeeklyTab();
   }
 });
 
-// 🚀 報表模式切換器綁定
-$('modeWeekBtn').addEventListener('click', () => {
-    reportMode = 'week';
-    $('modeWeekBtn').style.background = 'var(--panel)'; $('modeWeekBtn').style.color = 'var(--text)'; $('modeWeekBtn').style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-    $('modeMonthBtn').style.background = 'transparent'; $('modeMonthBtn').style.color = 'var(--muted)'; $('modeMonthBtn').style.boxShadow = 'none';
-    selectedDayIndex = null; renderWeeklyTab();
-});
-$('modeMonthBtn').addEventListener('click', () => {
-    reportMode = 'month';
-    $('modeMonthBtn').style.background = 'var(--panel)'; $('modeMonthBtn').style.color = 'var(--text)'; $('modeMonthBtn').style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-    $('modeWeekBtn').style.background = 'transparent'; $('modeWeekBtn').style.color = 'var(--muted)'; $('modeWeekBtn').style.boxShadow = 'none';
-    selectedMonthDayIndex = null; renderWeeklyTab();
-});
-
-$('prevWeekBtn').addEventListener('click', () => { 
-  const isWeek = reportMode === 'week';
-  const cache = isWeek ? weeklyDataCache : monthlyDataCache;
-  const currIdx = isWeek ? currentViewingWeekIndex : currentViewingMonthIndex;
-  if (currIdx < cache.length - 1) { 
-    if (isWeek) { currentViewingWeekIndex++; selectedDayIndex = null; } else { currentViewingMonthIndex++; selectedMonthDayIndex = null; }
-    renderWeeklyTab(); 
-  }
-});
-$('nextWeekBtn').addEventListener('click', () => { 
-  const isWeek = reportMode === 'week';
-  const currIdx = isWeek ? currentViewingWeekIndex : currentViewingMonthIndex;
-  if (currIdx > 0) { 
-    if (isWeek) { currentViewingWeekIndex--; selectedDayIndex = null; } else { currentViewingMonthIndex--; selectedMonthDayIndex = null; }
-    renderWeeklyTab(); 
-  }
-});
+$('prevWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex < weeklyDataCache.length - 1) { currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab(); }});
+$('nextWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex > 0) { currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab(); }});
 
 $('weekTitleWrap').addEventListener('click', () => {
-  const isWeek = reportMode === 'week';
-  const cache = isWeek ? weeklyDataCache : monthlyDataCache;
-  if(cache.length === 0) return;
-  
-  $('weekSelectTitle').textContent = isWeek ? '選取週數' : '選取月份';
-  $('weekSelectLegendStr').textContent = isWeek ? '每週明細' : '每月明細';
-  $('legendDaysRow').style.display = isWeek ? 'flex' : 'none'; // 月報模式下隱藏 一~日 標籤
-
+  if(weeklyDataCache.length === 0) return;
   const listWrap = $('weekSelectList');
-  listWrap.innerHTML = cache.map((w, idx) => {
+  listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
     const miniChartHtml = w.days.map(d => {
       const h = (d.total > 0 && w.maxDayTotal > 0) ? (d.total / w.maxDayTotal) * 100 : 0;
-      const label = isWeek ? d.dayNum : '';
-      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${label}</div></div>`;
+      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
     }).join('');
-    return `<div class="week-item" data-week-idx="${idx}"><div class="week-item-info"><span class="week-item-date">${isWeek ? w.dateRangeStr : w.label}</span><span class="week-item-amt">${fmtDisplayMoney(w.total)}</span></div><div class="mini-chart">${miniChartHtml}</div></div>`;
+    return `<div class="week-item" data-week-idx="${idx}"><div class="week-item-info"><span class="week-item-date">${w.dateRangeStr}</span><span class="week-item-amt">${fmtDisplayMoney(w.total)}</span></div><div class="mini-chart">${miniChartHtml}</div></div>`;
   }).join('');
   showOverlay('weekSelectOverlay');
 });
 $('weekSelectList').addEventListener('click', e => {
   const item = e.target.closest('.week-item');
-  if(item) { 
-    const idx = parseInt(item.getAttribute('data-week-idx'));
-    if (reportMode === 'week') { currentViewingWeekIndex = idx; selectedDayIndex = null; } 
-    else { currentViewingMonthIndex = idx; selectedMonthDayIndex = null; }
-    hideOverlay('weekSelectOverlay'); renderWeeklyTab(); 
-  }
+  if(item) { currentViewingWeekIndex = parseInt(item.getAttribute('data-week-idx')); selectedDayIndex = null; hideOverlay('weekSelectOverlay'); renderWeeklyTab(); }
 });
 $('closeWeekSelectBtn').addEventListener('click', () => hideOverlay('weekSelectOverlay'));
 
@@ -1030,13 +905,7 @@ function init(){
   $('singleDateInput').value = formatDateInput(new Date()); updateDateDisplay();
   
   renderColToggles();
-  renderActive(); 
-  computeTodaySummary(); 
-  computeWeeklyData(); 
-  computeMonthlyData(); // 🚀 新增月報平行計算
-  renderWeeklyTab(); 
-  renderDetailTable(); 
-  renderTrash();
+  renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderTrash();
   setInterval(tick, 1000); reportUiState(); syncActiveToAndroid();
 }
 
@@ -1250,7 +1119,7 @@ function completeOrder(id){
       orders.unshift(record); const rIdx = active.findIndex(a => a.id === item.id); if(rIdx > -1) active.splice(rIdx,1);
     });
     saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid(); 
-    closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderWeeklyTab(); renderDetailTable();
+    closeVk(); renderActive(); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable();
   } catch(e) { console.error('Complete Order Err:', e); }
 }
 
@@ -1310,7 +1179,7 @@ function computeTodaySummary(){
 $('clearAllBtn').addEventListener('click', ()=> showOverlay('confirmClearOverlay'));
 $('confirmClearCancel').addEventListener('click', ()=> hideOverlay('confirmClearOverlay'));$('confirmClearOk').addEventListener('click', ()=>{ 
   orders = []; saveJSON(KEY_ORDERS, orders); 
-  computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderWeeklyTab(); renderDetailTable(); hideOverlay('confirmClearOverlay'); 
+  computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); hideOverlay('confirmClearOverlay'); 
 });
 
 const TAB_ID_MAP = { main: 'tabMain', detail: 'tabDetail', weekly: 'tabWeekly', settings: 'tabSettings' };
@@ -1330,7 +1199,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     }
 
     if(tab === 'detail') renderDetailTable();
-    if(tab === 'weekly') { computeWeeklyData(); computeMonthlyData(); renderWeeklyTab(); }
+    if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
     if(tab === 'settings') renderTrash();
   });
 });
@@ -1455,6 +1324,7 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
+// 🚀 新增：明細表長按功能升級為「專屬操作選單」 (支援無損還原與永久刪除，無 Emoji 圖示)
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
 function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
 
@@ -1514,16 +1384,16 @@ $('rowActionRestoreBtn').addEventListener('click', ()=>{
     active.unshift(item);
   });
 
-  // 全局存檔與同步重算 (包含新增的 computeMonthlyData)
+  // 全局存檔與同步重算
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid();
-  computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderWeeklyTab(); renderDetailTable(); renderActive();
+  computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderActive();
   
   pendingDeleteRowId = null; hideOverlay('rowActionMenuOverlay');
 });
 
 // 原本的刪除確認視窗邏輯維持不變
 $('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
-  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderWeeklyTab(); renderDetailTable(); }
+  if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); }
   pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
 
@@ -1549,7 +1419,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
         const { extraMin, extraFee } = calcOrderSubsidy(order, order.endTs);
         order.extraMin = extraMin; order.extraFee = extraFee; 
         order.total = (order.excludeBaseFromTotal ? 0 : (order.basePrice || 0)) + extraFee + (order.bonus || 0) + (order.tip || 0);
-        saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderDetailTable();
+        saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
       }
       return;
     }
@@ -1578,7 +1448,7 @@ $('exportPreviewWrap').addEventListener('change', e=>{
         go.elapsedMinCeil = billedMin; go.extraMin = extraMin; go.extraFee = extraFee;
         go.total = (go.linkRole === 'secondary' ? 0 : (go.basePrice || 0)) + extraFee + (go.bonus || 0) + (go.tip || 0);
       });
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderDetailTable();
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable();
     }
   } catch(e) { console.error('Export Preview change err:', e); }
 });
@@ -1668,7 +1538,7 @@ $('importCsvBtn').addEventListener('click', ()=> $('importCsvInput').click());$(
       });
       if(imported.length === 0){ showImportStatus('沒有讀到可匯入的紀錄'); e.target.value=''; return; }
       orders = orders.concat(imported).sort((a,b) => b.startTs - a.startTs);
-      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); computeMonthlyData(); renderDetailTable(); 
+      saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderDetailTable(); 
       showImportStatus(`已匯入 ${imported.length} 筆紀錄`);
     }catch(err){ showImportStatus('匯入失敗，請確認格式'); }
     e.target.value = '';
