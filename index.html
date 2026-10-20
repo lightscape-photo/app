@@ -644,7 +644,7 @@ function parseTimeInput(str){
   return { h, m };
 }
 
-// 🚀 新增：專門用來解析「用時」輸入框的 MM:SS 或純數字分鐘格式
+// 🚀 新增：安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
 function parseElapsedInput(str) {
   str = (str || '').trim(); if(!str) return null;
   let m = 0, s = 0;
@@ -659,7 +659,7 @@ function parseElapsedInput(str) {
     m = parseInt(digits, 10);
   }
   if (isNaN(m) || isNaN(s) || m < 0 || s < 0 || s > 59) return null;
-  return (m * 60 + s) * 1000; // 回傳毫秒數
+  return (m * 60 + s) * 1000;
 }
 
 function fmtMMSS(ms){
@@ -1334,7 +1334,7 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
-// 🚀 明細表長按功能 (無損還原與永久刪除，無 Emoji)
+// 長按刪除/還原選單
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
 function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
 
@@ -1363,7 +1363,6 @@ function openRowActionMenu(id, displayIdx){
 }
 
 $('rowActionCancelBtn').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('rowActionMenuOverlay'); });
-
 $('rowActionDeleteBtn').addEventListener('click', ()=>{
   hideOverlay('rowActionMenuOverlay');
   $('deleteRowInfo').textContent = `確定要永久刪除這筆紀錄嗎？`; 
@@ -1407,14 +1406,14 @@ $('exportPreviewWrap').addEventListener('input', e=>{
   if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
 });
 
-// 🚀 核心修改：支援開始時間、結束時間、以及「用時」的雙向反推修改與重新計算
+// 🚀 核心修改：具備「點進去沒改就不破壞毫秒」保護機制的時間與用時編輯邏輯
 $('exportPreviewWrap').addEventListener('change', e=>{
   try {
     const baseId = e.target.getAttribute('data-edit-base'); 
     const ordnoId = e.target.getAttribute('data-edit-ordno');
     const startId = e.target.getAttribute('data-edit-start'); 
     const endId = e.target.getAttribute('data-edit-end');
-    const elapsedId = e.target.getAttribute('data-edit-elapsed'); // 支援用時編輯
+    const elapsedId = e.target.getAttribute('data-edit-elapsed');
     const bonusId = e.target.getAttribute('data-edit-bonus'); 
     const tipId = e.target.getAttribute('data-edit-tip');
     
@@ -1438,7 +1437,6 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       return;
     }
     
-    // 處理開始時間、結束時間、用時變更
     if(startId || endId || elapsedId){
       const id = startId || endId || elapsedId; 
       const order = orders.find(o => o.id === id); if(!order) return;
@@ -1449,15 +1447,22 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       if(startId){
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
-        const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime();
+        const d = new Date(order.startTs);
+        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
+        if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
+        d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime();
       } else if(endId){
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
-        const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime();
+        const d = new Date(order.endTs);
+        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
+        if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
+        d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime();
       } else if(elapsedId){
-        // 🚀 用時反推結束時間邏輯：以 startTs 為起點，加上輸入的毫秒數
         const elapsedMs = parseElapsedInput(e.target.value);
         if(elapsedMs === null || elapsedMs <= 0){ showTimeError('用時格式錯誤，請輸入如 15 或 15:30'); return; }
+        // 🚀 防呆保護：若計算出來的用時毫秒數跟原本一樣，則不更動
+        if (elapsedMs === (order.endTs - order.startTs)) return;
         newEndTs = order.startTs + elapsedMs;
       }
 
