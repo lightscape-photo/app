@@ -503,7 +503,6 @@
   </div>
 </div>
 
-<!-- 🚀 新增：明細表的長按專屬操作選單 (支援無損還原與永久刪除，無 Emoji) -->
 <div class="overlay" id="rowActionMenuOverlay">
   <div class="settings-panel" style="max-width:340px;text-align:center;">
     <h3 style="margin-bottom:10px;">訂單操作</h3>
@@ -644,6 +643,25 @@ function parseTimeInput(str){
   if(isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
   return { h, m };
 }
+
+// 🚀 新增：專門用來解析「用時」輸入框的 MM:SS 或純數字分鐘格式
+function parseElapsedInput(str) {
+  str = (str || '').trim(); if(!str) return null;
+  let m = 0, s = 0;
+  if (str.includes(':')) {
+    const parts = str.split(':');
+    if (parts.length !== 2) return null;
+    m = parseInt(parts[0], 10);
+    s = parseInt(parts[1], 10);
+  } else {
+    const digits = str.replace(/\D/g, '');
+    if (!digits) return null;
+    m = parseInt(digits, 10);
+  }
+  if (isNaN(m) || isNaN(s) || m < 0 || s < 0 || s > 59) return null;
+  return (m * 60 + s) * 1000; // 回傳毫秒數
+}
+
 function fmtMMSS(ms){
   const totalSec = Math.max(0, Math.floor(ms/1000));
   const m = Math.floor(totalSec/60); const s = totalSec%60;
@@ -790,9 +808,8 @@ function renderWeeklyTab() {
   try {
     if(weeklyDataCache.length === 0) {
       $('weekTitleStr').textContent = '--';
-      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';
-      $('mBase').textContent = '$0'; $('mFee').textContent = '$0'; $('mBonus').textContent = '$0'; $('mTip').textContent = '$0';
-      $('mCount').textContent = '0'; $('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h'; $('mRate').textContent = '$0/h';
+      $('mTitle').textContent = '本週總收入'; $('mTotal').textContent = '$0';$('mBase').textContent = '$0';$('mFee').textContent = '$0';$('mBonus').textContent = '$0';$('mTip').textContent = '$0';
+      $('mCount').textContent = '0';$('mAvg').textContent = '$0'; $('mTime').textContent = '0.0h';$('mRate').textContent = '$0/h';
       initChartDOM();
       const chartWrap = $('mainChartWrap');
       if(chartWrap) {
@@ -805,8 +822,7 @@ function renderWeeklyTab() {
     if(currentViewingWeekIndex < 0) currentViewingWeekIndex = 0;
     const wData = weeklyDataCache[currentViewingWeekIndex];
     $('weekTitleStr').textContent = wData.dateRangeStr;
-    $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';
-    $('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
+    $('prevWeekBtn').style.opacity = currentViewingWeekIndex < weeklyDataCache.length - 1 ? '1' : '0.2';$('nextWeekBtn').style.opacity = currentViewingWeekIndex > 0 ? '1' : '0.2';
 
     let dTotal, dCount, dActiveMs, dBase, dFee, dBonus, dTip;
     if(selectedDayIndex !== null) {
@@ -824,11 +840,10 @@ function renderWeeklyTab() {
       dTip = wData.days.reduce((s,d)=>s+d.tipSum, 0);
     }
 
-    $('mTotal').textContent = fmtDisplayMoney(dTotal);
-    $('mBase').textContent = `$${plainNum(dBase)}`; $('mFee').textContent = `$${plainNum(dFee)}`;
+    $('mTotal').textContent = fmtDisplayMoney(dTotal);$('mBase').textContent = `$${plainNum(dBase)}`; $('mFee').textContent = `$${plainNum(dFee)}`;
     $('mBonus').textContent = `$${plainNum(dBonus)}`; $('mTip').textContent = `$${plainNum(dTip)}`;
     $('mCount').textContent = dCount; $('mAvg').textContent = formatAvg(dTotal, dCount);
-    $('mTime').textContent = formatHrs(dActiveMs); $('mRate').textContent = formatHrRate(dTotal, dActiveMs);
+    $('mTime').textContent = formatHrs(dActiveMs);$('mRate').textContent = formatHrRate(dTotal, dActiveMs);
 
     initChartDOM(); 
     const chartWrap = $('mainChartWrap');
@@ -864,8 +879,7 @@ $('mainChartWrap').addEventListener('click', e => {
   }
 });
 
-$('prevWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex < weeklyDataCache.length - 1) { currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab(); }});
-$('nextWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex > 0) { currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab(); }});
+$('prevWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex < weeklyDataCache.length - 1) { currentViewingWeekIndex++; selectedDayIndex = null; renderWeeklyTab(); }});$('nextWeekBtn').addEventListener('click', () => { if (currentViewingWeekIndex > 0) { currentViewingWeekIndex--; selectedDayIndex = null; renderWeeklyTab(); }});
 
 $('weekTitleWrap').addEventListener('click', () => {
   if(weeklyDataCache.length === 0) return;
@@ -879,11 +893,7 @@ $('weekTitleWrap').addEventListener('click', () => {
   }).join('');
   showOverlay('weekSelectOverlay');
 });
-$('weekSelectList').addEventListener('click', e => {
-  const item = e.target.closest('.week-item');
-  if(item) { currentViewingWeekIndex = parseInt(item.getAttribute('data-week-idx')); selectedDayIndex = null; hideOverlay('weekSelectOverlay'); renderWeeklyTab(); }
-});
-$('closeWeekSelectBtn').addEventListener('click', () => hideOverlay('weekSelectOverlay'));
+$('weekSelectList').addEventListener('click', e => { const item = e.target.closest('.week-item'); if(item) { currentViewingWeekIndex = parseInt(item.getAttribute('data-week-idx')); selectedDayIndex = null; hideOverlay('weekSelectOverlay'); renderWeeklyTab(); } });$('closeWeekSelectBtn').addEventListener('click', () => hideOverlay('weekSelectOverlay'));
 
 function init(){
   active = loadJSON(KEY_ACTIVE, []);
@@ -916,8 +926,7 @@ function openVk(inputEl, layout) {
   activeVkInput = inputEl; activeVkInput.focus();
   activeVkWrapper = inputEl.classList.contains('price-input') ? inputEl.closest('.price-input-wrap') : inputEl;
   activeVkWrapper.classList.add('vk-active');
-  $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';
-  $('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
+  $('vkNumpad').style.display = layout === 'numpad' ? 'flex' : 'none';$('vkHex').style.display = layout === 'hex' ? 'flex' : 'none';
   
   const vkContainer = $('vkContainer'); const vkHeight = vkContainer.offsetHeight || 220;
   document.body.style.paddingBottom = (vkHeight + 40) + 'px';
@@ -1302,7 +1311,8 @@ function renderDetailTable(){
                 <td>${fmtDateOnly(o.startTs)}</td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
-                <td>${t.elapsed}</td><td>${t.over}</td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-elapsed="${o.id}" value="${t.elapsed}" placeholder="00:00"></td>
+                <td>${t.over}</td>
                 <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
                 <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0">`}</td>
                 <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0">`}</td>
@@ -1324,7 +1334,7 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
-// 🚀 新增：明細表長按功能升級為「專屬操作選單」 (支援無損還原與永久刪除，無 Emoji 圖示)
+// 🚀 明細表長按功能 (無損還原與永久刪除，無 Emoji)
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
 function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
 
@@ -1338,12 +1348,12 @@ $('exportPreviewWrap').addEventListener('pointerdown', e=>{
 });
 
 $('exportPreviewWrap').addEventListener('pointerup', cancelLongPress); 
-$('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);$('exportPreviewWrap').addEventListener('pointermove', e=>{
+$('exportPreviewWrap').addEventListener('pointercancel', cancelLongPress);
+$('exportPreviewWrap').addEventListener('pointermove', e=>{
   if(!longPressTimer) return;
   if(Math.abs(e.clientX - longPressStartX) > 10 || Math.abs(e.clientY - longPressStartY) > 10) cancelLongPress();
 });
 
-// 開啟操作選單
 function openRowActionMenu(id, displayIdx){
   const o = orders.find(x=>x.id===id);
   if(!o) return;
@@ -1352,23 +1362,19 @@ function openRowActionMenu(id, displayIdx){
   showOverlay('rowActionMenuOverlay');
 }
 
-// 取消選單
 $('rowActionCancelBtn').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('rowActionMenuOverlay'); });
 
-// 進入永久刪除確認
 $('rowActionDeleteBtn').addEventListener('click', ()=>{
   hideOverlay('rowActionMenuOverlay');
   $('deleteRowInfo').textContent = `確定要永久刪除這筆紀錄嗎？`; 
   showOverlay('confirmDeleteRowOverlay');
 });
 
-// 🚀 執行無損還原
 $('rowActionRestoreBtn').addEventListener('click', ()=>{
   if(!pendingDeleteRowId) return;
   const target = orders.find(o=>o.id===pendingDeleteRowId);
   if(!target) { hideOverlay('rowActionMenuOverlay'); return; }
 
-  // 疊單防呆：如果這單有綁定，必須把兩張單一起從歷史紀錄裡抽出來
   let toRestoreIds = target.linkGroupId ? orders.filter(o => o.linkGroupId === target.linkGroupId).map(o => o.id) : [target.id];
 
   const restoredItems = [];
@@ -1377,22 +1383,20 @@ $('rowActionRestoreBtn').addEventListener('click', ()=>{
     return true;
   });
 
-  // 清除結算專用屬性，並將包含原始 startTs (精準到毫秒) 的物件推回進行中 (active)
   restoredItems.reverse().forEach(item => {
     delete item.endTs; delete item.elapsedMinCeil; delete item.extraMin; 
     delete item.extraFee; delete item.total; delete item.excludeBaseFromTotal;
     active.unshift(item);
   });
 
-  // 全局存檔與同步重算
   saveJSON(KEY_ACTIVE, active); saveJSON(KEY_ORDERS, orders); syncActiveToAndroid();
   computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); renderActive();
   
   pendingDeleteRowId = null; hideOverlay('rowActionMenuOverlay');
 });
 
-// 原本的刪除確認視窗邏輯維持不變
-$('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });$('confirmDeleteRowOk').addEventListener('click', ()=>{
+$('confirmDeleteRowCancel').addEventListener('click', ()=>{ pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay'); });
+$('confirmDeleteRowOk').addEventListener('click', ()=>{
   if(pendingDeleteRowId){ orders = orders.filter(o=>o.id!==pendingDeleteRowId); saveJSON(KEY_ORDERS, orders); computeTodaySummary(); computeWeeklyData(); renderWeeklyTab(); renderDetailTable(); }
   pendingDeleteRowId = null; hideOverlay('confirmDeleteRowOverlay');
 });
@@ -1403,11 +1407,16 @@ $('exportPreviewWrap').addEventListener('input', e=>{
   if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
 });
 
+// 🚀 核心修改：支援開始時間、結束時間、以及「用時」的雙向反推修改與重新計算
 $('exportPreviewWrap').addEventListener('change', e=>{
   try {
-    const baseId = e.target.getAttribute('data-edit-base'); const ordnoId = e.target.getAttribute('data-edit-ordno');
-    const startId = e.target.getAttribute('data-edit-start'); const endId = e.target.getAttribute('data-edit-end');
-    const bonusId = e.target.getAttribute('data-edit-bonus'); const tipId = e.target.getAttribute('data-edit-tip');
+    const baseId = e.target.getAttribute('data-edit-base'); 
+    const ordnoId = e.target.getAttribute('data-edit-ordno');
+    const startId = e.target.getAttribute('data-edit-start'); 
+    const endId = e.target.getAttribute('data-edit-end');
+    const elapsedId = e.target.getAttribute('data-edit-elapsed'); // 支援用時編輯
+    const bonusId = e.target.getAttribute('data-edit-bonus'); 
+    const tipId = e.target.getAttribute('data-edit-tip');
     
     if (baseId || bonusId || tipId) {
       const id = baseId || bonusId || tipId; const order = orders.find(o => o.id === id);
@@ -1428,20 +1437,34 @@ $('exportPreviewWrap').addEventListener('change', e=>{
       if(order){ order.orderNo = e.target.value.toUpperCase(); saveJSON(KEY_ORDERS, orders); renderDetailTable(); }
       return;
     }
-    if(startId || endId){
-      const id = startId || endId; const order = orders.find(o => o.id === id); if(!order) return;
-      const parsed = parseTimeInput(e.target.value);
-      if(!parsed){
-        const err = $('editTimeError'); err.textContent = '時間格式錯誤，請輸入如 14:30，已還原';
-        err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
+    
+    // 處理開始時間、結束時間、用時變更
+    if(startId || endId || elapsedId){
+      const id = startId || endId || elapsedId; 
+      const order = orders.find(o => o.id === id); if(!order) return;
+      
+      let newStartTs = order.startTs; 
+      let newEndTs = order.endTs;
+
+      if(startId){
+        const parsed = parseTimeInput(e.target.value);
+        if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
+        const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime();
+      } else if(endId){
+        const parsed = parseTimeInput(e.target.value);
+        if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
+        const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime();
+      } else if(elapsedId){
+        // 🚀 用時反推結束時間邏輯：以 startTs 為起點，加上輸入的毫秒數
+        const elapsedMs = parseElapsedInput(e.target.value);
+        if(elapsedMs === null || elapsedMs <= 0){ showTimeError('用時格式錯誤，請輸入如 15 或 15:30'); return; }
+        newEndTs = order.startTs + elapsedMs;
       }
-      let newStartTs = order.startTs; let newEndTs = order.endTs;
-      if(startId){ const d = new Date(order.startTs); d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime(); }
-      else{ const d = new Date(order.endTs); d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime(); }
+
       if(newEndTs <= newStartTs){
-        const err = $('editTimeError'); err.textContent = '完成時間必須晚於開始時間，已還原';
-        err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable(); return;
+        showTimeError('完成時間必須晚於開始時間'); return;
       }
+
       let group = order.linkGroupId ? orders.filter(o => o.linkGroupId === order.linkGroupId) : [order];
       group.forEach(go => {
         go.startTs = newStartTs; go.endTs = newEndTs; const { billedMin, extraMin, extraFee } = calcOrderSubsidy(go, newEndTs);
@@ -1452,6 +1475,11 @@ $('exportPreviewWrap').addEventListener('change', e=>{
     }
   } catch(e) { console.error('Export Preview change err:', e); }
 });
+
+function showTimeError(msg) {
+  const err = $('editTimeError'); err.textContent = msg + '，已還原';
+  err.style.display = 'block'; setTimeout(()=>{ err.style.display = 'none'; }, 3000); renderDetailTable();
+}
 
 function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
 
