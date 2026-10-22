@@ -316,17 +316,17 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 圖表區塊 */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 160px; display:flex; margin-top:20px; margin-bottom:10px; }
+  /* 🚀 優化：直方圖區塊支援彈性自動調整長短，徹底消除底部切邊風險 */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 100px; display:flex; margin-top:10px; margin-bottom:4px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
   .chart-bar-zone { flex:1; display:flex; align-items:flex-end; justify-content:center; border-bottom:1px dashed var(--border); }
   .chart-bar { width:65%; background:var(--chart-blue); border-radius:4px 4px 0 0; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   
-  .chart-label-group { height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:4px; }
-  .chart-date { font-size:13px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
-  .chart-day { font-size:11px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:2px; line-height:1.2; }
+  .chart-label-group { height:36px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top:2px; flex-shrink:0; }
+  .chart-date { font-size:12px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
+  .chart-day { font-size:10px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:1px; line-height:1.2; }
 
   /* 歷史週數選取清單 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
@@ -644,7 +644,6 @@ function parseTimeInput(str){
   return { h, m };
 }
 
-// 🚀 新增：安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
 function parseElapsedInput(str) {
   str = (str || '').trim(); if(!str) return null;
   let m = 0, s = 0;
@@ -1334,7 +1333,6 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
-// 長按刪除/還原選單
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
 function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
 
@@ -1406,7 +1404,6 @@ $('exportPreviewWrap').addEventListener('input', e=>{
   if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
 });
 
-// 🚀 核心修改：具備「點進去沒改就不破壞毫秒」保護機制的時間與用時編輯邏輯
 $('exportPreviewWrap').addEventListener('change', e=>{
   try {
     const baseId = e.target.getAttribute('data-edit-base'); 
@@ -1448,20 +1445,17 @@ $('exportPreviewWrap').addEventListener('change', e=>{
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
         const d = new Date(order.startTs);
-        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
         if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
         d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime();
       } else if(endId){
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
         const d = new Date(order.endTs);
-        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
         if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
         d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime();
       } else if(elapsedId){
         const elapsedMs = parseElapsedInput(e.target.value);
         if(elapsedMs === null || elapsedMs <= 0){ showTimeError('用時格式錯誤，請輸入如 15 或 15:30'); return; }
-        // 🚀 防呆保護：若計算出來的用時毫秒數跟原本一樣，則不更動
         if (elapsedMs === (order.endTs - order.startTs)) return;
         newEndTs = order.startTs + elapsedMs;
       }
