@@ -644,7 +644,6 @@ function parseTimeInput(str){
   return { h, m };
 }
 
-// 🚀 安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
 function parseElapsedInput(str) {
   str = (str || '').trim(); if(!str) return null;
   let m = 0, s = 0;
@@ -804,7 +803,7 @@ function initChartDOM() {
   }
 }
 
-// 🚀 週報主圖動態對比增強演算法（拉開均等營收的起伏落差，並確保非 0 日至少 12% 高度）
+// 🚀 黃金比例演算法：週報主圖與縮圖 100% 同步共用，兼顧高低對比與真實比例，徹底消滅斷崖落差
 function getScaledBarHeight(val, maxVal) {
   if (!val || val <= 0 || !maxVal || maxVal <= 0) return 0;
   if (val >= maxVal) return 100;
@@ -894,22 +893,10 @@ $('weekTitleWrap').addEventListener('click', () => {
   if(weeklyDataCache.length === 0) return;
   const listWrap = $('weekSelectList');
   listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
-    // 🚀 核心優化：小圖表尺寸結構完全不變，套用「視覺差值等比轉換（動態範圍映射）」
-    const activeTotals = w.days.map(d => d.total).filter(t => t > 0);
-    const minVal = activeTotals.length > 0 ? Math.min(...activeTotals) : 0;
-    const maxVal = activeTotals.length > 0 ? Math.max(...activeTotals) : 0;
-
+    // 🚀 核心修正：縮圖完全共用 getScaledBarHeight，與週報主圖達成 100% 同步等比縮放
     const miniChartHtml = w.days.map(d => {
-      let h = 0;
-      if (d.total > 0) {
-        if (maxVal === minVal) {
-          h = 75; // 整週跑單金額完全相同時，給予 75% 舒適比例
-        } else {
-          // 最低金額映射至 25%，最高金額映射至 100%，其餘做線性等比拉伸
-          h = 25 + ((d.total - minVal) / (maxVal - minVal)) * 75;
-        }
-      }
-      return `<div class="mini-col"><div class="mini-bar" style="height:${Math.round(h)}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
+      const h = getScaledBarHeight(d.total, w.maxDayTotal);
+      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
     }).join('');
     return `<div class="week-item" data-week-idx="${idx}"><div class="week-item-info"><span class="week-item-date">${w.dateRangeStr}</span><span class="week-item-amt">${fmtDisplayMoney(w.total)}</span></div><div class="mini-chart">${miniChartHtml}</div></div>`;
   }).join('');
