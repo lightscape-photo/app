@@ -316,8 +316,8 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 優化：直方圖區塊支援彈性自動調整長短，徹底消除底部切邊風險 */
-  .chart-area { position:relative; width:100%; flex: 1; min-height: 100px; display:flex; margin-top:10px; margin-bottom:4px; }
+  /* 🚀 優化：直方圖高度彈性自適應，消滅在小螢幕被切邊問題 */
+  .chart-area { position:relative; width:100%; flex: 1; min-height: 80px; display:flex; margin-top:10px; margin-bottom:4px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
   
@@ -644,6 +644,7 @@ function parseTimeInput(str){
   return { h, m };
 }
 
+// 🚀 安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
 function parseElapsedInput(str) {
   str = (str || '').trim(); if(!str) return null;
   let m = 0, s = 0;
@@ -803,6 +804,15 @@ function initChartDOM() {
   }
 }
 
+// 🚀 優化：動態對比增強演算法（拉開均等營收的起伏落差，並確保非 0 日至少 12% 高度）
+function getScaledBarHeight(val, maxVal) {
+  if (!val || val <= 0 || !maxVal || maxVal <= 0) return 0;
+  if (val >= maxVal) return 100;
+  const ratio = val / maxVal;
+  const scaled = Math.pow(ratio, 1.6) * 100;
+  return Math.max(12, Math.min(100, Math.round(scaled)));
+}
+
 function renderWeeklyTab() {
   try {
     if(weeklyDataCache.length === 0) {
@@ -851,7 +861,8 @@ function renderWeeklyTab() {
         const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
         if(col) {
           col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
-          const barHeight = (d.total > 0 && wData.maxDayTotal > 0) ? (d.total / wData.maxDayTotal) * 100 : 0;
+          // 🚀 套用對比拉伸比例
+          const barHeight = getScaledBarHeight(d.total, wData.maxDayTotal);
           col.querySelector('.chart-bar').style.height = `${barHeight}%`;
           col.querySelector('.chart-date').textContent = d.dayNum;
           col.querySelector('.chart-day').textContent = d.dayName;
@@ -885,7 +896,8 @@ $('weekTitleWrap').addEventListener('click', () => {
   const listWrap = $('weekSelectList');
   listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
     const miniChartHtml = w.days.map(d => {
-      const h = (d.total > 0 && w.maxDayTotal > 0) ? (d.total / w.maxDayTotal) * 100 : 0;
+      // 🚀 縮圖同步套用對比拉伸比例
+      const h = getScaledBarHeight(d.total, w.maxDayTotal);
       return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
     }).join('');
     return `<div class="week-item" data-week-idx="${idx}"><div class="week-item-info"><span class="week-item-date">${w.dateRangeStr}</span><span class="week-item-amt">${fmtDisplayMoney(w.total)}</span></div><div class="mini-chart">${miniChartHtml}</div></div>`;
@@ -1121,7 +1133,7 @@ function completeOrder(id){
       const record = {
         id: genId(), orderNo: item.orderNo || '', basePrice: item.basePrice || 0,
         excludeBaseFromTotal: isSec, startTs: item.startTs, endTs,
-        elapsedMinCeil: billedMin, extraMin: extraMin, extraFee: extraFee, bonus: 0, tip: 0,
+        elapsedMinCeil: billedMin, extraMin: actualExtraMin, extraFee: extraFee, bonus: 0, tip: 0,
         total: (isSec ? 0 : (item.basePrice || 0)) + extraFee, linkGroupId: item.linkGroupId, linkRole: item.linkRole
       };
       orders.unshift(record); const rIdx = active.findIndex(a => a.id === item.id); if(rIdx > -1) active.splice(rIdx,1);
