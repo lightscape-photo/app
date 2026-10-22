@@ -316,7 +316,7 @@
   .metric-card.main .metric-val { font-size:32px; color:var(--amber); letter-spacing:-1px; margin-top:2px;}
   .metric-card.main .metric-lbl { font-size:13px; }
 
-  /* 🚀 優化：直方圖高度彈性自適應，消滅在小螢幕被切邊問題 */
+  /* 直方圖高度彈性自適應，消滅在小螢幕被切邊問題 */
   .chart-area { position:relative; width:100%; flex: 1; min-height: 80px; display:flex; margin-top:10px; margin-bottom:4px; }
   .chart-col { flex:1; display:flex; flex-direction:column; cursor:pointer; transition: opacity 0.2s ease; }
   .chart-area.has-selection .chart-col:not(.active) { opacity: 0.3; }
@@ -328,7 +328,7 @@
   .chart-date { font-size:12px; color:var(--text); font-family:system-ui,sans-serif; font-weight:600; line-height:1.2; }
   .chart-day { font-size:10px; color:var(--muted); font-family:system-ui,sans-serif; margin-top:1px; line-height:1.2; }
 
-  /* 歷史週數選取清單 */
+  /* 歷史週數選取清單：結構與尺寸完全維持原樣 */
   .week-select-top { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
   .week-select-top h2 { margin:0; font-size:22px; font-weight:700; }
   .week-select-close { background:none; border:none; color:var(--text); font-size:28px; cursor:pointer; line-height:1; }
@@ -804,7 +804,7 @@ function initChartDOM() {
   }
 }
 
-// 🚀 優化：動態對比增強演算法（拉開均等營收的起伏落差，並確保非 0 日至少 12% 高度）
+// 🚀 週報主圖動態對比增強演算法（拉開均等營收的起伏落差，並確保非 0 日至少 12% 高度）
 function getScaledBarHeight(val, maxVal) {
   if (!val || val <= 0 || !maxVal || maxVal <= 0) return 0;
   if (val >= maxVal) return 100;
@@ -861,7 +861,6 @@ function renderWeeklyTab() {
         const col = chartWrap.querySelector(`[data-day-idx="${idx}"]`);
         if(col) {
           col.className = `chart-col ${selectedDayIndex === idx ? 'active' : ''}`;
-          // 🚀 套用對比拉伸比例
           const barHeight = getScaledBarHeight(d.total, wData.maxDayTotal);
           col.querySelector('.chart-bar').style.height = `${barHeight}%`;
           col.querySelector('.chart-date').textContent = d.dayNum;
@@ -895,10 +894,22 @@ $('weekTitleWrap').addEventListener('click', () => {
   if(weeklyDataCache.length === 0) return;
   const listWrap = $('weekSelectList');
   listWrap.innerHTML = weeklyDataCache.map((w, idx) => {
+    // 🚀 核心優化：小圖表尺寸結構完全不變，套用「視覺差值等比轉換（動態範圍映射）」
+    const activeTotals = w.days.map(d => d.total).filter(t => t > 0);
+    const minVal = activeTotals.length > 0 ? Math.min(...activeTotals) : 0;
+    const maxVal = activeTotals.length > 0 ? Math.max(...activeTotals) : 0;
+
     const miniChartHtml = w.days.map(d => {
-      // 🚀 縮圖同步套用對比拉伸比例
-      const h = getScaledBarHeight(d.total, w.maxDayTotal);
-      return `<div class="mini-col"><div class="mini-bar" style="height:${h}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
+      let h = 0;
+      if (d.total > 0) {
+        if (maxVal === minVal) {
+          h = 75; // 整週跑單金額完全相同時，給予 75% 舒適比例
+        } else {
+          // 最低金額映射至 25%，最高金額映射至 100%，其餘做線性等比拉伸
+          h = 25 + ((d.total - minVal) / (maxVal - minVal)) * 75;
+        }
+      }
+      return `<div class="mini-col"><div class="mini-bar" style="height:${Math.round(h)}%;"></div><div class="mini-day">${d.dayNum}</div></div>`;
     }).join('');
     return `<div class="week-item" data-week-idx="${idx}"><div class="week-item-info"><span class="week-item-date">${w.dateRangeStr}</span><span class="week-item-amt">${fmtDisplayMoney(w.total)}</span></div><div class="mini-chart">${miniChartHtml}</div></div>`;
   }).join('');
