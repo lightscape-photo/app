@@ -250,6 +250,21 @@
 
   .export-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
 
+  /* 🚀 勾選欄位專屬樣式：高度與內距嚴格受控，徹底杜絕撐高表格問題 */
+  .share-chk-cell {
+    padding: 0 1px !important;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .share-select-chk {
+    width: 12px;
+    height: 12px;
+    margin: 0 auto;
+    display: block;
+    cursor: pointer;
+    accent-color: var(--green);
+  }
+
   .tab-group{display:flex;gap:18px;}
   .brand-label{font-family:'Poppins',sans-serif;font-size:24px;font-weight:500;padding-bottom:5px;letter-spacing:0.2px;}
   .brand-uber{color:var(--brand-uber-color);}
@@ -410,9 +425,11 @@
     
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
         <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
+        <button class="export-btn" id="shareCardBtn">分享小卡</button>
+        <button class="export-btn" id="generateCardBtn" style="display:none;background:var(--green);color:var(--on-green);border:none;font-weight:700;">產生小卡</button>
         <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
       </div>
       <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
@@ -544,6 +561,23 @@
   </div>
 </div>
 
+<!-- 🚀 生成圖片明細小卡展示彈窗 -->
+<div class="overlay" id="shareCardOverlay">
+  <div class="settings-panel" style="max-width:440px;text-align:center;max-height:92vh;display:flex;flex-direction:column;padding:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;font-size:16px;">明細分享小卡</h3>
+      <button id="closeShareCardX" style="background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;margin-bottom:14px;display:flex;justify-content:center;align-items:center;">
+      <img id="shareCardImg" style="width:100%;max-width:390px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:block;" alt="分享小卡">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button id="sendShareCardBtn" style="flex:1.2;padding:11px;border-radius:10px;background:var(--green);color:var(--on-green);border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">分享至 LINE</button>
+      <button id="saveShareCardBtn" style="flex:1;padding:11px;border-radius:10px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">儲存圖片</button>
+    </div>
+  </div>
+</div>
+
 <div id="vkContainer" class="vk-container">
   <div id="vkNumpad" class="vk-layout" style="display:none;">
     <div class="vk-row"><button class="vk-key">7</button><button class="vk-key">8</button><button class="vk-key">9</button></div>
@@ -579,6 +613,12 @@ let sortAsc = true;
 let weeklyDataCache = [];
 let currentViewingWeekIndex = 0;
 let selectedDayIndex = null;
+
+// 🚀 小卡多選分享狀態
+let isSelectMode = false;
+let selectedOrderIds = new Set();
+let currentShareCardBlob = null;
+let currentShareCardDataUrl = '';
 
 const $ = id => document.getElementById(id);
 
@@ -644,7 +684,7 @@ function parseTimeInput(str){
   return { h, m };
 }
 
-// 🚀 新增：安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
+// 🚀 安全解析用時輸入 (支援 MM:SS 或純數字分鐘)
 function parseElapsedInput(str) {
   str = (str || '').trim(); if(!str) return null;
   let m = 0, s = 0;
@@ -1207,7 +1247,16 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       document.body.classList.remove('weekly-mode');
     }
 
-    if(tab === 'detail') renderDetailTable();
+    if(tab === 'detail') {
+      renderDetailTable();
+    } else {
+      if(isSelectMode) {
+        isSelectMode = false;
+        selectedOrderIds.clear();
+        $('shareCardBtn').textContent = '分享小卡';
+        $('generateCardBtn').style.display = 'none';
+      }
+    }
     if(tab === 'weekly') { computeWeeklyData(); renderWeeklyTab(); }
     if(tab === 'settings') renderTrash();
   });
@@ -1224,10 +1273,18 @@ function updateDateDisplay() { const val = $('singleDateInput').value; if(val)$(
 function changeSingleDay(offset) {
   const parts = $('singleDateInput').value.split('-'); if(parts.length !== 3) return;
   const current = new Date(parts[0], parts[1]-1, parts[2]); current.setDate(current.getDate() + offset);
-  $('singleDateInput').value = formatDateInput(current); updateDateDisplay(); renderDetailTable();
+  $('singleDateInput').value = formatDateInput(current); updateDateDisplay(); 
+  if(isSelectMode) { selectedOrderIds.clear(); }
+  renderDetailTable();
 }
 $('prevDayBtn').addEventListener('click', () => changeSingleDay(-1));
-$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));$('singleDateInput').addEventListener('change', () => { if (!$('singleDateInput').value)$('singleDateInput').value = formatDateInput(new Date()); updateDateDisplay(); renderDetailTable(); });
+$('nextDayBtn').addEventListener('click', () => changeSingleDay(1));
+$('singleDateInput').addEventListener('change', () => { 
+  if (!$('singleDateInput').value)$('singleDateInput').value = formatDateInput(new Date()); 
+  updateDateDisplay(); 
+  if(isSelectMode) { selectedOrderIds.clear(); }
+  renderDetailTable(); 
+});
 
 function getDisplayOrders(){
   const dVal = $('singleDateInput').value; if(!dVal) return []; const parts = dVal.split('-'); if(parts.length !== 3) return [];
@@ -1256,6 +1313,21 @@ $('colToggles')?.addEventListener('click', e => {
 });
 
 $('exportPreviewWrap').addEventListener('click', e => {
+  // 🚀 多選模式下點選整列切換勾選狀態
+  if (isSelectMode) {
+    const row = e.target.closest('tbody tr');
+    if (row && row.querySelector('.share-select-chk')) {
+      const chk = row.querySelector('.share-select-chk');
+      const id = chk.getAttribute('data-chk-id');
+      if (e.target !== chk) {
+        chk.checked = !chk.checked;
+      }
+      if (chk.checked) selectedOrderIds.add(id);
+      else selectedOrderIds.delete(id);
+      return;
+    }
+  }
+
   const th = e.target.closest('th.sortable');
   if (th) { const col = th.getAttribute('data-sort'); if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderDetailTable(); }
 });
@@ -1263,7 +1335,16 @@ $('exportPreviewWrap').addEventListener('click', e => {
 function renderDetailTable(){
   try {
     const wrap = $('exportPreviewWrap'); let list = getDisplayOrders();$('clearAllBtn').style.display = orders.length === 0 ? 'none' : 'block';
-    if(list.length === 0){ wrap.innerHTML = '<div class="export-empty">這天沒有任何紀錄</div>'; return; }
+    if(list.length === 0){ 
+      wrap.innerHTML = '<div class="export-empty">這天沒有任何紀錄</div>'; 
+      if(isSelectMode) {
+        isSelectMode = false;
+        selectedOrderIds.clear();
+        $('shareCardBtn').textContent = '分享小卡';
+        $('generateCardBtn').style.display = 'none';
+      }
+      return; 
+    }
     
     const baseSum = list.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : o.basePrice), 0);
     const feeSum = list.reduce((s,o)=> s + o.extraFee, 0);
@@ -1284,11 +1365,14 @@ function renderDetailTable(){
     }
 
     const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
+    // 🚀 勾選欄位：零撐高、緊湊置中，徹底保持原始行高[cite: 6]
+    const chkTh = isSelectMode ? `<th class="share-chk-cell" style="width:24px;">選</th>` : '';
     
     wrap.innerHTML = `
       <div class="export-table-scroll">
         <table class="export-table">
           <thead><tr>
+            ${chkTh}
             <th data-sort="id" class="sortable">編號</th>
             <th>單號</th>
             <th>日期</th>
@@ -1304,24 +1388,26 @@ function renderDetailTable(){
             ${displayList.map(item => {
               const o = item._obj; const t = getExactTimes(o);
               const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
+              const chkTd = isSelectMode ? `<td class="share-chk-cell"><input type="checkbox" class="share-select-chk" data-chk-id="${o.id}" ${selectedOrderIds.has(o.id)?'checked':''}></td>` : '';
               return `
-              <tr>
+              <tr style="${isSelectMode ? 'cursor:pointer;' : ''}">
+                ${chkTd}
                 <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
-                <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false"></td>
+                <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
                 <td>${fmtDateOnly(o.startTs)}</td>
-                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00"></td>
-                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00"></td>
-                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-elapsed="${o.id}" value="${t.elapsed}" placeholder="00:00"></td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-elapsed="${o.id}" value="${t.elapsed}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
                 <td>${t.over}</td>
-                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0">`}</td>
-                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0">`}</td>
-                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0">`}</td>
+                <td>${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-base="${o.id}" value="${o.basePrice}" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
+                <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
+                <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
                 <td>${displayFee}</td>
               </tr>`;
             }).join('')}
           </tbody>
           <tfoot><tr>
-            <td colspan="5" style="text-align:right; padding-right:10px;">總計</td>
+            <td colspan="${isSelectMode ? 6 : 5}" style="text-align:right; padding-right:10px;">總計</td>
             <td></td><td></td>
             <td>${plainNum(baseSum)}</td>
             <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
@@ -1334,11 +1420,327 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
+// 🚀 切換多選分享模式與產生小卡（按鈕純文字，固定不顯示數量）
+$('shareCardBtn').addEventListener('click', () => {
+  const currentList = getDisplayOrders();
+  if (currentList.length === 0) {
+    alert('這天沒有任何紀錄可分享');
+    return;
+  }
+  isSelectMode = !isSelectMode;
+  selectedOrderIds.clear();
+  if (isSelectMode) {
+    $('shareCardBtn').textContent = '取消選取';
+    $('generateCardBtn').style.display = 'inline-block';
+  } else {
+    $('shareCardBtn').textContent = '分享小卡';
+    $('generateCardBtn').style.display = 'none';
+  }
+  renderDetailTable();
+});
+
+// 🚀 Canvas 圓角路徑繪製：標準 4 參數語法，杜絕調用崩潰
+function drawRoundedRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// 🚀 小卡完全依照表格形式繪製（8 欄全置中對齊，底部統計採方案 C：三等分完全置中）
+function generateDetailCard(selectedList) {
+  const dpr = 2;
+  const cardW = 430;
+  const headerH = 88;
+  const thH = 28;
+  const trH = 32;
+  const footerH = 120;
+  const cardH = headerH + thH + selectedList.length * trH + footerH;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cardW * dpr;
+  canvas.height = cardH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // 小卡配色完全同步當前主題
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  let tBg, tPanel, tBorder, tText, tMuted, tGreen, tBrandUber, tBadgeBg;
+
+  if (currentTheme === 'light') {
+    tBg = '#FFFFFF';
+    tPanel = '#F1F2F4';
+    tBorder = '#E1E3E6';
+    tText = '#1B1F24';
+    tMuted = '#6B7280';
+    tGreen = '#3B814B';
+    tBrandUber = '#1B1F24';
+    tBadgeBg = '#E4F2E8';
+  } else if (currentTheme === 'cyberpunk') {
+    tBg = '#0A0E17';
+    tPanel = '#140B28';
+    tBorder = '#331E52';
+    tText = '#E8F4FF';
+    tMuted = '#9A8BC2';
+    tGreen = '#05D9E8';
+    tBrandUber = '#05D9E8';
+    tBadgeBg = '#1F0F35';
+  } else {
+    // 深色主題
+    tBg = '#1B1F24';
+    tPanel = '#23282F';
+    tBorder = '#343B44';
+    tText = '#EDEFF2';
+    tMuted = '#8A929C';
+    tGreen = '#3DDC97';
+    tBrandUber = '#FFFFFF';
+    tBadgeBg = '#2C333C';
+  }
+
+  // 卡片外框與背景
+  drawRoundedRectPath(ctx, 0, 0, cardW, cardH, 20);
+  ctx.fillStyle = tBg;
+  ctx.fill();
+  ctx.strokeStyle = tBorder;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 頂部品牌 Header
+  ctx.font = "bold 22px 'Poppins', system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tBrandUber;
+  ctx.fillText("Uber", 20, 38);
+  const uberW = ctx.measureText("Uber ").width;
+  ctx.fillStyle = tGreen;
+  ctx.fillText("Eats", 20 + uberW, 38);
+
+  // 右上角標籤
+  drawRoundedRectPath(ctx, cardW - 105, 20, 85, 24, 12);
+  ctx.fillStyle = tBadgeBg;
+  ctx.fill();
+  ctx.font = "600 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tText;
+  ctx.textAlign = 'center';
+  ctx.fillText("跑單明細卡", cardW - 62.5, 36);
+  ctx.textAlign = 'left';
+
+  // 頂部副標：日期 · 試算結算（移除「跑跑算」）
+  const dateStr = $('singleDateDisplay').textContent || formatDateInput(new Date());
+  ctx.font = "500 12px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.fillText(`${dateStr} · 試算結算`, 20, 62);
+
+  // 分隔線
+  ctx.strokeStyle = tBorder;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, 74);
+  ctx.lineTo(cardW - 20, 74);
+  ctx.stroke();
+
+  // 🚀 表格欄位座標規劃 (8 欄中心點全數水平置中)
+  const colX = {
+    idx: 28,            // 序號 (center)
+    no: 65,             // 單號 (center)
+    time: 135,          // 時間 (center)
+    elapsed: 205,       // 用時 (center)
+    over: 255,          // 超時 (center)
+    base: 305,          // 單價 (center)
+    fee: 355,           // 差額 (center)
+    total: 402          // 合計 (center)
+  };
+
+  // 繪製表格 Header (TH)：全數水平置中
+  let curY = headerH;
+  ctx.font = "600 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.textAlign = 'center';
+  
+  ctx.fillText("#", colX.idx, curY + 16);
+  ctx.fillText("單號", colX.no, curY + 16);
+  ctx.fillText("時間", colX.time, curY + 16);
+  ctx.fillText("用時", colX.elapsed, curY + 16);
+  ctx.fillText("超時", colX.over, curY + 16);
+  ctx.fillText("單價", colX.base, curY + 16);
+  ctx.fillText("差額", colX.fee, curY + 16);
+  ctx.fillText("合計", colX.total, curY + 16);
+
+  // 表頭底線
+  curY += thH;
+  ctx.strokeStyle = tBorder;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, curY);
+  ctx.lineTo(cardW - 20, curY);
+  ctx.stroke();
+
+  // 🚀 繪製各筆訂單資料行 (TR)：全數改為水平置中對齊，字體大小與顏色與時間一致 (500 11px tText)
+  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tText;
+  ctx.textAlign = 'center';
+
+  selectedList.forEach((o, idx) => {
+    const rowY = curY + idx * trH;
+    const textY = rowY + 21;
+    const t = getExactTimes(o);
+    const ordTotal = o.total || ((o.excludeBaseFromTotal ? 0 : o.basePrice) + o.extraFee + (o.bonus||0) + (o.tip||0));
+    const ordNo = o.orderNo ? o.orderNo : '未填';
+    const timeRange = `${fmtHHMM(o.startTs)} - ${fmtHHMM(o.endTs)}`;
+    const baseStr = o.excludeBaseFromTotal ? '-' : plainNum(o.basePrice);
+    const feeStr = o.excludeBaseFromTotal ? '-' : (o.extraFee > 0 ? plainNum(o.extraFee) : '-');
+
+    // 1. 序號 (1, 2...)
+    ctx.fillText(String(idx + 1), colX.idx, textY);
+
+    // 2. 單號
+    ctx.fillText(ordNo, colX.no, textY);
+
+    // 3. 時間 (開始 - 結束)
+    ctx.fillText(timeRange, colX.time, textY);
+
+    // 4. 用時
+    ctx.fillText(t.elapsed, colX.elapsed, textY);
+
+    // 5. 超時
+    ctx.fillText(t.over, colX.over, textY);
+
+    // 6. 單價 (置中)
+    ctx.fillText(baseStr, colX.base, textY);
+
+    // 7. 差額 (置中，無論數值或 - 皆完美置中)
+    ctx.fillText(feeStr, colX.fee, textY);
+
+    // 8. 合計 (置中)
+    ctx.fillText(plainNum(ordTotal), colX.total, textY);
+
+    // 列分隔線
+    ctx.strokeStyle = tBorder;
+    ctx.beginPath();
+    ctx.moveTo(20, rowY + trH);
+    ctx.lineTo(cardW - 20, rowY + trH);
+    ctx.stroke();
+  });
+
+  // 🚀 Footer 統計看板：方案 C（三等分完全置中）
+  const footerY = curY + selectedList.length * trH + 16;
+  const totalSum = selectedList.reduce((s,o)=> s + (o.total || ((o.excludeBaseFromTotal?0:o.basePrice)+o.extraFee+(o.bonus||0)+(o.tip||0))), 0);
+  const totalMs = calculateMergedActiveMs(selectedList);
+
+  drawRoundedRectPath(ctx, 20, footerY, cardW - 40, 58, 12);
+  ctx.fillStyle = tPanel;
+  ctx.fill();
+
+  // 底盒內部三等分中心點：85, 215, 345
+  ctx.textAlign = 'center';
+
+  // 1. 選取趟數 (三等分第 1 區中心 X: 85)
+  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.fillText("選取趟數", 85, footerY + 22);
+  ctx.font = "700 16px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tText;
+  ctx.fillText(`${selectedList.length} 單`, 85, footerY + 44);
+
+  // 2. 累計用時 (三等分第 2 區中心 X: 215)
+  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.fillText("累計用時", 215, footerY + 22);
+  ctx.font = "700 16px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tText;
+  ctx.fillText(formatHrs(totalMs), 215, footerY + 44);
+
+  // 3. 合計總收入 (三等分第 3 區中心 X: 345)
+  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.fillText("合計總收入", 345, footerY + 22);
+  ctx.font = "700 18px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tGreen;
+  ctx.fillText(`NT$${plainNum(totalSum)}`, 345, footerY + 44);
+
+  // 底部文字完整保留：維持「跑跑算 · 外送員智慧時薪與差額精算」不變
+  ctx.textAlign = 'center';
+  ctx.font = "500 10px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = tMuted;
+  ctx.fillText("跑跑算 · 外送員智慧時薪與差額精算", cardW / 2, footerY + 84);
+
+  canvas.toBlob(blob => {
+    currentShareCardBlob = blob;
+    currentShareCardDataUrl = canvas.toDataURL('image/png');
+    $('shareCardImg').src = currentShareCardDataUrl;
+    showOverlay('shareCardOverlay');
+  }, 'image/png');
+}
+
+$('generateCardBtn').addEventListener('click', () => {
+  if (selectedOrderIds.size === 0) {
+    alert('請先在列表勾選要分享的訂單');
+    return;
+  }
+  const allCurrent = getDisplayOrders();
+  const selectedList = allCurrent.filter(o => selectedOrderIds.has(o.id));
+  if (selectedList.length === 0) {
+    alert('沒有選取的訂單紀錄');
+    return;
+  }
+  // 依照出單時間先後排序
+  selectedList.sort((a, b) => a.startTs - b.startTs);
+  generateDetailCard(selectedList);
+});
+
+$('closeShareCardX').addEventListener('click', () => hideOverlay('shareCardOverlay'));
+
+$('sendShareCardBtn').addEventListener('click', () => {
+  if (navigator.share && currentShareCardBlob) {
+    const file = new File([currentShareCardBlob], `跑跑算明細_${formatDateInput(new Date())}.png`, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: '跑單明細小卡',
+        text: '跑單明細小卡分享'
+      }).catch(() => {});
+      return;
+    }
+  }
+  if (window.AndroidDownloader && window.AndroidDownloader.getBase64FromBlobData) {
+    window.AndroidDownloader.getBase64FromBlobData(currentShareCardDataUrl, 'image/png');
+    alert('已為您儲存小卡圖片！可直接在 LINE 聊天室中選取圖片傳送給朋友。');
+  } else {
+    const a = document.createElement('a');
+    a.href = currentShareCardDataUrl;
+    a.download = `跑跑算明細_${formatDateInput(new Date())}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('已儲存圖片！請開啟 LINE 並在相簿中選擇發送。');
+  }
+});
+
+$('saveShareCardBtn').addEventListener('click', () => {
+  if (window.AndroidDownloader && window.AndroidDownloader.getBase64FromBlobData) {
+    window.AndroidDownloader.getBase64FromBlobData(currentShareCardDataUrl, 'image/png');
+    alert('圖片已成功儲存！');
+  } else {
+    const a = document.createElement('a');
+    a.href = currentShareCardDataUrl;
+    a.download = `跑跑算明細_${formatDateInput(new Date())}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+});
+
 // 長按刪除/還原選單
 let longPressTimer = null; let longPressStartX = 0, longPressStartY = 0; let pendingDeleteRowId = null;
 function cancelLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
 
 $('exportPreviewWrap').addEventListener('pointerdown', e=>{      
+  if (isSelectMode) return; // 🚀 選取模式下不觸發長按操作
   const cell = e.target.closest('.row-id-cell'); if(!cell) return;      
   longPressStartX = e.clientX; longPressStartY = e.clientY;      
   longPressTimer = setTimeout(()=>{ 
@@ -1406,7 +1808,7 @@ $('exportPreviewWrap').addEventListener('input', e=>{
   if(e.target.value !== upper){ const cursorPos = e.target.selectionStart; e.target.value = upper; e.target.setSelectionRange(cursorPos, cursorPos); }
 });
 
-// 🚀 核心修改：具備「點進去沒改就不破壞毫秒」保護機制的時間與用時編輯邏輯
+// 🚀 具備「點進去沒改就不破壞毫秒」保護機制的時間與用時編輯邏輯
 $('exportPreviewWrap').addEventListener('change', e=>{
   try {
     const baseId = e.target.getAttribute('data-edit-base'); 
@@ -1448,20 +1850,17 @@ $('exportPreviewWrap').addEventListener('change', e=>{
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
         const d = new Date(order.startTs);
-        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
         if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
         d.setHours(parsed.h, parsed.m, 0, 0); newStartTs = d.getTime();
       } else if(endId){
         const parsed = parseTimeInput(e.target.value);
         if(!parsed){ showTimeError('時間格式錯誤，請輸入如 14:30'); return; }
         const d = new Date(order.endTs);
-        // 🚀 防呆保護：若輸入的時分跟原本完全一樣，則不更動毫秒
         if (d.getHours() === parsed.h && d.getMinutes() === parsed.m) return;
         d.setHours(parsed.h, parsed.m, 0, 0); newEndTs = d.getTime();
       } else if(elapsedId){
         const elapsedMs = parseElapsedInput(e.target.value);
         if(elapsedMs === null || elapsedMs <= 0){ showTimeError('用時格式錯誤，請輸入如 15 或 15:30'); return; }
-        // 🚀 防呆保護：若計算出來的用時毫秒數跟原本一樣，則不更動
         if (elapsedMs === (order.endTs - order.startTs)) return;
         newEndTs = order.startTs + elapsedMs;
       }
