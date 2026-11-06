@@ -206,10 +206,12 @@
   .settings-actions .confirm{background:var(--amber);border:none;color:var(--on-amber);}
 
   .clear-all{font-size:12px;color:var(--muted);background:none;border:none;text-decoration:underline;cursor:pointer;font-family:system-ui,sans-serif;}
-  .history-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+  
+  /* 🚀 操作按鈕列：左右劃分明確，消除擠壓 */
+  .history-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:6px;}
   .export-btn{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-    font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer; font-family:system-ui,sans-serif;
+    font-size:12px;padding:8px 10px;border-radius:10px;cursor:pointer; font-family:system-ui,sans-serif;white-space:nowrap;
   }
   .export-btn:active{transform:scale(0.97);}
 
@@ -425,14 +427,14 @@
     
     <div id="exportPreviewWrap"></div>
     <div class="history-actions">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="export-btn" id="exportCsvBtn">匯出 CSV</button>
-        <button class="export-btn" id="importCsvBtn">匯入 CSV</button>
-        <button class="export-btn" id="shareCardBtn">分享小卡</button>
-        <button class="export-btn" id="generateCardBtn" style="display:none;background:var(--green);color:var(--on-green);border:none;font-weight:700;">產生小卡</button>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        <button class="export-btn" id="exportCsvBtn">匯出</button>
+        <button class="export-btn" id="importCsvBtn">匯入</button>
+        <button class="export-btn" id="shareCardBtn">分享</button>
+        <button class="export-btn" id="generateCardBtn" style="display:none;background:var(--green);color:var(--on-green);border:none;font-weight:700;">圖卡</button>
         <input type="file" id="importCsvInput" accept=".csv, text/csv, text/plain, */*" style="display:none;">
       </div>
-      <button class="clear-all" id="clearAllBtn" style="display:none;">清空所有紀錄</button>
+      <button class="clear-all" id="clearAllBtn" style="display:none;white-space:nowrap;flex-shrink:0;">清空所有紀錄</button>
     </div>
     <p id="importStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
   </div>
@@ -561,7 +563,7 @@
   </div>
 </div>
 
-<!-- 🚀 生成圖片明細小卡展示彈窗 -->
+<!-- 🚀 生成圖片明細小卡展示彈窗（儲存圖片在左，取消在右） -->
 <div class="overlay" id="shareCardOverlay">
   <div class="settings-panel" style="max-width:440px;text-align:center;max-height:92vh;display:flex;flex-direction:column;padding:18px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -572,8 +574,8 @@
       <img id="shareCardImg" style="width:100%;max-width:390px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:block;" alt="分享小卡">
     </div>
     <div style="display:flex;gap:8px;">
-      <button id="sendShareCardBtn" style="flex:1.2;padding:11px;border-radius:10px;background:var(--green);color:var(--on-green);border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">分享至 LINE</button>
-      <button id="saveShareCardBtn" style="flex:1;padding:11px;border-radius:10px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">儲存圖片</button>
+      <button id="saveShareCardBtn" style="flex:1;padding:11px;border-radius:10px;background:var(--green);color:var(--on-green);border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">儲存圖片</button>
+      <button id="closeShareCardBtn" style="flex:1;padding:11px;border-radius:10px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">取消</button>
     </div>
   </div>
 </div>
@@ -1253,7 +1255,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       if(isSelectMode) {
         isSelectMode = false;
         selectedOrderIds.clear();
-        $('shareCardBtn').textContent = '分享小卡';
+        $('shareCardBtn').textContent = '分享';
         $('generateCardBtn').style.display = 'none';
       }
     }
@@ -1340,7 +1342,7 @@ function renderDetailTable(){
       if(isSelectMode) {
         isSelectMode = false;
         selectedOrderIds.clear();
-        $('shareCardBtn').textContent = '分享小卡';
+        $('shareCardBtn').textContent = '分享';
         $('generateCardBtn').style.display = 'none';
       }
       return; 
@@ -1430,10 +1432,10 @@ $('shareCardBtn').addEventListener('click', () => {
   isSelectMode = !isSelectMode;
   selectedOrderIds.clear();
   if (isSelectMode) {
-    $('shareCardBtn').textContent = '取消選取';
+    $('shareCardBtn').textContent = '取消';
     $('generateCardBtn').style.display = 'inline-block';
   } else {
-    $('shareCardBtn').textContent = '分享小卡';
+    $('shareCardBtn').textContent = '分享';
     $('generateCardBtn').style.display = 'none';
   }
   renderDetailTable();
@@ -1694,32 +1696,7 @@ $('generateCardBtn').addEventListener('click', () => {
 });
 
 $('closeShareCardX').addEventListener('click', () => hideOverlay('shareCardOverlay'));
-
-$('sendShareCardBtn').addEventListener('click', () => {
-  if (navigator.share && currentShareCardBlob) {
-    const file = new File([currentShareCardBlob], `跑跑算明細_${formatDateInput(new Date())}.png`, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({
-        files: [file],
-        title: '跑單明細小卡',
-        text: '跑單明細小卡分享'
-      }).catch(() => {});
-      return;
-    }
-  }
-  if (window.AndroidDownloader && window.AndroidDownloader.getBase64FromBlobData) {
-    window.AndroidDownloader.getBase64FromBlobData(currentShareCardDataUrl, 'image/png');
-    alert('已為您儲存小卡圖片！可直接在 LINE 聊天室中選取圖片傳送給朋友。');
-  } else {
-    const a = document.createElement('a');
-    a.href = currentShareCardDataUrl;
-    a.download = `跑跑算明細_${formatDateInput(new Date())}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('已儲存圖片！請開啟 LINE 並在相簿中選擇發送。');
-  }
-});
+$('closeShareCardBtn').addEventListener('click', () => hideOverlay('shareCardOverlay'));
 
 $('saveShareCardBtn').addEventListener('click', () => {
   if (window.AndroidDownloader && window.AndroidDownloader.getBase64FromBlobData) {
