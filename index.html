@@ -503,7 +503,7 @@
 <div class="overlay" id="confirmClearOverlay">
   <div class="settings-panel" style="max-width:340px;text-align:center;">
     <h3 style="margin-bottom:10px;">清空所有紀錄？</h3>
-    <p class="hint" style="margin-bottom:18px;">這會刪除全部歷史紀錄，且無法復原。建議先用「匯出 CSV」備份。</p>
+    <p class="hint" style="margin-bottom:18px;">這會刪除全部歷史紀錄，且無法復原。建議先用「匯出」備份。</p>
     <div class="settings-actions">
       <button class="cancel" id="confirmClearCancel">取消</button>
       <button class="confirm" id="confirmClearOk" style="background:var(--red);color:var(--on-red);">確定清空</button>
@@ -1367,7 +1367,7 @@ function renderDetailTable(){
     }
 
     const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
-    // 🚀 勾選欄位：零撐高、緊湊置中，徹底保持原始行高[cite: 6]
+    // 🚀 勾選欄位：零撐高、緊湊置中，徹底保持原始行高
     const chkTh = isSelectMode ? `<th class="share-chk-cell" style="width:24px;">選</th>` : '';
     
     wrap.innerHTML = `
@@ -1422,7 +1422,7 @@ function renderDetailTable(){
   } catch(e) { console.error('Render Detail Table Err:', e); }
 }
 
-// 🚀 切換多選分享模式與產生小卡（按鈕純文字，固定不顯示數量）
+// 🚀 切換多選分享模式與產生小卡
 $('shareCardBtn').addEventListener('click', () => {
   const currentList = getDisplayOrders();
   if (currentList.length === 0) {
@@ -1456,15 +1456,16 @@ function drawRoundedRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 🚀 小卡完全依照表格形式繪製（8 欄全置中對齊，底部統計採方案 C：三等分完全置中）
+// 🚀 小卡繪製：8 欄全置中對齊，底部改為如同明細表格的總計列佈局
 function generateDetailCard(selectedList) {
   const dpr = 2;
   const cardW = 430;
   const headerH = 88;
   const thH = 28;
   const trH = 32;
-  const footerH = 120;
-  const cardH = headerH + thH + selectedList.length * trH + footerH;
+  const totalH = 34;
+  const bottomH = 36;
+  const cardH = headerH + thH + selectedList.length * trH + totalH + bottomH;
 
   const canvas = document.createElement('canvas');
   canvas.width = cardW * dpr;
@@ -1472,7 +1473,7 @@ function generateDetailCard(selectedList) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  // 小卡配色完全同步當前主題
+  // 配色完全同步主題
   const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
   let tBg, tPanel, tBorder, tText, tMuted, tGreen, tBrandUber, tBadgeBg;
 
@@ -1532,7 +1533,7 @@ function generateDetailCard(selectedList) {
   ctx.fillText("跑單明細卡", cardW - 62.5, 36);
   ctx.textAlign = 'left';
 
-  // 頂部副標：日期 · 試算結算（移除「跑跑算」）
+  // 頂部副標：日期 · 試算結算
   const dateStr = $('singleDateDisplay').textContent || formatDateInput(new Date());
   ctx.font = "500 12px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = tMuted;
@@ -1587,7 +1588,8 @@ function generateDetailCard(selectedList) {
   ctx.fillStyle = tText;
   ctx.textAlign = 'center';
 
-  selectedList.forEach((o, idx) => {
+  selectedList.forEach((item, idx) => {
+    const o = item._obj || item;
     const rowY = curY + idx * trH;
     const textY = rowY + 21;
     const t = getExactTimes(o);
@@ -1596,9 +1598,10 @@ function generateDetailCard(selectedList) {
     const timeRange = `${fmtHHMM(o.startTs)} - ${fmtHHMM(o.endTs)}`;
     const baseStr = o.excludeBaseFromTotal ? '-' : plainNum(o.basePrice);
     const feeStr = o.excludeBaseFromTotal ? '-' : (o.extraFee > 0 ? plainNum(o.extraFee) : '-');
+    const rowNum = item.origIndex !== undefined ? item.origIndex : (idx + 1);
 
-    // 1. 序號 (1, 2...)
-    ctx.fillText(String(idx + 1), colX.idx, textY);
+    // 1. 序號 (依照明細中的序號顯示)
+    ctx.fillText(String(rowNum), colX.idx, textY);
 
     // 2. 單號
     ctx.fillText(ordNo, colX.no, textY);
@@ -1629,47 +1632,45 @@ function generateDetailCard(selectedList) {
     ctx.stroke();
   });
 
-  // 🚀 Footer 統計看板：方案 C（三等分完全置中）
-  const footerY = curY + selectedList.length * trH + 16;
-  const totalSum = selectedList.reduce((s,o)=> s + (o.total || ((o.excludeBaseFromTotal?0:o.basePrice)+o.extraFee+(o.bonus||0)+(o.tip||0))), 0);
-  const totalMs = calculateMergedActiveMs(selectedList);
+  // 🚀 表格總計列（移除底盒，直接在單價、差額、合計下方加總顯示）
+  const selectedOrders = selectedList.map(item => item._obj || item);
+  const baseSum = selectedOrders.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : (o.basePrice || 0)), 0);
+  const feeSum = selectedOrders.reduce((s,o)=> s + (o.extraFee || 0), 0);
+  const totalSum = selectedOrders.reduce((s,o)=> s + (o.total || ((o.excludeBaseFromTotal?0:o.basePrice)+o.extraFee+(o.bonus||0)+(o.tip||0))), 0);
 
-  drawRoundedRectPath(ctx, 20, footerY, cardW - 40, 58, 12);
-  ctx.fillStyle = tPanel;
-  ctx.fill();
+  const totalY = curY + selectedList.length * trH;
+  const totalTextY = totalY + 21;
 
-  // 底盒內部三等分中心點：85, 215, 345
+  ctx.font = "600 11px system-ui, -apple-system, sans-serif";
   ctx.textAlign = 'center';
 
-  // 1. 選取趟數 (三等分第 1 區中心 X: 85)
-  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
+  // 1. "總計" 字樣（置於超時欄位下方 colX.over = 255）
   ctx.fillStyle = tMuted;
-  ctx.fillText("選取趟數", 85, footerY + 22);
-  ctx.font = "700 16px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = tText;
-  ctx.fillText(`${selectedList.length} 單`, 85, footerY + 44);
+  ctx.fillText("總計", colX.over, totalTextY);
 
-  // 2. 累計用時 (三等分第 2 區中心 X: 215)
-  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = tMuted;
-  ctx.fillText("累計用時", 215, footerY + 22);
-  ctx.font = "700 16px system-ui, -apple-system, sans-serif";
+  // 2. 單價加總（置於單價欄位下方 colX.base = 305）
   ctx.fillStyle = tText;
-  ctx.fillText(formatHrs(totalMs), 215, footerY + 44);
+  ctx.fillText(plainNum(baseSum), colX.base, totalTextY);
 
-  // 3. 合計總收入 (三等分第 3 區中心 X: 345)
-  ctx.font = "500 11px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = tMuted;
-  ctx.fillText("合計總收入", 345, footerY + 22);
-  ctx.font = "700 18px system-ui, -apple-system, sans-serif";
+  // 3. 差額加總（置於差額欄位下方 colX.fee = 355）
+  ctx.fillText(plainNum(feeSum), colX.fee, totalTextY);
+
+  // 4. 合計加總（置於合計欄位下方 colX.total = 402）
   ctx.fillStyle = tGreen;
-  ctx.fillText(`NT$${plainNum(totalSum)}`, 345, footerY + 44);
+  ctx.fillText(plainNum(totalSum), colX.total, totalTextY);
+
+  // 總計列下方分隔線
+  ctx.strokeStyle = tBorder;
+  ctx.beginPath();
+  ctx.moveTo(20, totalY + totalH);
+  ctx.lineTo(cardW - 20, totalY + totalH);
+  ctx.stroke();
 
   // 底部文字完整保留：維持「跑跑算 · 外送員智慧時薪與差額精算」不變
   ctx.textAlign = 'center';
   ctx.font = "500 10px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = tMuted;
-  ctx.fillText("跑跑算 · 外送員智慧時薪與差額精算", cardW / 2, footerY + 84);
+  ctx.fillText("跑跑算 · 外送員智慧時薪與差額精算", cardW / 2, totalY + totalH + 20);
 
   canvas.toBlob(blob => {
     currentShareCardBlob = blob;
@@ -1679,20 +1680,22 @@ function generateDetailCard(selectedList) {
   }, 'image/png');
 }
 
+// 🚀 產生小卡：依照明細中的序號 (origIndex) 排序傳入
 $('generateCardBtn').addEventListener('click', () => {
   if (selectedOrderIds.size === 0) {
     alert('請先在列表勾選要分享的訂單');
     return;
   }
-  const allCurrent = getDisplayOrders();
-  const selectedList = allCurrent.filter(o => selectedOrderIds.has(o.id));
-  if (selectedList.length === 0) {
+  const list = getDisplayOrders();
+  let displayList = list.map((o, i) => { return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs }; });
+  const selectedItems = displayList.filter(item => selectedOrderIds.has(item._obj.id));
+  if (selectedItems.length === 0) {
     alert('沒有選取的訂單紀錄');
     return;
   }
-  // 依照出單時間先後排序
-  selectedList.sort((a, b) => a.startTs - b.startTs);
-  generateDetailCard(selectedList);
+  // 依照明細中的序號 (origIndex) 嚴格升冪排序
+  selectedItems.sort((a, b) => a.origIndex - b.origIndex);
+  generateDetailCard(selectedItems);
 });
 
 $('closeShareCardX').addEventListener('click', () => hideOverlay('shareCardOverlay'));
