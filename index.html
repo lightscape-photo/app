@@ -1367,7 +1367,6 @@ function renderDetailTable(){
     }
 
     const h = (id) => hiddenCols.includes(id) ? 'hide-col' : '';
-    // 🚀 勾選欄位：零撐高、緊湊置中，徹底保持原始行高
     const chkTh = isSelectMode ? `<th class="share-chk-cell" style="width:24px;">選</th>` : '';
     
     wrap.innerHTML = `
@@ -1456,7 +1455,7 @@ function drawRoundedRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 🚀 小卡繪製：8 欄全置中對齊，底部改為如同明細表格的總計列佈局
+// 🚀 方案二：比照明細表網格模型 (Table Box: 20 ~ 410px，時間保留 90px，其餘 7 欄均分)
 function generateDetailCard(selectedList) {
   const dpr = 2;
   const cardW = 430;
@@ -1539,7 +1538,7 @@ function generateDetailCard(selectedList) {
   ctx.fillStyle = tMuted;
   ctx.fillText(`${dateStr} · 試算結算`, 20, 62);
 
-  // 分隔線
+  // 頂部分隔線 (20 ~ 410)
   ctx.strokeStyle = tBorder;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -1547,25 +1546,38 @@ function generateDetailCard(selectedList) {
   ctx.lineTo(cardW - 20, 74);
   ctx.stroke();
 
-  // 🚀 表格欄位座標規劃 (8 欄中心點全數水平置中)
+  // 🚀 方案二核心：實體表格網格切割 (Table: 20 ~ 410，寬度 390)
+  const tableX = 20;
+  const tableW = 390;
+  const timeW = 90;
+  const otherW = (tableW - timeW) / 7; // 其餘 7 欄嚴格等寬均分 (~42.86px)
+
+  const colWidths = [otherW, otherW, timeW, otherW, otherW, otherW, otherW, otherW];
+  let curColX = tableX;
+  const colCenters = colWidths.map(w => {
+    const c = curColX + w / 2;
+    curColX += w;
+    return c;
+  });
+
   const colX = {
-    idx: 28,            // 序號 (center)
-    no: 65,             // 單號 (center)
-    time: 135,          // 時間 (center)
-    elapsed: 205,       // 用時 (center)
-    over: 255,          // 超時 (center)
-    base: 305,          // 單價 (center)
-    fee: 355,           // 差額 (center)
-    total: 402          // 合計 (center)
+    idx: colCenters[0],
+    no: colCenters[1],
+    time: colCenters[2],
+    elapsed: colCenters[3],
+    over: colCenters[4],
+    base: colCenters[5],
+    fee: colCenters[6],
+    total: colCenters[7]
   };
 
-  // 繪製表格 Header (TH)：全數水平置中
+  // 繪製表格 Header (TH)：全數水平置中，第一欄為「序號」
   let curY = headerH;
   ctx.font = "600 11px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = tMuted;
   ctx.textAlign = 'center';
   
-  ctx.fillText("#", colX.idx, curY + 16);
+  ctx.fillText("序號", colX.idx, curY + 16);
   ctx.fillText("單號", colX.no, curY + 16);
   ctx.fillText("時間", colX.time, curY + 16);
   ctx.fillText("用時", colX.elapsed, curY + 16);
@@ -1574,7 +1586,7 @@ function generateDetailCard(selectedList) {
   ctx.fillText("差額", colX.fee, curY + 16);
   ctx.fillText("合計", colX.total, curY + 16);
 
-  // 表頭底線
+  // 表頭底線 (20 ~ 410)
   curY += thH;
   ctx.strokeStyle = tBorder;
   ctx.lineWidth = 1;
@@ -1583,7 +1595,7 @@ function generateDetailCard(selectedList) {
   ctx.lineTo(cardW - 20, curY);
   ctx.stroke();
 
-  // 🚀 繪製各筆訂單資料行 (TR)：全數改為水平置中對齊，字體大小與顏色與時間一致 (500 11px tText)
+  // 繪製各筆訂單資料行 (TR)：全數於單元格中央置中，字體 500 11px tText
   ctx.font = "500 11px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = tText;
   ctx.textAlign = 'center';
@@ -1600,7 +1612,7 @@ function generateDetailCard(selectedList) {
     const feeStr = o.excludeBaseFromTotal ? '-' : (o.extraFee > 0 ? plainNum(o.extraFee) : '-');
     const rowNum = item.origIndex !== undefined ? item.origIndex : (idx + 1);
 
-    // 1. 序號 (依照明細中的序號顯示)
+    // 1. 序號 (依照明細中的序號精準顯示)
     ctx.fillText(String(rowNum), colX.idx, textY);
 
     // 2. 單號
@@ -1618,13 +1630,13 @@ function generateDetailCard(selectedList) {
     // 6. 單價 (置中)
     ctx.fillText(baseStr, colX.base, textY);
 
-    // 7. 差額 (置中，無論數值或 - 皆完美置中)
+    // 7. 差額 (置中，無差額 - 完美居中)
     ctx.fillText(feeStr, colX.fee, textY);
 
     // 8. 合計 (置中)
     ctx.fillText(plainNum(ordTotal), colX.total, textY);
 
-    // 列分隔線
+    // 列分隔線 (20 ~ 410)
     ctx.strokeStyle = tBorder;
     ctx.beginPath();
     ctx.moveTo(20, rowY + trH);
@@ -1632,7 +1644,7 @@ function generateDetailCard(selectedList) {
     ctx.stroke();
   });
 
-  // 🚀 表格總計列（移除底盒，直接在單價、差額、合計下方加總顯示）
+  // 🚀 表格總計列：總計移至最左側（對齊序號），單價、差額、合計正下方居中加總
   const selectedOrders = selectedList.map(item => item._obj || item);
   const baseSum = selectedOrders.reduce((s,o)=> s + (o.excludeBaseFromTotal ? 0 : (o.basePrice || 0)), 0);
   const feeSum = selectedOrders.reduce((s,o)=> s + (o.extraFee || 0), 0);
@@ -1644,29 +1656,29 @@ function generateDetailCard(selectedList) {
   ctx.font = "600 11px system-ui, -apple-system, sans-serif";
   ctx.textAlign = 'center';
 
-  // 1. "總計" 字樣（置於超時欄位下方 colX.over = 255）
+  // 1. "總計" 字樣：移至最左側，與序號欄位 (colX.idx) 完美對齊
   ctx.fillStyle = tMuted;
-  ctx.fillText("總計", colX.over, totalTextY);
+  ctx.fillText("總計", colX.idx, totalTextY);
 
-  // 2. 單價加總（置於單價欄位下方 colX.base = 305）
+  // 2. 單價加總 (對齊單價欄位中心)
   ctx.fillStyle = tText;
   ctx.fillText(plainNum(baseSum), colX.base, totalTextY);
 
-  // 3. 差額加總（置於差額欄位下方 colX.fee = 355）
+  // 3. 差額加總 (對齊差額欄位中心)
   ctx.fillText(plainNum(feeSum), colX.fee, totalTextY);
 
-  // 4. 合計加總（置於合計欄位下方 colX.total = 402）
+  // 4. 合計加總 (對齊合計欄位中心)
   ctx.fillStyle = tGreen;
   ctx.fillText(plainNum(totalSum), colX.total, totalTextY);
 
-  // 總計列下方分隔線
+  // 總計列下方分隔線 (20 ~ 410)
   ctx.strokeStyle = tBorder;
   ctx.beginPath();
   ctx.moveTo(20, totalY + totalH);
   ctx.lineTo(cardW - 20, totalY + totalH);
   ctx.stroke();
 
-  // 底部文字完整保留：維持「跑跑算 · 外送員智慧時薪與差額精算」不變
+  // 底部說明文字
   ctx.textAlign = 'center';
   ctx.font = "500 10px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = tMuted;
