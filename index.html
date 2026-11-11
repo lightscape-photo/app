@@ -1296,8 +1296,9 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
+// 🚀 新增「合計」為可切換欄位（如同加成、小費）
 const togglableCols = [
-  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
+  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }, { id: 'total', label: '合計' }
 ];
 function renderColToggles() {
   const wrap = $('colToggles'); if(!wrap) return;
@@ -1352,6 +1353,7 @@ function renderDetailTable(){
     const feeSum = list.reduce((s,o)=> s + o.extraFee, 0);
     const bonusSum = list.reduce((s,o)=> s + (o.bonus||0), 0);
     const tipSum = list.reduce((s,o)=> s + (o.tip||0), 0);
+    const totalSum = baseSum + feeSum + bonusSum + tipSum;
     
     let displayList = list.map((o, i) => { return { _obj: o, origIndex: i + 1, elapsedMs: o.endTs - o.startTs }; });
     if (sortCol) {
@@ -1362,6 +1364,11 @@ function renderDetailTable(){
         else if (sortCol === 'overtime') { valA = a._obj.extraMin; valB = b._obj.extraMin; }
         else if (sortCol === 'base') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.basePrice || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.basePrice || 0); }
         else if (sortCol === 'fee') { valA = a._obj.excludeBaseFromTotal ? -1 : (a._obj.extraFee || 0); valB = b._obj.excludeBaseFromTotal ? -1 : (b._obj.extraFee || 0); }
+        else if (sortCol === 'total') {
+          const totA = a._obj.total !== undefined ? a._obj.total : ((a._obj.excludeBaseFromTotal ? 0 : a._obj.basePrice) + a._obj.extraFee + (a._obj.bonus||0) + (a._obj.tip||0));
+          const totB = b._obj.total !== undefined ? b._obj.total : ((b._obj.excludeBaseFromTotal ? 0 : b._obj.basePrice) + b._obj.extraFee + (b._obj.bonus||0) + (b._obj.tip||0));
+          valA = totA; valB = totB;
+        }
         if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
       });
     }
@@ -1384,11 +1391,14 @@ function renderDetailTable(){
             <th class="${h('bonus')}">加成</th>
             <th class="${h('tip')}">小費</th>
             <th data-sort="fee" class="sortable">差額</th>
+            <th data-sort="total" class="sortable ${h('total')}">合計</th>
           </tr></thead>
           <tbody>
             ${displayList.map(item => {
               const o = item._obj; const t = getExactTimes(o);
               const displayFee = o.excludeBaseFromTotal ? '-' : (o.extraFee === 0 ? '-' : plainNum(o.extraFee));
+              const ordTotal = o.total !== undefined ? o.total : ((o.excludeBaseFromTotal ? 0 : (o.basePrice || 0)) + (o.extraFee || 0) + (o.bonus || 0) + (o.tip || 0));
+              const displayTotal = o.excludeBaseFromTotal && ordTotal === 0 ? '-' : plainNum(ordTotal);
               const chkTd = isSelectMode ? `<td class="share-chk-cell"><input type="checkbox" class="share-select-chk" data-chk-id="${o.id}" ${selectedOrderIds.has(o.id)?'checked':''}></td>` : '';
               return `
               <tr style="${isSelectMode ? 'cursor:pointer;' : ''}">
@@ -1404,6 +1414,7 @@ function renderDetailTable(){
                 <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
                 <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
                 <td>${displayFee}</td>
+                <td class="${h('total')}">${displayTotal}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1414,6 +1425,7 @@ function renderDetailTable(){
             <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
             <td class="${h('tip')}">${plainNum(tipSum)}</td>
             <td>${plainNum(feeSum)}</td>
+            <td class="${h('total')}">${plainNum(totalSum)}</td>
           </tr></tfoot>
         </table>
       </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
