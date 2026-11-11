@@ -235,7 +235,12 @@
   
   .export-table tbody tr:last-child td{border-bottom:none;}
   .row-id-cell{-webkit-user-select:none;user-select:none;cursor:pointer;}
-  .export-table tfoot td{border-top:1px solid var(--border);border-bottom:none;color:var(--amber);font-weight:600;padding-top:10px;}
+  
+  /* 🚀 表尾總計樣式微調：防斷行、微縮字級與間距，防止 4 位數＋小數點互相推擠 */
+  .export-table tfoot td{
+    border-top:1px solid var(--border);border-bottom:none;color:var(--amber);font-weight:600;
+    padding-top:10px;white-space:nowrap;font-size:10px;letter-spacing:-0.3px;
+  }
   .export-table-scroll{overflow-x:hidden;}
   
   .detail-edit-input{
