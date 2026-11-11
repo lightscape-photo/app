@@ -942,7 +942,7 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']);
+  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip', 'total']);
   
   let migrated = false;
   orders.forEach(o=>{
