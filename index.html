@@ -947,7 +947,7 @@ function init(){
   orders = loadJSON(KEY_ORDERS, []);
   trashItems = loadJSON(KEY_TRASH, []);
   
-  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip', 'total']);
+  hiddenCols = loadJSON(KEY_HIDDEN_COLS, ['bonus', 'tip']).filter(c => c !== 'total');
   
   let migrated = false;
   orders.forEach(o=>{
@@ -1301,9 +1301,9 @@ function getDisplayOrders(){
 function fmtDateOnly(ts){ const d = new Date(ts); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateFull(ts){ const d = new Date(ts); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 
-// 🚀 新增「合計」為可切換欄位（如同加成、小費）
+// 🚀 僅保留「加成」、「小費」為可切換欄位，合計改為常駐顯示
 const togglableCols = [
-  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }, { id: 'total', label: '合計' }
+  { id: 'bonus', label: '加成' }, { id: 'tip', label: '小費' }
 ];
 function renderColToggles() {
   const wrap = $('colToggles'); if(!wrap) return;
@@ -1388,7 +1388,6 @@ function renderDetailTable(){
             ${chkTh}
             <th data-sort="id" class="sortable">編號</th>
             <th>單號</th>
-            <th>日期</th>
             <th>開始</th><th>結束</th>
             <th data-sort="elapsed" class="sortable">用時</th>
             <th data-sort="overtime" class="sortable">超時</th>
@@ -1396,7 +1395,7 @@ function renderDetailTable(){
             <th class="${h('bonus')}">加成</th>
             <th class="${h('tip')}">小費</th>
             <th data-sort="fee" class="sortable">差額</th>
-            <th data-sort="total" class="sortable ${h('total')}">合計</th>
+            <th data-sort="total" class="sortable">合計</th>
           </tr></thead>
           <tbody>
             ${displayList.map(item => {
@@ -1410,7 +1409,6 @@ function renderDetailTable(){
                 ${chkTd}
                 <td class="row-id-cell" data-row-id="${o.id}">${item.origIndex}</td>
                 <td><input type="text" class="detail-edit-input ordno-edit-input" data-edit-ordno="${o.id}" value="${escapeHTML(o.orderNo)}" placeholder="-" autocapitalize="characters" autocomplete="off" spellcheck="false" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
-                <td>${fmtDateOnly(o.startTs)}</td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-start="${o.id}" value="${fmtHHMM(o.startTs)}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-end="${o.id}" value="${fmtHHMM(o.endTs)}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
                 <td><input type="text" inputmode="numeric" maxlength="5" class="detail-edit-input" data-edit-elapsed="${o.id}" value="${t.elapsed}" placeholder="00:00" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}></td>
@@ -1419,18 +1417,18 @@ function renderDetailTable(){
                 <td class="${h('bonus')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-bonus="${o.id}" value="${o.bonus ? o.bonus : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
                 <td class="${h('tip')}">${o.excludeBaseFromTotal ? '-' : `<input type="number" class="detail-edit-input num-edit-input" data-edit-tip="${o.id}" value="${o.tip ? o.tip : ''}" placeholder="-" min="0" ${isSelectMode ? 'readonly style="pointer-events:none;"' : ''}>`}</td>
                 <td>${displayFee}</td>
-                <td class="${h('total')}">${displayTotal}</td>
+                <td>${displayTotal}</td>
               </tr>`;
             }).join('')}
           </tbody>
           <tfoot><tr>
-            <td colspan="${isSelectMode ? 6 : 5}" style="text-align:right; padding-right:10px;">總計</td>
+            <td colspan="${isSelectMode ? 5 : 4}" style="text-align:right; padding-right:10px;">總計</td>
             <td></td><td></td>
             <td>${plainNum(baseSum)}</td>
             <td class="${h('bonus')}">${plainNum(bonusSum)}</td>
             <td class="${h('tip')}">${plainNum(tipSum)}</td>
             <td>${plainNum(feeSum)}</td>
-            <td class="${h('total')}">${plainNum(totalSum)}</td>
+            <td>${plainNum(totalSum)}</td>
           </tr></tfoot>
         </table>
       </div><p id="editTimeError" style="font-size:11px;color:var(--red);margin-top:6px;display:none;"></p>
